@@ -9,7 +9,15 @@
 //-----------------------------------------------------------------------------
 static CVar tile_QuadTree("tile_QuadTree", false);
 //-----------------------------------------------------------------------------
-#define ZZZOOM 16
+//#define ZZZOOM 16
+#define ZZZOOM 16					// Regular grid uses a fixed zoom
+const bool useSingleTile = false;	// Only load 1 tile. Good for debugging
+const Vec3i singleTile(1204, 2554, 12);
+//const Vec3i singleTile(19294, 40893, 16);
+//const Vec3i singleTile(9647, 20446, 15);
+//-----------------------------------------------------------------------------
+// Threads & synchronization
+//-----------------------------------------------------------------------------
 const int numThreads = 1;
 std::thread threads[numThreads];
 bool stop = false;
@@ -28,9 +36,9 @@ List2<StreamResult> doneList;
 //-----------------------------------------------------------------------------
 MyTile::MyTile(const Vec3i& tms)
 {
-	m_Frame = 0;
-	m_Tms	= tms;
-	m_Origo = TileMin(m_Tms.xy(), m_Tms.z);
+	m_Frame  = 0;
+	m_Tms	 = tms;
+	m_Origo  = TileMin(m_Tms);
 	m_Status = eNotLoaded;
 	
 	const CStrL tileName = Str_Printf("%d_%d_%d", tms.x, tms.y, tms.z);
@@ -80,19 +88,31 @@ void TileManager::Stop()
 void TileManager::Initialize(CCamera* cam)
 {
 	m_Initialized = true;
-	//m_LongLat = Vec2d(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
-	Vec2d longLat = Vec2d(-74.0130, 40.703);	// 19294, 24642 - Manhattan
 
-	Vec2d meters = LonLatToMeters(longLat);
-	Vec2i tile = MetersToTile(meters, ZZZOOM);
-	Vec2d tileMin = TileMin(tile, ZZZOOM);
-	Vec2d tileMax = TileMax(tile, ZZZOOM);
-	m_TileSize = tileMax.x - tileMin.x;
+	Vec3i tile;
+	if (useSingleTile) // Debug
+	{
+		tile = singleTile;
+	}
+	else
+	{
+		//m_LongLat = Vec2d(18.080, 59.346);		// 36059, 19267 - Stockholm Stadion
+		Vec2d longLat = Vec2d(-74.0130, 40.703);	// 19294, 24642 - Manhattan
+
+		Vec2d meters = LonLatToMeters(longLat);
+		Vec2i _tile = MetersToTile(meters, ZZZOOM);
+		tile = Vec3i(_tile.x, _tile.y, ZZZOOM);
+	}
+	
+	Vec2d tileMin = TileMin(tile);
+	Vec2d tileMax = TileMax(tile);
+	double size = tileMax.x - tileMin.x;
+	
 	// Set world origo at corner of tile
 	m_WorldOrigo = tileMin;
 
 	// Set camera in center of tile
-	cam->SetWorldPos(Vec3(m_TileSize*0.5f, 40.0f, -m_TileSize*0.5f));
+	cam->SetWorldPos(Vec3(size*0.5f, 40.0f, -size*0.5f));
 
 	m_LastTile = Vec3i(0, 0, -1);
 
@@ -140,8 +160,15 @@ void TileManager::Update(CCamera* cam)
 
 	// Determine needed tiles
 	neededTiles.Clear();
-	if (tile_QuadTree)	UpdateQTree(cam);
-	else				UpdateRegularGrid(cam);
+	if (useSingleTile)
+	{
+		neededTiles.Add(singleTile);
+	}
+	else
+	{
+		if (tile_QuadTree)	UpdateQTree(cam);
+		else				UpdateRegularGrid(cam);
+	}
 
 	// Determine missing tiles
 	const uint32 frame = Engine_GetFrameNumber();

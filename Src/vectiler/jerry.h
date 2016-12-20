@@ -41,7 +41,7 @@ struct Tile {
 
 	std::bitset<4> borders;
 
-	double invScale = 0.0;
+	//double invScale = 0.0;
 	Vec2d tileOrigin;
 
 	bool operator==(const Tile& rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z; }

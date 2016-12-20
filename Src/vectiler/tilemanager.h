@@ -20,7 +20,6 @@ public:
 	Hash<Vec3i, class MyTile*> m_Tiles;
 	bool m_Initialized = false;
 	Vec2d m_WorldOrigo;
-	float m_TileSize;
 	Vec3i m_LastTile;
 
 	Vec2d GlToMercator2d(const Vec3& gl)

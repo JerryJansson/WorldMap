@@ -31,7 +31,7 @@ Tile::Tile(int x, int y, int z) : x(x), y(y), z(z)
 	// JJ
 	//double scale = 0.5 * myAbs(bounds.x - bounds.z);
 	//invScale = 1.0 / scale;
-	invScale = 1.0f;
+	//invScale = 1.0f;
 
 	borders = 0;
 }

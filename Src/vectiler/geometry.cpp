@@ -128,8 +128,8 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 	const float height,
 	std::vector<PolygonVertex>& outVertices,
 	std::vector<unsigned int>& outIndices,
-	const HeightData* elevation,
-	float inverseTileScale)
+	const HeightData* elevation)
+	//float inverseTileScale)
 {
 	int vertexDataOffset = outVertices.size();
 	v3 upVector(0.0f, 0.0f, 1.0f);
@@ -144,7 +144,8 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 		cz = sampleElevation(centroid(polygon), elevation);
 		minz = std::numeric_limits<float>::max();
 
-		for (auto& line : polygon) {
+		for (auto& line : polygon)
+		{
 			for (size_t i = 0; i < line.size(); i++) {
 				v3 p(line[i]);
 
@@ -155,13 +156,15 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 		}
 	}
 
-	for (auto& line : polygon) {
+	for (auto& line : polygon)
+	{
 		size_t lineSize = line.size();
 
 		outVertices.reserve(outVertices.size() + lineSize * 4);
 		outIndices.reserve(outIndices.size() + lineSize * 6);
 
-		for (size_t i = 0; i < lineSize - 1; i++) {
+		for (size_t i = 0; i < lineSize - 1; i++)
+		{
 			v3 a(line[i]);
 			v3 b(line[i + 1]);
 
@@ -170,13 +173,13 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 			normalVector = glm::cross(upVector, b - a);
 			normalVector = glm::normalize(normalVector);
 
-			a.z = height + cz * inverseTileScale;
+			a.z = height + cz;// *inverseTileScale;
 			outVertices.push_back({ a, normalVector });
-			b.z = height + cz * inverseTileScale;
+			b.z = height + cz;// *inverseTileScale;
 			outVertices.push_back({ b, normalVector });
-			a.z = minHeight + minz * inverseTileScale;
+			a.z = minHeight + minz;// *inverseTileScale;
 			outVertices.push_back({ a, normalVector });
-			b.z = minHeight + minz * inverseTileScale;
+			b.z = minHeight + minz;// *inverseTileScale;
 			outVertices.push_back({ b, normalVector });
 
 			outIndices.push_back(vertexDataOffset + 0);
@@ -198,8 +201,8 @@ void buildPolygon(const Polygon2& polygon,
 	std::vector<PolygonVertex>& outVertices,
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation,
-	float centroidHeight,
-	float inverseTileScale)
+	float centroidHeight)
+	//float inverseTileScale)
 {
 	mapbox::Earcut<float, unsigned int> earcut;
 	earcut(polygon);
@@ -223,7 +226,7 @@ void buildPolygon(const Polygon2& polygon,
 
 	static v3 normal(0.0, 0.0, 1.0);
 	outVertices.reserve(outVertices.size() + earcut.vertices.size());
-	centroidHeight *= inverseTileScale;
+	//centroidHeight *= inverseTileScale;
 
 	for (auto& p : earcut.vertices)
 	{
@@ -252,13 +255,13 @@ v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
 }
 //-----------------------------------------------------------------------------
 void addPolygonPolylinePoint(Line& line,
-	const v3 curr,
-	const v3 next,
-	const v3 last,
+	const v3& curr,
+	const v3& next,
+	const v3& last,
 	const float extrude,
-	size_t lineDataSize,
-	size_t i,
-	bool forward)
+	const size_t lineDataSize,
+	const size_t i,
+	const bool forward)
 {
 	v3 n0 = perp(curr - last);
 	v3 n1 = perp(next - curr);
@@ -281,13 +284,15 @@ void addPolygonPolylinePoint(Line& line,
 	}
 }
 //-----------------------------------------------------------------------------
-PolygonMesh* CreateMeshFromFeature(
-	const ELayerType layerType,
-	const Feature& feature,
-	const HeightData* heightMap,
-	const float scale				// tile.invScale
-)
+PolygonMesh* CreateMeshFromFeature(const ELayerType layerType,	const Feature& feature,	const HeightData* heightMap)
 {
+	CStopWatch sw;
+
+	if (feature.lines.size() > 3000)
+	{
+		int abba = 10;
+	}
+
 	// JJ 
 	auto mesh = new PolygonMesh(layerType);
 
@@ -306,11 +311,11 @@ PolygonMesh* CreateMeshFromFeature(
 			float centroidHeight = 0.f;
 			if (feature.min_height != feature.height)
 			{
-				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap, scale);
-				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight, scale);
+				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap);// , scale);
+				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight);// , scale);
 			}
 			else
-				buildPolygon(polygon, feature.height+sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight, scale);
+				buildPolygon(polygon, feature.height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);// , scale);
 		}
 	}
 
@@ -325,7 +330,7 @@ PolygonMesh* CreateMeshFromFeature(
 		{
 			int abba = 10;
 		}
-		const float extrudeW = feature.road_width * scale;
+		const float extrudeW = feature.road_width;// *scale;
 		//const float extrudeH = lineExtrusionHeight * scale;
 		const float extrudeH = sortHeight;
 		for (const Line& line : feature.lines)
@@ -391,15 +396,15 @@ PolygonMesh* CreateMeshFromFeature(
 			size_t offset = mesh->vertices.size();
 
 			if (extrudeH > 0)
-				buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr, scale);
+				buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr);// , scale);
 
-			buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f, scale);
+			buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f);// , scale);
 
 			if (heightMap)
 			{
 				for (auto it = mesh->vertices.begin() + offset; it != mesh->vertices.end(); ++it)
 				{
-					it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap) * scale;
+					it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap);// *scale;
 				}
 			}
 		}
@@ -408,6 +413,13 @@ PolygonMesh* CreateMeshFromFeature(
 		if(heightMap)
 			computeNormals(mesh);
 	}
+
+	float time = sw.GetMs();
+	if (time > 100)
+	{
+		int abba = 10;
+	}
+	LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
 
 	if (mesh->vertices.size() == 0)
 	{

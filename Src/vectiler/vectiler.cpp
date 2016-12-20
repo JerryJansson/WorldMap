@@ -95,13 +95,13 @@ void buildPedestalPlanes(const Tile& tile,
 			float h0 = sampleElevation(v2(v0.x, v0.y), elevation);
 			float h1 = sampleElevation(v2(v1.x, v1.y), elevation);
 
-			v0.z = h0 * tile.invScale;
+			v0.z = h0;// *tile.invScale;
 			outVertices.push_back({ v0, normalVector });
-			v1.z = h1 * tile.invScale;
+			v1.z = h1;// *tile.invScale;
 			outVertices.push_back({ v1, normalVector });
-			v0.z = pedestalHeight * tile.invScale;
+			v0.z = pedestalHeight;// *tile.invScale;
 			outVertices.push_back({ v0, normalVector });
-			v1.z = pedestalHeight * tile.invScale;
+			v1.z = pedestalHeight;// *tile.invScale;
 			outVertices.push_back({ v1, normalVector });
 
 			if (i == Border::right || i == Border::bottom) {
@@ -181,7 +181,7 @@ PolygonMesh* CreateTerrainMesh(const Tile& tile, const HeightData* heightMap, co
 	{
 		v2 tilePosition = v2(vertex.position.x, vertex.position.y);
 		float extrusion = sampleElevation(tilePosition, heightMap);
-		vertex.position.z = extrusion * tile.invScale;				// Scale the height within the tile scale
+		vertex.position.z = extrusion;// *tile.invScale;				// Scale the height within the tile scale
 	}
 
 	return mesh;
@@ -195,7 +195,7 @@ void CreatePedestalMeshes(const Tile& tile, const HeightData* heightMap, Polygon
 	buildPlane(ground->vertices, ground->indices, 2.0, 2.0, terrainSubdivision, terrainSubdivision, true);
 
 	for (auto& vertex : ground->vertices)
-		vertex.position.z = pedestalHeight * tile.invScale;
+		vertex.position.z = pedestalHeight;// *tile.invScale;
 
 	buildPedestalPlanes(tile, wall->vertices, wall->indices, heightMap, terrainSubdivision, pedestalHeight);
 
@@ -301,7 +301,7 @@ bool vectiler2(const Params2 params)
 				if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
 				if (heightMap && (type != eLayerRoads) && (feature.height == 0.0f))	continue;
 
-				auto mesh = CreateMeshFromFeature(type, feature, heightMap, tile.invScale);
+				auto mesh = CreateMeshFromFeature(type, feature, heightMap);// , tile.invScale);
 				if (mesh)
 					meshes.push_back(mesh);
 			}

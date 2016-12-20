@@ -34,8 +34,8 @@ bool LoadBin(const char* fname, TArray<GGeom>& geomArr);
 PolygonMesh* CreateMeshFromFeature(
 	const ELayerType layerType,
 	const struct Feature& feature,
-	const struct HeightData* heightMap,
-	const float scale				// tile.invScale
+	const struct HeightData* heightMap
+	//const float scale				// tile.invScale
 	//const float lineExtrusionWidth, // params.roadsExtrusionWidth
 	//const float lineExtrusionHeight // params.roadsHeight
 );
