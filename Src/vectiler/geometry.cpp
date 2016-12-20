@@ -261,7 +261,7 @@ v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
 	else {
 		float theta = atan2f(d1.y, d1.x) - atan2f(d0.y, d0.x);
 		if (theta < 0.f) 
-			theta += 2 * F_PI;
+			theta += 2.0f * FLOAT_PI;
 		miter *= 1.f / std::max<float>(sin(theta * 0.5f), EPSILON);
 	}
 
@@ -607,106 +607,7 @@ bool saveOBJ(const char* outputOBJ,
 
 	return false;
 }
-
-
 //-----------------------------------------------------------------------------
-void WriteMesh(FILE* f, const PolygonMesh* mesh, const char* layerName, const int meshIdx, const int idxOffset)
-{
-	fprintf(f, "o %s_%d\n", layerName, meshIdx);
-	for (auto v : mesh->vertices)
-	{
-		// JJ - flip
-		fprintf(f, "v %f %f %f\n", v.position.x, v.position.z, -v.position.y);
-		//file << "v " << v.position.x + offsetx + mesh.offset.x << " " << v.position.y + offsety + mesh.offset.y << " " << v.position.z << "\n";
-	}
-	for (auto v : mesh->vertices)
-	{
-		fprintf(f, "vn %f %f %f\n", v.normal.x, v.normal.z, -v.normal.y);
-	}
-
-	for (size_t i = 0; i < mesh->indices.size(); i += 3)
-	{
-		int idx0 = mesh->indices[i+0] + idxOffset + 1;
-		int idx1 = mesh->indices[i+1] + idxOffset + 1;
-		int idx2 = mesh->indices[i+2] + idxOffset + 1;
-		fprintf(f, "f %d//%d %d//%d %d//%d\n", idx0, idx0, idx1, idx1, idx2, idx2);
-	}
-
-	//indexOffset += mesh->vertices.size();
-}
-//-----------------------------------------------------------------------------
-bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
-{
-	FILE* f = fopen(fname, "wt");
-	if (!f)
-		return false;
-
-	fprintf(f, "# exported by Jerry's WorldMap\n\n");
-
-	int statNumObjects = 0;
-	int statNumVertices = 0;
-	int statNumTriangles = 0;
-
-	int idxOffset = 0;
-	for (int i = 0; i < eNumLayerTypes; i++)
-	{
-		for (size_t k = 0; k < meshArr[i].size(); k++)
-		{
-			WriteMesh(f, meshArr[i][k], layerNames[i], k, idxOffset);
-			idxOffset += meshArr[i][k]->vertices.size();
-
-			statNumObjects++;
-			statNumVertices += meshArr[i][k]->vertices.size();
-			statNumTriangles += meshArr[i][k]->indices.size()/3;
-		}
-	}
-
-	fclose(f);
-
-	LOG("Saved obj file: %s\n", fname);
-	LOG("Objects: %ld\n", statNumObjects);
-	LOG("Triangles: %ld\n", statNumTriangles);
-	LOG("Vertices: %ld\n", statNumVertices);
-
-	return true;
-}
-
-
-//-----------------------------------------------------------------------------
-#if 0
-void WriteMeshBin(CFile& f, const PolygonMesh* mesh, const char* layerName, const int meshIdx)
-{
-	if (mesh->vertices.size() == 0)
-		return;
-
-	CStrL meshname = Str_Printf("%s_%d", layerName, meshIdx);
-	f.WriteInt(meshname.Len());
-	f.Write(meshname.Str(), meshname.Len() * sizeof(char));
-	f.WriteInt(mesh->layerType);
-	f.WriteInt(mesh->vertices.size());
-	f.WriteInt(mesh->indices.size());
-	for (auto v : mesh->vertices)
-	{
-		// Flip
-		float p[6];
-		p[0] = v.position.x;
-		p[1] = v.position.z;
-		p[2] = -v.position.y;
-		p[3] = v.normal.x;
-		p[4] = v.normal.z;
-		p[5] = -v.normal.y;
-		f.Write(p, sizeof(float) * 6);
-	}
-
-	f.Write(mesh->indices.data(), mesh->indices.size() * sizeof(int));
-
-	/*for (size_t i = 0; i < mesh->indices.size(); i++)
-	{
-		uint16 u16 = mesh->indices[i];
-		f.Write(&u16, sizeof(u16));
-	}*/
-}
-#endif
 #define VER 1
 //-----------------------------------------------------------------------------
 bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])

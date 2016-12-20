@@ -4,32 +4,6 @@
 // JJ
 // http://www.codepool.biz/build-use-libcurl-vs2015-windows.html
 
-struct Params {
-    const char* apiKey;
-    const char* tilex;
-    const char* tiley;
-    int tilez;
-    float offset[2];
-    bool splitMesh;
-    int aoSizeHint;
-    int aoSamples;
-    bool aoBaking;
-    bool append;
-    bool terrain;
-    int terrainSubdivision;
-    float terrainExtrusionScale;
-    bool buildings;
-    float buildingsExtrusionScale;
-    bool roads;
-    float roadsHeight;
-    float roadsExtrusionWidth;
-    bool normals;
-    float buildingsHeight;
-    int pedestal;
-    float pedestalHeight;
-};
-
-int vectiler(struct Params parameters, CStrL& outFileName);
 
 struct Params2 {
 	const char* apiKey;
@@ -47,7 +21,7 @@ struct Params2 {
 	//float pedestalHeight;
 };
 
-bool vectiler2(Params2 params);
+bool vectiler2(const Params2 params);
 
 
 

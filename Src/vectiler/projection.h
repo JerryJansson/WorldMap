@@ -1,9 +1,4 @@
 #pragma once
-#include "jerry.h"
-#include <cmath>
-#include <functional>
-#include <bitset>
-
 /* 
 	Longitude growths at E, decreases to W (x-axis)
 	Latitude growths to N, decreases to S (y-axis)
@@ -39,60 +34,24 @@
 	Zoom level 16 is (65536 x 65536)
 	Zoom level n is (2^n x 2^n tiles)
 */
-//-----------------------------------------------------------------------------
-//extern const int iTileSize;
-//-----------------------------------------------------------------------------
-Vec2d lonLatToMeters(const Vec2d& _lonLat);
-v2d pixelsToMeters(const v2d _pix, const int _zoom);
-v4d tileBounds(int x, int y, int z);
-v2d tileCenter(int x, int y, int z);
 
-//Vec4d TileBounds2(const int x, const int y, const int zoom);
 //-----------------------------------------------------------------------------
-v2d LatLonToMeters(double lat, double lon);
-Vec4d TileBoundsInMeters(const Vec2i& t, const int zoom);
+// Converts given lat/lon in WGS84 Datum to XY in Spherical Mercator EPSG:900913"
+//-----------------------------------------------------------------------------
+Vec2d LonLatToMeters(const Vec2d& _lonLat);
+//-----------------------------------------------------------------------------
+// Converts XY point from Spherical Mercator EPSG:900913 to lat/lon in WGS84 Datum
+//-----------------------------------------------------------------------------
+Vec2d MetersToLongLat(const Vec2d& m);
+//-----------------------------------------------------------------------------
+// Returns tile for given mercator coordinates
+//-----------------------------------------------------------------------------
 Vec2i MetersToTile(const Vec2d& m, const int zoom);
-v2d MetersToLonLat(const v2d& m);
-
 //-----------------------------------------------------------------------------
-enum Border {
-    right,
-    left,
-    bottom,
-    top,
-};
+// Returns bounds of the given tile in EPSG:900913 coordinates
 //-----------------------------------------------------------------------------
-struct Tile {
-    int x;
-    int y;
-    int z;
-
-    std::bitset<4> borders;
-
-    double invScale = 0.0;
-    v2d tileOrigin;
-
-    bool operator==(const Tile& rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z; }
-
-    Tile(int x, int y, int z) : x(x), y(y), z(z)
-	{
-        v4d bounds = tileBounds(x, y, z);
-        tileOrigin = v2d(0.5 * (bounds.x + bounds.z), -0.5 * (bounds.y + bounds.w));
-        
-		// JJ
-		//double scale = 0.5 * myAbs(bounds.x - bounds.z);
-        //invScale = 1.0 / scale;
-		invScale = 1.0f;
-
-        borders = 0;
-    }
-};
+Vec4d TileBounds(const Vec2i& t, const int zoom);
 //-----------------------------------------------------------------------------
-namespace std {
-    template<>
-    struct hash<Tile> {
-        size_t operator()(const Tile &tile) const {
-            return std::hash<int>()(tile.x) ^ std::hash<int>()(tile.y) ^ std::hash<int>()(tile.z);
-        }
-    };
-}
+// Converts TMS tile coordinates to Google Tile coordinates
+//-----------------------------------------------------------------------------
+Vec2i TmsToGoogleTile(const Vec2i& t, const int zoom);

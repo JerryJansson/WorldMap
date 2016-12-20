@@ -189,22 +189,19 @@ void TileManager::Update(CCamera* cam)
 		m_Initialized = true;
 		m_LongLat = Vec2d(18.080, 59.346);	// Stockholm stadion
 
-		Vec2d meters = lonLatToMeters(m_LongLat);
-		Vec2i tile = MetersToTile(meters, ZZZOOM);
-
-		//Vec4d tileBounds = TileBounds2(tile.x, tile.y, ZZZOOM);
-		Vec4d tileBounds = TileBoundsInMeters(tile, ZZZOOM);
-
-		Vec2d tileMin = tileBounds.xy();
-		Vec2d tileMax = tileBounds.zw();
-		m_TileSize = tileMax.x - tileMin.x;
+		Vec2d meters	 = LonLatToMeters(m_LongLat);
+		Vec2i tile		 = MetersToTile(meters, ZZZOOM);
+		Vec4d tileBounds = TileBounds(tile, ZZZOOM);
+		Vec2d tileMin	 = tileBounds.xy();
+		Vec2d tileMax	 = tileBounds.zw();
+		m_TileSize		 = tileMax.x - tileMin.x;
 		// Set world origo at corner of tile
-		m_WorldOrigo.x = tileMin.x;
-		m_WorldOrigo.y = 0.0f;
-		m_WorldOrigo.z = tileMin.y;
+		m_WorldOrigo.x	= tileMin.x;
+		m_WorldOrigo.y	= 0.0f;
+		m_WorldOrigo.z	= tileMin.y;
 
 		// Set camera in center of tile
-		cam->SetWorldPos(Vec3(m_TileSize*0.5f, 20.0f, m_TileSize*0.5f));
+		cam->SetWorldPos(Vec3(m_TileSize*0.5f, 20.0f, -m_TileSize*0.5f));
 
 		m_LastTile = Vec3i(0, 0, -1);
 	}
@@ -286,10 +283,13 @@ void TileManager::Update(CCamera* cam)
 			a.m_Min = CVec3(x*m_TileSize, 0, y*m_TileSize);
 			a.m_Max = CVec3((x+1)*m_TileSize, 10, (y+1)*m_TileSize);
 			DrawWireAabb3d(a, gRGBA_Red);
-			DrawWireCube(CVec3(x*m_TileSize*0.5f, 1.0f, y*m_TileSize*0.5f), 1, gRGBA_Red);
+
+			float center_x = ((float)x + 0.5f) * m_TileSize;
+			float center_y = ((float)y + 0.5f) * m_TileSize;
+
+			DrawWireCube(CVec3(center_x, 1.0f, center_y), 1, gRGBA_Red);
 		}
 	}
-	//CVec3 pos = cam->GetWorldPos();
 }
 
 TileManager gTileManager;

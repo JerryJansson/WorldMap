@@ -1,8 +1,8 @@
 #pragma once
 #include "..\..\..\..\Source\Modules\GameObject\Entity.h"
+#include "projection.h"
+#include <bitset>
 
-#define D_PI 3.1415926535897932384626433832795
-#define F_PI 3.1415926535897932384626433832795f
 #define USE_GLM
 
 #ifdef USE_GLM
@@ -25,6 +25,38 @@ typedef CVec4d	v4d;
 #define myCross cross
 #define myClamp Clamp
 #endif
+
+//-----------------------------------------------------------------------------
+enum Border {
+	right,
+	left,
+	bottom,
+	top,
+};
+//-----------------------------------------------------------------------------
+struct Tile {
+	int x;
+	int y;
+	int z;
+
+	std::bitset<4> borders;
+
+	double invScale = 0.0;
+	Vec2d tileOrigin;
+
+	bool operator==(const Tile& rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z; }
+
+	Tile(int x, int y, int z);
+};
+
+namespace std {
+	template<>
+	struct hash<Tile> {
+		size_t operator()(const Tile &tile) const {
+			return std::hash<int>()(tile.x) ^ std::hash<int>()(tile.y) ^ std::hash<int>()(tile.z);
+		}
+	};
+}
 
 //-----------------------------------------------------------------------------
 class MyTile : public Entity

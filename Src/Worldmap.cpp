@@ -229,14 +229,6 @@ int gMaterialCategory = -1;
 //-----------------------------------------------------------------------------
 bool MyApp_Init()
 {
-	/*for (int i = 0; i < 10; i++)
-	{
-		int a = pow(2, i);
-		int b = 1 << i;
-
-		LOG("%d: %d, %d\n", i, a, b);
-	}*/
-
 	Input_SetMouseMode(MOUSE_MODE_HIDDEN);
 	Editor_Init();
 	
@@ -252,70 +244,15 @@ bool MyApp_Init()
 
 	gViewer.Create();
 
+	//const Vec2d longLat(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
+	const Vec2d longLat(-74.0130, 40.7040);	// 19294, 24642 - Manhattan
 	
-	//float Latitude = 39.921864f;
-	//float Longitude = 32.818442f;
-	//int Range = 3;
-	//float TileSize = 100;
-
-	// Longitude growths at E, decreases to W (x-axis)
-	// Latitude growths to N, decreases to S (y-axis)
-
-	// Stockholm Stadion
-	float Longitude = 18.080f;
-	float Latitude = 59.346f;
-	
-	Vec4d b1 = TileBoundsInMeters(Vec2i(0, 0), 0);
-	//Vec4d b2 = TileBounds2(0, 0, 0);
-
-
-	//v4d bounds = TileBoundsInMeters(v2d(19294, 24642), 16);
-	Vec4d bounds = TileBoundsInMeters(Vec2i(36059, 19267), 16);
-	//Vec4d bounds2 = TileBounds2(36059, 19267, 16);
-
-	Vec2d mini = Vec2d(bounds.x, bounds.y);
-	Vec2d maxi = Vec2d(bounds.z, bounds.w);
-	Vec2d extent = maxi - mini;
-	Vec2d center = mini + extent * 0.5;
-	//Vec2d center = Vec2d(center_glm.x, center_glm.y);
-	Vec2i tile = MetersToTile(center, 16);
-
-	Vec2d lonlat(Longitude, Latitude);
-	Vec2d tmp1 = lonLatToMeters(lonlat);
-	v2d tmp2 = LatLonToMeters(Latitude, Longitude);
-	CVec2i tile2 = MetersToTile(tmp1, 16);
-
-	//v2d lonlat2 = MetersToLonLat(center);
-
-	const char* tileX = NULL;
-	const char* tileY = NULL;
-	int tX = 0;
-	int tY = 0;
-
-	int zoom = 16;
-	// Manhattan
-	if (1)
-	{
-		tileX = "19294";
-		tileY = "24642";
-		tX = 19294;
-		tY = 24642;
-	}
-	// Stadion?
-	else if (0)
-	{
-		tileX = "36059";
-		tileY = "19267";	// Google tile coords
-		tX = 36059;
-		tY = 19267;
-	}
-	else if (0)
-	{
-		tileX = "36059";
-		tileY = "19268";	// Google tile coords
-		tX = 36059;
-		tY = 19268;
-	}
+	const int zoom		= 16;
+	Vec2d meters		= LonLatToMeters(longLat);
+	Vec2d ll			= MetersToLongLat(meters);
+	Vec2i tile_tms		= MetersToTile(meters, zoom);
+	Vec2i tile_google	= TmsToGoogleTile(tile_tms, zoom);
+	Vec4d bounds		= TileBounds(tile_tms, zoom);
 	
 	/*CStrL outFileName;
 	int result = GetTile(tileX, tileY, zoom, outFileName);
@@ -324,7 +261,9 @@ bool MyApp_Init()
 	//LoadObj("jerry.obj");
 	//LoadObj(outFileName);
 	LoadBin(outFileName);*/
-	GetTile2(tX, tY, zoom);
+
+	//GetTile2(tX, tY, zoom);
+	GetTile2(tile_tms.x, tile_tms.y, zoom);
 
 	return true;
 }

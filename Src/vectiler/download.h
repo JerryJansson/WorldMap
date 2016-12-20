@@ -1,5 +1,6 @@
 #pragma once
-#include "projection.h"
+//#include "projection.h"
+#include "jerry.h"
 #include <vector>
 //-----------------------------------------------------------------------------
 struct MemoryStruct

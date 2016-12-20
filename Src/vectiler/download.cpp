@@ -71,12 +71,14 @@ bool DownloadData(MemoryStruct& out, const char* url)
 //-----------------------------------------------------------------------------
 CStrL VectorTileURL(int x, int y, int z, const char* apiKey)
 {
-	return Str_Printf("https://tile.mapzen.com/mapzen/vector/v1/all/%d/%d/%d.json?api_key=%s", z, x, y, apiKey);
+	Vec2i google = TmsToGoogleTile(Vec2i(x, y), z);
+	return Str_Printf("https://tile.mapzen.com/mapzen/vector/v1/all/%d/%d/%d.json?api_key=%s", z, google.x, google.y, apiKey);
 }
 //-----------------------------------------------------------------------------
 CStrL TerrainURL(int x, int y, int z, const char* apiKey)
 {
-	return Str_Printf("https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%d/%d/%d.png?api_key=%s", z,x,y, apiKey);
+	Vec2i google = TmsToGoogleTile(Vec2i(x, y), z);
+	return Str_Printf("https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%d/%d/%d.png?api_key=%s", z, google.x, google.y, apiKey);
 }
 //-----------------------------------------------------------------------------
 HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float extrusionScale)
