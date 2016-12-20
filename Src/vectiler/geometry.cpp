@@ -129,10 +129,9 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 	std::vector<PolygonVertex>& outVertices,
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation)
-	//float inverseTileScale)
 {
 	int vertexDataOffset = outVertices.size();
-	v3 upVector(0.0f, 0.0f, 1.0f);
+	
 	v3 normalVector;
 	float minz = 0.f;
 	float cz = 0.f;
@@ -156,6 +155,7 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 		}
 	}
 
+	const v3 upVector(0.0f, 0.0f, 1.0f);
 	for (auto& line : polygon)
 	{
 		size_t lineSize = line.size();
@@ -173,13 +173,13 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 			normalVector = glm::cross(upVector, b - a);
 			normalVector = glm::normalize(normalVector);
 
-			a.z = height + cz;// *inverseTileScale;
+			a.z = height + cz;
 			outVertices.push_back({ a, normalVector });
-			b.z = height + cz;// *inverseTileScale;
+			b.z = height + cz;
 			outVertices.push_back({ b, normalVector });
-			a.z = minHeight + minz;// *inverseTileScale;
+			a.z = minHeight + minz;
 			outVertices.push_back({ a, normalVector });
-			b.z = minHeight + minz;// *inverseTileScale;
+			b.z = minHeight + minz;
 			outVertices.push_back({ b, normalVector });
 
 			outIndices.push_back(vertexDataOffset + 0);
@@ -261,26 +261,47 @@ void addPolygonPolylinePoint(Line& line,
 	const size_t i,
 	const bool forward)
 {
-	v3 n0 = perp(curr - last);
-	v3 n1 = perp(next - curr);
+	const v3 n0 = perp(curr - last);
+	const v3 n1 = perp(next - curr);
 	bool right = glm::cross(n1, n0).z > 0.0;
 
-	if ((i == 1 && forward) || (i == lineDataSize - 2 && !forward)) {
+	if ((i == 1 && forward) || (i == lineDataSize - 2 && !forward))
+	{
 		line.push_back(last + n0 * extrude);
 		line.push_back(last - n0 * extrude);
 	}
 
-	if (right) {
+	if (right)
+	{
 		v3 d0 = glm::normalize(last - curr);
 		v3 d1 = glm::normalize(next - curr);
 		v3 miter = computeMiterVector(d0, d1, n0, n1);
 		line.push_back(curr - miter * extrude);
 	}
-	else {
+	else
+	{
 		line.push_back(curr - n0 * extrude);
 		line.push_back(curr - n1 * extrude);
 	}
 }
+//-----------------------------------------------------------------------------
+// 1150
+// 115
+// 31508
+//
+// 1134
+// 107
+// 31981
+//
+// 1163
+// 108
+// 31362
+//
+// Less CCW stuff
+// 1122
+// 105
+// 30918
+// 
 //-----------------------------------------------------------------------------
 PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& feature, const HeightData* heightMap)
 {
@@ -317,8 +338,6 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 				buildPolygon(polygon, feature.height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);
 		}
 	}
-
-	//if (params.roads)
 	else if (feature.geometryType == GeometryType::lines)
 	{
 		if (layerType == eLayerRoads)
@@ -332,6 +351,174 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 		const float extrudeW = feature.road_width;// *scale;
 		//const float extrudeH = lineExtrusionHeight * scale;
 		const float extrudeH = sortHeight;
+
+		Polygon2 polygon;
+		polygon.emplace_back();
+		Line& polygonLine = polygon.back();
+
+		for (const Line& line : feature.lines)
+		{
+			polygonLine.clear();
+			const size_t n = line.size();
+
+			if (n == 2)
+			{
+				const v3& curr = line[0];
+				const v3& next = line[1];
+				v3 n0 = perp(next - curr);
+				n0 *= extrudeW;
+
+				polygonLine.push_back(curr - n0);
+				polygonLine.push_back(curr + n0);
+				polygonLine.push_back(next + n0);
+				polygonLine.push_back(next - n0);
+			}
+			else
+			{
+				v3 last = line[0];
+				for (size_t i = 1; i < n - 1; ++i)
+				{
+					const v3& curr = line[i];
+					const v3& next = line[i + 1];
+					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, true);
+					last = curr;
+				}
+
+				last = line[n - 1];
+				for (int i = n - 2; i > 0; --i)
+				{
+					const v3& curr = line[i];
+					const v3& next = line[i - 1];
+					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, false);
+					last = curr;
+				}
+
+				std::reverse(polygonLine.begin(), polygonLine.end());
+			}
+
+			if (polygonLine.size() < 4) { continue; }
+
+			/*int count = 0;
+			for (size_t i = 0; i < polygonLine.size(); i++)
+			{
+				int j = (i + 1) % polygonLine.size();
+				int k = (i + 2) % polygonLine.size();
+				double z = (polygonLine[j].x - polygonLine[i].x)
+					* (polygonLine[k].y - polygonLine[j].y)
+					- (polygonLine[j].y - polygonLine[i].y)
+					* (polygonLine[k].x - polygonLine[j].x);
+				if (z < 0) { count--; }
+				else if (z > 0) { count++; }
+			}
+
+			if (line.size() == 2 && count > 0)
+			{
+				int abba = 10;
+			}
+			if (line.size() > 2 && count <= 0)
+			{
+				int abba = 10;
+			}
+
+			if (count > 0) { // CCW
+
+				if (line.size() == 2)
+				{
+					int abba = 10;
+				}
+				
+				std::reverse(polygonLine.begin(), polygonLine.end());
+			}*/
+
+			// Close the polygon
+			polygonLine.push_back(polygonLine[0]);
+
+			const size_t offset = mesh->vertices.size();
+
+			if (extrudeH > 0)
+				buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr);
+
+			buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f);
+
+			if (heightMap)
+			{
+				for (auto it = mesh->vertices.begin() + offset; it != mesh->vertices.end(); ++it)
+				{
+					it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap);// *scale;
+				}
+			}
+		}
+
+		//if (params.terrain)
+		if (heightMap)
+			computeNormals(mesh);
+	}
+
+	float time = sw.GetMs();
+	if (time > 100)
+	{
+		LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
+	}
+
+	if (mesh->vertices.size() == 0)
+	{
+		delete mesh;
+		mesh = NULL;
+	}
+
+	return mesh;
+}
+//-----------------------------------------------------------------------------
+#if 0
+PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& feature, const HeightData* heightMap)
+{
+	CStopWatch sw;
+
+	if (feature.lines.size() > 3000)
+	{
+		int abba = 10;
+	}
+
+	if (feature.geometryType == GeometryType::unknown || feature.geometryType == GeometryType::points)
+		return NULL;
+
+	auto mesh = new PolygonMesh(layerType);
+	const float sortHeight = feature.sort_rank / (500.0f);
+
+	//if (exportParams.buildings)
+	if (feature.geometryType == GeometryType::polygons)
+	{
+		for (const Polygon2& polygon : feature.polygons)
+		{
+			if (feature.min_height > feature.height)
+			{
+				int abba = 10;
+			}
+
+			float centroidHeight = 0.f;
+			if (feature.min_height != feature.height)
+			{
+				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap);
+				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight);
+			}
+			else
+				buildPolygon(polygon, feature.height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);
+		}
+	}
+	else if (feature.geometryType == GeometryType::lines)
+	{
+		if (layerType == eLayerRoads)
+		{
+			int abba = 10;
+		}
+		else
+		{
+			int abba = 10;
+		}
+		const float extrudeW = feature.road_width;// *scale;
+		//const float extrudeH = lineExtrusionHeight * scale;
+		const float extrudeH = sortHeight;
+
 		for (const Line& line : feature.lines)
 		{
 			Polygon2 polygon;
@@ -414,7 +601,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 	}
 
 	float time = sw.GetMs();
-	if (time > 10)
+	if (time > 100)
 	{
 		LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
 	}
@@ -427,6 +614,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 
 	return mesh;
 }
+#endif
 //-----------------------------------------------------------------------------
 #if 0
 void addFaces(std::ostream& file, const PolygonMesh& mesh, size_t indexOffset, bool normals)
