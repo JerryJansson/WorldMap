@@ -660,6 +660,9 @@ bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerType
 //-----------------------------------------------------------------------------
 void WriteMeshBin(CFile& f, const PolygonMesh* mesh, const char* layerName, const int meshIdx)
 {
+	if (mesh->vertices.size() == 0)
+		return;
+
 	CStrL meshname = Str_Printf("%s_%d", layerName, meshIdx);
 	f.WriteInt(meshname.Len());
 	f.Write(meshname.Str(), meshname.Len() * sizeof(char));
@@ -771,9 +774,6 @@ bool LoadBin(const char* fname)
 		}
 
 		f.Read(idxs, ni * sizeof(uint32));
-		
-		//geom.SetMaterial("testDiffuseSpec");
-
 
 		if (type == eLayerTerrain) geom.SetMaterial("grass");
 		else if (type == eLayerBuildings) geom.SetMaterial("buildings");

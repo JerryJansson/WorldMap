@@ -270,40 +270,44 @@ bool MyApp_Init()
 	v2d tmp1 = lonLatToMeters(lonlat);
 	v2d tmp2 = LatLonToMeters(Latitude, Longitude);
 
-	
-	int tX = 19294;
-	int tY = 24642;
-
-
 	const char* tileX = NULL;
 	const char* tileY = NULL;
+	int tX = 0;
+	int tY = 0;
+
 	int zoom = 16;
 	// Manhattan
 	if (1)
 	{
 		tileX = "19294";
 		tileY = "24642";
+		tX = 19294;
+		tY = 24642;
 	}
 	// Stadion?
 	else if (0)
 	{
 		tileX = "36059";
 		tileY = "19267";	// Google tile coords
-		//tileY = "46268";
+		tX = 36059;
+		tY = 19267;
 	}
 	else if (0)
 	{
 		tileX = "36059";
 		tileY = "19268";	// Google tile coords
+		tX = 36059;
+		tY = 19268;
 	}
 	
-	CStrL outFileName;
+	/*CStrL outFileName;
 	int result = GetTile(tileX, tileY, zoom, outFileName);
 	if (result == EXIT_FAILURE)
 		return false;
 	//LoadObj("jerry.obj");
 	//LoadObj(outFileName);
-	LoadBin(outFileName);
+	LoadBin(outFileName);*/
+	GetTile2(tX, tY, zoom);
 
 	return true;
 }

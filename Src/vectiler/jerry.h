@@ -25,3 +25,4 @@ typedef CVec4d	v4d;
 #endif
 
 int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName);
+bool GetTile2(const int tileX, const int tileY, const int zoom);

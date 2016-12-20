@@ -554,12 +554,11 @@ int vectiler(Params exportParams, CStrL& outFileName)
 	return EXIT_SUCCESS;
 }
 
-#if 0
+#if 1
 //-----------------------------------------------------------------------------
 bool vectiler2(Params2 params)
 {
-	const char* apiKey = params.apiKey;
-	LOG("Using API key %s\n", apiKey);
+	LOG("Using API key %s\n", params.apiKey);
 
 	HeightData* heightMap = NULL;
 	TileVectorData* vectorTileData = NULL;
@@ -569,7 +568,7 @@ bool vectiler2(Params2 params)
 
 	if (params.terrain)
 	{
-		heightMap = DownloadHeightmapTile(tile, apiKey, params.terrainExtrusionScale);
+		heightMap = DownloadHeightmapTile(tile, params.apiKey, params.terrainExtrusionScale);
 
 		if (!heightMap)
 		{
@@ -584,7 +583,7 @@ bool vectiler2(Params2 params)
 
 	if (params.buildings || params.roads)
 	{
-		vectorTileData = DownloadVectorTile(tile, apiKey);
+		vectorTileData = DownloadVectorTile(tile, params.apiKey);
 
 		if (!vectorTileData)
 			LOG("Failed to download vector tile data for tile %d %d %d\n", tile.x, tile.y, tile.z);
@@ -669,43 +668,20 @@ bool vectiler2(Params2 params)
 		}
 	}
 
-	LOG("Built PolygonMeshes in %.1fms\n", sw.GetMs(true));
+	LOG("Built PolygonMeshes from layers in %.1fms\n", sw.GetMs(true));
 
 	// Separate all meshes in it's respective layer
 	// Merge all meshes from same layer into 1 big mesh. If this mesh gets vcount>65536 the mesh is split
 	std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
-	for (PolygonMesh* mesh : meshes)
-	{
-		const int nv = mesh->vertices.size();
+	MergeLayerMeshes(meshes, meshArr);
 
-		// This mesh is to big. Throw it away
-		if (nv > 65536)	{
-			gLogger.Warning("Mesh > 65536. Must implement mesh splitting");
-			continue;
-		}
+	// Save output BIN file
+	CStrL fname = Str_Printf("%d_%d_%d.bin", tile.x, tile.y, tile.z);
+	SaveBin(fname, meshArr);
 
-		std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
-		PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
-		if (!bigMesh || !AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
-		{
-			bigMesh = new PolygonMesh(mesh->layerType);
-			arr.push_back(bigMesh);
-			AddMeshToMesh(mesh, bigMesh);
-		}
-	}
-
-	LOG("Merged (%.1fms) %d meshes into:\n", sw.GetMs(true), meshes.size());
-	for (int i = 0; i < eNumLayerTypes; i++)
-	{
-		LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
-	}
-
-
-	std::string outFile = std::to_string(origin.x) + "." + std::to_string(origin.y) + "." + std::to_string(origin.z);
+	/*std::string outFile = std::to_string(origin.x) + "." + std::to_string(origin.y) + "." + std::to_string(origin.z);
 	std::string outputOBJ = outFile + ".obj";
-	std::string outputBIN = outFile + ".bin";
-	outFileName = outputBIN.c_str();
-
+	
 	// Save output OBJ file
 	bool saved = saveOBJ(outputOBJ.c_str(),
 		exportParams.splitMesh, meshes,
@@ -714,14 +690,9 @@ bool vectiler2(Params2 params)
 		exportParams.append,
 		exportParams.normals);
 
-	// Save output BIN file
-	SaveBin(outputBIN.c_str(), meshArr);
-
-	//bool saved2 = SaveOBJ2("jerry.obj", meshArr);
-
 	if (!saved)
-		return EXIT_FAILURE;
+		return EXIT_FAILURE;*/
 
-	return EXIT_SUCCESS;
+	return true;
 }
 #endif
