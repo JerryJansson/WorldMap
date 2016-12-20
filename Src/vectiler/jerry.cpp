@@ -18,7 +18,6 @@ int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName)
 
 	// Parse params
 	/* flag_usage("[options]");
-	flag_string(&name, "name", "File name");
 	flag_string(&apiKey, "apikey", "Developer API key (https://mapzen.com/developers/)");
 	flag_int(&splitMeshes, "splitMeshes", "Generate one mesh per feature in wavefront file");
 	flag_string(&tileX, "tilex", "Tile X (can be a tile range: 19294/19295)");
@@ -46,7 +45,6 @@ int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName)
 
 	struct Params parameters = 
 	{ 
-		NULL,						// filename
 		"vector-tiles-qVaBcRA",		// apiKey
 		tileX,						// Tile X (can be a tile range: 19294/19295)
 		tileY,						// Tile Y (can be a tile range: 24642/24643)

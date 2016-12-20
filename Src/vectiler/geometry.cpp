@@ -4,6 +4,16 @@
 #include <sstream>
 #include <string>
 #include "geometry.h"
+#include "../../../Source/Modules/Shared/SceneNew.h"
+//-----------------------------------------------------------------------------
+const char* layerNames[eNumLayerTypes] =
+{
+	"terrain",
+	"buildings",
+	"roads",
+	"water",
+	"other"
+};
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh& mesh)
 {
@@ -28,7 +38,24 @@ void computeNormals(PolygonMesh& mesh)
 		v.normal = myNormalize(v.normal);
 	}
 }
+//-----------------------------------------------------------------------------
+bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst)
+{
+	const int voffset = dst->vertices.size();
+	int nv = src->vertices.size();
 
+	if (voffset + nv > 65536)
+		return false;
+
+	dst->vertices.insert(dst->vertices.end(), src->vertices.begin(), src->vertices.end());
+	
+	for (size_t i = 0; i < src->indices.size(); i++)
+	{
+		dst->indices.push_back(voffset + src->indices[i]);
+	}
+
+	return true;
+}
 //-----------------------------------------------------------------------------
 void addFaces(std::ostream& file, const PolygonMesh& mesh, size_t indexOffset, bool normals)
 {
@@ -46,28 +73,20 @@ void addFaces(std::ostream& file, const PolygonMesh& mesh, size_t indexOffset, b
 void addNormals(std::ostream& file, const PolygonMesh& mesh)
 {
 	// JJ Flip
-	for (auto vertex : mesh.vertices)
-		file << "vn " << vertex.normal.x << " " << vertex.normal.z << " " << -vertex.normal.y << "\n";
+	for (auto v : mesh.vertices)
+		file << "vn " << v.normal.x << " " << v.normal.z << " " << -v.normal.y << "\n";
 	//for (auto vertex : mesh.vertices)
 	//	file << "vn " << vertex.normal.x << " " << vertex.normal.y << " " << vertex.normal.z << "\n";
 }
 //-----------------------------------------------------------------------------
 void addPositions(std::ostream& file, const PolygonMesh& mesh, float offsetx, float offsety)
 {
-	// JJ - flip
-	for (auto vertex : mesh.vertices)
+	for (auto v : mesh.vertices)
 	{
-	file << "v " << vertex.position.x + offsetx + mesh.offset.x << " "
-	<< vertex.position.z << " "
-	<< -vertex.position.y + offsety + mesh.offset.y
-	<< "\n";
+		// JJ - flip
+		file << "v " << v.position.x + offsetx + mesh.offset.x << " " << v.position.z << " " << -v.position.y + offsety + mesh.offset.y	<< "\n";
+		//file << "v " << v.position.x + offsetx + mesh.offset.x << " " << v.position.y + offsety + mesh.offset.y << " " << v.position.z << "\n";
 	}
-	/*for (auto vertex : mesh.vertices)
-	{
-		file << "v " << vertex.position.x + offsetx + mesh.offset.x << " "
-			<< vertex.position.y + offsety + mesh.offset.y << " "
-			<< vertex.position.z << "\n";
-	}*/
 }
 /*-----------------------------------------------------------------------------
 * Save an obj file for the set of meshes
@@ -80,7 +99,8 @@ void addPositions(std::ostream& file, const PolygonMesh& mesh, float offsetx, fl
 -----------------------------------------------------------------------------*/
 bool saveOBJ(const char* outputOBJ,
 	bool splitMeshes,
-	std::vector<std::unique_ptr<PolygonMesh>>& meshes,
+	//std::vector<std::unique_ptr<PolygonMesh>>& meshes,
+	std::vector<PolygonMesh*>& meshes,
 	float offsetx,
 	float offsety,
 	bool append,
@@ -149,7 +169,8 @@ bool saveOBJ(const char* outputOBJ,
 			{
 				int meshCnt = 0;
 
-				for (const auto& mesh : meshes) {
+				for (const auto& mesh : meshes)
+				{
 					if (mesh->vertices.size() == 0) { continue; }
 
 					file << "o mesh" << meshCnt++ << "\n";
@@ -223,3 +244,204 @@ bool saveOBJ(const char* outputOBJ,
 
 	return false;
 }
+
+
+//-----------------------------------------------------------------------------
+void WriteMesh(FILE* f, const PolygonMesh* mesh, const char* layerName, const int meshIdx, const int idxOffset)
+{
+	fprintf(f, "o %s_%d\n", layerName, meshIdx);
+	for (auto v : mesh->vertices)
+	{
+		// JJ - flip
+		fprintf(f, "v %f %f %f\n", v.position.x, v.position.z, -v.position.y);
+		//file << "v " << v.position.x + offsetx + mesh.offset.x << " " << v.position.y + offsety + mesh.offset.y << " " << v.position.z << "\n";
+	}
+	for (auto v : mesh->vertices)
+	{
+		fprintf(f, "vn %f %f %f\n", v.normal.x, v.normal.z, -v.normal.y);
+	}
+
+	for (size_t i = 0; i < mesh->indices.size(); i += 3)
+	{
+		int idx0 = mesh->indices[i+0] + idxOffset + 1;
+		int idx1 = mesh->indices[i+1] + idxOffset + 1;
+		int idx2 = mesh->indices[i+2] + idxOffset + 1;
+		fprintf(f, "f %d//%d %d//%d %d//%d\n", idx0, idx0, idx1, idx1, idx2, idx2);
+	}
+
+	//indexOffset += mesh->vertices.size();
+}
+//-----------------------------------------------------------------------------
+bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
+{
+	FILE* f = fopen(fname, "wt");
+	if (!f)
+		return false;
+
+	fprintf(f, "# exported by Jerry's WorldMap\n\n");
+
+	int statNumObjects = 0;
+	int statNumVertices = 0;
+	int statNumTriangles = 0;
+
+	int idxOffset = 0;
+	for (int i = 0; i < eNumLayerTypes; i++)
+	{
+		for (size_t k = 0; k < meshArr[i].size(); k++)
+		{
+			WriteMesh(f, meshArr[i][k], layerNames[i], k, idxOffset);
+			idxOffset += meshArr[i][k]->vertices.size();
+
+			statNumObjects++;
+			statNumVertices += meshArr[i][k]->vertices.size();
+			statNumTriangles += meshArr[i][k]->indices.size()/3;
+		}
+	}
+
+	fclose(f);
+
+	LOG("Saved obj file: %s\n", fname);
+	LOG("Objects: %ld\n", statNumObjects);
+	LOG("Triangles: %ld\n", statNumTriangles);
+	LOG("Vertices: %ld\n", statNumVertices);
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------
+void WriteMeshBin(CFile& f, const PolygonMesh* mesh, const char* layerName, const int meshIdx)
+{
+	CStrL meshname = Str_Printf("%s_%d", layerName, meshIdx);
+	f.WriteInt(meshname.Len());
+	f.Write(meshname.Str(), meshname.Len() * sizeof(char));
+	f.WriteInt(mesh->layerType);
+	f.WriteInt(mesh->vertices.size());
+	f.WriteInt(mesh->indices.size());
+	for (auto v : mesh->vertices)
+	{
+		// Flip
+		float p[6];
+		p[0] = v.position.x;
+		p[1] = v.position.z;
+		p[2] = -v.position.y;
+		p[3] = v.normal.x;
+		p[4] = v.normal.z;
+		p[5] = -v.normal.y;
+		f.Write(p, sizeof(float) * 6);
+	}
+
+	f.Write(mesh->indices.data(), mesh->indices.size() * sizeof(int));
+
+	/*for (size_t i = 0; i < mesh->indices.size(); i++)
+	{
+		uint16 u16 = mesh->indices[i];
+		f.Write(&u16, sizeof(u16));
+	}*/
+}
+#define VER 1
+//-----------------------------------------------------------------------------
+bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
+{
+	CFile f;
+	if (!f.Open(fname, FILE_WRITE))
+		return false;
+
+	int nMeshes = 0;
+	for (int l = 0; l < eNumLayerTypes; l++)
+		nMeshes += meshArr[l].size();
+	
+	f.WriteInt(VER);
+	f.WriteInt(nMeshes);
+
+	int statNumVertices = 0;
+	int statNumTriangles = 0;
+
+	for (int l = 0; l < eNumLayerTypes; l++)
+	{
+		for (size_t k = 0; k < meshArr[l].size(); k++)
+		{
+			WriteMeshBin(f, meshArr[l][k], layerNames[l], k);
+			statNumVertices += meshArr[l][k]->vertices.size();
+			statNumTriangles += meshArr[l][k]->indices.size() / 3;
+		}
+	}
+
+	LOG("Saved obj file: %s\n", fname);
+	LOG("Objects: %ld\n", nMeshes);
+	LOG("Triangles: %ld\n", statNumTriangles);
+	LOG("Vertices: %ld\n", statNumVertices);
+
+	return true;
+}
+//-----------------------------------------------------------------------------
+bool LoadBin(const char* fname)
+{
+	CFile f;
+	if (!f.Open(fname, FILE_READ))
+		return false;
+
+	int ver = f.ReadInt();
+
+	if (ver != VER)
+	{
+		gLogger.TellUser(LOG_ERROR, "Wrong version");
+		return false;
+	}
+
+	int nMeshes = f.ReadInt();
+
+	GGeom geom;
+	for(int m=0; m<nMeshes; m++)
+	{
+		int nlen = f.ReadInt();
+		if (nlen >= 64)
+		{
+			gLogger.Warning("Name to long");
+			return false;
+		}
+
+		char name[64];
+		int type, nv, ni;
+
+		f.Read(name, nlen * sizeof(char));
+		name[nlen] = '\0';
+		f.Read(&type, sizeof(type));
+		f.Read(&nv, sizeof(nv));
+		f.Read(&ni, sizeof(ni));
+
+		geom.Prepare(nv, ni);
+		GVertex* vtx = geom.VertexPtr();
+		uint32* idxs = geom.IndexPtr();
+
+		for (int i = 0; i < nv; i++)
+		{
+			float v[6];
+			f.Read(v, sizeof(v[0]) * 6);
+			vtx[i].pos = &v[0];
+			vtx[i].nrm = &v[3];
+		}
+
+		f.Read(idxs, ni * sizeof(uint32));
+		
+		geom.SetMaterial("testDiffuseSpec");
+
+		if (type == eLayerRoads)
+			geom.SetMaterial("$default");
+
+		Entity* entity = new Entity(name);
+		MeshComponent* meshcomp = entity->CreateComponent<MeshComponent>();
+		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
+
+		CMesh* mesh = CreateMeshFromGeoms(name, &geom, 1);
+		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete);
+
+		entity->SetPos(CVec3(0, 10, -10));
+		gScene.AddEntity(entity);
+
+		LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
+	}
+	
+	return true;
+}
+

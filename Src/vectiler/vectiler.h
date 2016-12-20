@@ -5,7 +5,6 @@
 // http://www.codepool.biz/build-use-libcurl-vs2015-windows.html
 
 struct Params {
-    const char* filename;
     const char* apiKey;
     const char* tilex;
     const char* tiley;

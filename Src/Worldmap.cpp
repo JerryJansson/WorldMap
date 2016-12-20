@@ -8,6 +8,7 @@
 #include "vectiler/jerry.h"
 #include "tinyobjloader/tiny_obj_loader.h"
 #include "vectiler/projection.h"
+#include "vectiler/geometry.h"
 
 //-----------------------------------------------------------------------------
 CStateManager	gStateManager;
@@ -131,20 +132,20 @@ bool LoadObj(const char* fname)
 	LOG("# of shapes    = %d\n", ns);
 
 	assert(nv == nn);
-	assert(ns == 1);
+	//assert(ns == 1);
 
 	for (int s = 0; s < ns; s++)
 	{
 		tinyobj::shape_t& shape = shapes[s];
 		tinyobj::mesh_t& m = shape.mesh;
 		std::vector<tinyobj::index_t>& indices = m.indices;
-		
+		const int numTris = indices.size() / 3;
+#if 1
 		GGeom g;
 		g.Prepare(nv, indices.size());
 		GVertex* vtx = g.VertexPtr();
 		uint32* idxs = g.IndexPtr();
 		
-		const int numTris = indices.size() / 3;
 		for (int f = 0; f < numTris; f++)
 		{
 			tinyobj::index_t idx0 = indices[3 * f + 0];
@@ -167,6 +168,47 @@ bool LoadObj(const char* fname)
 			vtx[iv].nrm.y = attrib.normals[iv * 3 + 1];
 			vtx[iv].nrm.z = attrib.normals[iv * 3 + 2];
 		}
+#else
+		GGeom g;
+		g.Prepare(0, indices.size());
+		TArray<GVertex>& vtxArr = g.vertices;
+		uint32* idxs = g.IndexPtr();
+
+		// Ugly hack
+		int voffs = indices[0].vertex_index;
+		
+		for (int f = 0; f < numTris; f++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				// Index in obj file global vertex list
+				int gi = indices[3 * f + k].vertex_index;
+				// Local index in our local vertex array
+				int li = gi - voffs;
+				if (li >= vtxArr.Num())
+				{
+					vtxArr.SetNum(li + 1);
+					GVertex& v = vtxArr[li];// vtxArr.AddEmpty();
+					v.pos.x = attrib.vertices[gi * 3 + 0];
+					v.pos.y = attrib.vertices[gi * 3 + 1];
+					v.pos.z = attrib.vertices[gi * 3 + 2];
+					v.nrm.x = attrib.normals[gi * 3 + 0];
+					v.nrm.y = attrib.normals[gi * 3 + 1];
+					v.nrm.z = attrib.normals[gi * 3 + 2];
+				}
+				idxs[3 * f + k] = li;
+			}
+		}
+
+		int maxv = g.vertices.Num() - 1;
+		for (int i = 0; i < g.indexes.Num(); i++)
+		{
+			if (g.indexes[i] > maxv)
+			{
+				int abba = 10;
+			}
+		}
+#endif
 
 		g.SetMaterial("testDiffuseSpec");
 
@@ -188,13 +230,13 @@ int gMaterialCategory = -1;
 //-----------------------------------------------------------------------------
 bool MyApp_Init()
 {
-	for (int i = 0; i < 10; i++)
+	/*for (int i = 0; i < 10; i++)
 	{
 		int a = pow(2, i);
 		int b = 1 << i;
 
 		LOG("%d: %d, %d\n", i, a, b);
-	}
+	}*/
 
 	Input_SetMouseMode(MOUSE_MODE_HIDDEN);
 	Editor_Init();
@@ -211,6 +253,8 @@ bool MyApp_Init()
 
 	gViewer.Create();
 
+	//LoadObj("jerry.obj");
+	//return true;
 	//
 	float Latitude = 39.921864f;
 	float Longitude = 32.818442f;
@@ -259,7 +303,9 @@ bool MyApp_Init()
 	int result = GetTile(tileX, tileY, zoom, outFileName);
 	if (result == EXIT_FAILURE)
 		return false;
-	LoadObj(outFileName);
+	//LoadObj("jerry.obj");
+	//LoadObj(outFileName);
+	LoadBin(outFileName);
 
 	return true;
 }

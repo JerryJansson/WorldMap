@@ -500,7 +500,8 @@ std::unique_ptr<TileData> DownloadTile(const Tile& tile, const char* apiKey)
 	if (!DownloadData(out, url))
 		return nullptr;
 
-	// parse written data into a JSON object
+	// Parse written data into a JSON object
+	CStopWatch sw;
 	rapidjson::Document doc;
 	doc.Parse(out.memory);
 
@@ -512,12 +513,18 @@ std::unique_ptr<TileData> DownloadTile(const Tile& tile, const char* apiKey)
 		return nullptr;
 	}
 
+	float tJson = sw.GetMs(true);
+
 	std::unique_ptr<TileData> data = std::unique_ptr<TileData>(new TileData());
 	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
 	{
 		data->layers.emplace_back(std::string(layer->name.GetString()));
 		GeoJson::extractLayer(layer->value, data->layers.back(), tile);
 	}
+
+	float tLayers = sw.GetMs();
+
+	LOG("Parsed json in %.1fms. Built GeoJson structures in %.1fms\n", tJson, tLayers);
 
 	return data;
 }
@@ -606,17 +613,14 @@ int vectiler(Params exportParams, CStrL& outFileName)
     if (exportParams.terrain)
         adjustTerrainEdges(heightData);
 
-    std::vector<std::unique_ptr<PolygonMesh>> meshes;
-	/*std::vector<PolygonMesh*> meshes_buildings;
-	std::vector<PolygonMesh*> meshes_roads;
-	std::vector<PolygonMesh*> meshes_water;
-	std::vector<PolygonMesh*> meshes_other;*/
+    //std::vector<std::unique_ptr<PolygonMesh>> meshes;
+	std::vector<PolygonMesh*> meshes;
 
     v2 offset;
     Tile origin = tiles[0];
 
     LOG("---- Building tile data ----\n");
-
+	CStopWatch sw;
     // Build meshes for each of the tiles
     for (auto tile : tiles)
 	{
@@ -633,7 +637,8 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
 			/// Extract a plane geometry, vertices in [-1.0,1.0], for terrain mesh
 			{
-				auto mesh = std::unique_ptr<PolygonMesh>(new PolygonMesh);
+				//auto mesh = std::unique_ptr<PolygonMesh>(new PolygonMesh);
+				auto mesh = new PolygonMesh(eLayerTerrain);
 
 				buildPlane(mesh->vertices, mesh->indices, 2.0, 2.0, exportParams.terrainSubdivision, exportParams.terrainSubdivision);
 
@@ -652,14 +657,17 @@ int vectiler(Params exportParams, CStrL& outFileName)
 					computeNormals(*mesh);
 
 				mesh->offset = offset;
-				meshes.push_back(std::move(mesh));
+				//meshes.push_back(std::move(mesh));
+				meshes.push_back(mesh);
 			}
 
 			/// Build pedestal
 			if (exportParams.pedestal)
 			{
-				auto ground = std::unique_ptr<PolygonMesh>(new PolygonMesh);
-				auto wall = std::unique_ptr<PolygonMesh>(new PolygonMesh);
+				//auto ground = std::unique_ptr<PolygonMesh>(new PolygonMesh);
+				//auto wall = std::unique_ptr<PolygonMesh>(new PolygonMesh);
+				auto ground = new PolygonMesh(eLayerTerrain);
+				auto wall = new PolygonMesh(eLayerTerrain);
 
 				buildPlane(ground->vertices, ground->indices, 2.0, 2.0, exportParams.terrainSubdivision, exportParams.terrainSubdivision, true);
 
@@ -669,9 +677,11 @@ int vectiler(Params exportParams, CStrL& outFileName)
 				buildPedestalPlanes(tile, wall->vertices, wall->indices, textureData, exportParams.terrainSubdivision, exportParams.pedestalHeight);
 
 				ground->offset = offset;
-				meshes.push_back(std::move(ground));
+				//meshes.push_back(std::move(ground));
+				meshes.push_back(ground);
 				wall->offset = offset;
-				meshes.push_back(std::move(wall));
+				//meshes.push_back(std::move(wall));
+				meshes.push_back(wall);
 			}
 		}
 
@@ -688,14 +698,30 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
                 for (auto layer : data->layers) 
 				{
-					const bool layerWater = layer.name == "water";
+					ELayerType type = eLayerOther;
+					if (layer.name == "water")			type = eLayerWater;
+					else if (layer.name == "buildings") type = eLayerBuildings;
+					else if (layer.name == "roads")		type = eLayerRoads;
+					/*const bool layerWater = layer.name == "water";
 					const bool layerBuildings = layer.name == "buildings";
-					const bool layerRoads = layer.name == "roads";
-					const float default_height = layerBuildings ? exportParams.buildingsHeight * tile.invScale : 0.0f;
+					const bool layerRoads = layer.name == "roads";*/
+
+					//if (layerBuildings && !exportParams.buildings) continue;	// Skip buildings
+					//if (layerRoads && !exportParams.roads) continue;			// Skip roads
+					if (type == eLayerBuildings && !exportParams.buildings) continue;	// Skip buildings
+					if (type == eLayerRoads && !exportParams.roads) continue;			// Skip roads
+		
+					/*std::vector<PolygonMesh*>*	meshArr = &meshes_other;
+					if (layerBuildings)			meshArr = &meshes_buildings;
+					else if (layerWater)		meshArr = &meshes_water;
+					else if (layerRoads)		meshArr = &meshes_roads;*/
+
+					const float default_height = type == eLayerBuildings ? exportParams.buildingsHeight * tile.invScale : 0.0f;
 
                     for (auto feature : layer.features) 
 					{
-                        if (textureData && !layerBuildings && !layerRoads) continue;
+                        //if (textureData && !layerBuildings && !layerRoads) continue;
+						if (textureData && type != eLayerBuildings && type != eLayerRoads) continue;
 
 						// Height
 						float height = default_height;
@@ -703,7 +729,8 @@ int vectiler(Params exportParams, CStrL& outFileName)
                         if (itHeight != feature.props.numericProps.end()) 
                             height = itHeight->second * scale;
          
-                        if (textureData && !layerRoads && height == 0.0f)
+                        //if (textureData && !layerRoads && height == 0.0f)
+						if (textureData && type!=eLayerRoads && height == 0.0f)
                             continue;
 
 						// Min height
@@ -712,9 +739,12 @@ int vectiler(Params exportParams, CStrL& outFileName)
                         if (itMinHeight != feature.props.numericProps.end())
                             minHeight = itMinHeight->second * scale;
 
-                        auto mesh = std::unique_ptr<PolygonMesh>(new PolygonMesh);
+						// JJ 
+                        //auto mesh = std::unique_ptr<PolygonMesh>(new PolygonMesh);
+						auto mesh = new PolygonMesh(type);
 
-                        if (exportParams.buildings)
+                        //if (exportParams.buildings)
+						if(feature.geometryType == GeometryType::polygons)
 						{
                             for (const Polygon2& polygon : feature.polygons)
 							{
@@ -812,30 +842,63 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
                         // Add local mesh offset
                         mesh->offset = offset;
-                        meshes.push_back(std::move(mesh));
+                        //meshes.push_back(std::move(mesh));
+						meshes.push_back(mesh);
                     }
                 }
             }
         }
     }
 
-    std::string outFile;
+	LOG("Built PolygonMeshes in %.1fms\n", sw.GetMs());
 
-    if (exportParams.filename)
-        outFile = std::string(exportParams.filename);
-	else
-        outFile = std::to_string(origin.x) + "." + std::to_string(origin.y) + "." + std::to_string(origin.z);
+	// Separate all meshes in it's respective layer
+	std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
+	//for (PolygonMesh* mesh : meshes)
+	//	meshArr[mesh->layerType].push_back(mesh);
 
+	//PolygonMesh bigMesh[eNumLayerTypes];
+	
+	// Merge all meshes from same layer into 1 big mesh. If this mesh gets vcount>65536 the mesh is split
+	for (PolygonMesh* mesh : meshes)
+	{
+		const int nv = mesh->vertices.size();
+		
+		// This mesh is to big. Throw it away
+		if (nv > 65536)
+		{
+			gLogger.Warning("Mesh > 65536. Must implement splitting");
+			continue;
+		}
+
+		std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
+		PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
+		if (!bigMesh || !AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
+		{
+			bigMesh = new PolygonMesh(mesh->layerType);
+			arr.push_back(bigMesh);
+			AddMeshToMesh(mesh, bigMesh);
+		}
+	}
+
+
+    std::string outFile = std::to_string(origin.x) + "." + std::to_string(origin.y) + "." + std::to_string(origin.z);
     std::string outputOBJ = outFile + ".obj";
-
-	outFileName = outputOBJ.c_str();
-    // Save output OBJ file
+	std::string outputBIN = outFile + ".bin";
+	outFileName = outputBIN.c_str();
+    
+	// Save output OBJ file
     bool saved = saveOBJ(outputOBJ.c_str(),
         exportParams.splitMesh, meshes,
         exportParams.offset[0],
         exportParams.offset[1],
         exportParams.append,
         exportParams.normals);
+
+	// Save output BIN file
+	SaveBin(outputBIN.c_str(), meshArr);
+
+	//bool saved2 = SaveOBJ2("jerry.obj", meshArr);
 
     if (!saved)
 		return EXIT_FAILURE;

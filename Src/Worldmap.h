@@ -3,9 +3,6 @@
 //-----------------------------------------------------------------------------
 #include "../../../Source/Modules/CamFly.h"
 //-----------------------------------------------------------------------------
-//enum ESimviewMode { eFly, eDetailEdit };
-//extern const char* simviewModeNames[];
-//-----------------------------------------------------------------------------
 class CViewer
 {
 private:
@@ -16,10 +13,6 @@ private:
 
 	CCamera*	m_DrawCamera;		// Points to the camera we are looking from
 	CCamera*	m_InputCamera;		// Points to the camera we are controlling
-
-public:
-	//ESimviewMode		m_Mode;
-	//class CSimViewMode*	m_pMode;
 
 public:
 	CViewer();
@@ -76,7 +69,6 @@ public:
 	CCamera_Fly*	GetDebugCamera()		{ return &m_DebugCam;	 }
 	CCamera*		GetInputCamera()		{ return m_InputCamera; }
 	CCamera*		GetDrawCamera()		{ return m_DrawCamera; }
-//	void			SetMode(ESimviewMode mode);//const char* strMode)
 };
 //-----------------------------------------------------------------------------
 extern CViewer gViewer;
