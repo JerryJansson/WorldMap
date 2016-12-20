@@ -59,26 +59,7 @@ namespace std {
 }
 
 //-----------------------------------------------------------------------------
-class MyTile : public Entity
-{
-public:
-	enum Status { NOT_LOADED, LOADED, IN_SCENE } m_Status;
-public:
-	Vec3i	m_Tms;				// Tms grid coord xyz
-	Vec2d	m_OrigoMercator;	// This tile origo (lower left corner) in mercator coordinates
-	uint32	m_Frame;			// Last frame bump
 
-	MyTile(int x, int y, int zoom)
-	{
-		m_Frame = 0;
-		m_Tms = Vec3i(x, y, zoom);
-		m_OrigoMercator = TileBounds(m_Tms.xy(), m_Tms.z).xy();
-		const CStrL tileName = Str_Printf("%d_%d_%d", x, y, zoom);
-		SetName(tileName);
-	}
-};
-//-----------------------------------------------------------------------------
-
-int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName);
-//bool GetTile2(const int tileX, const int tileY, const int zoom);
-MyTile* GetTile2(const int tileX, const int tileY, const int zoom);
+//int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName);
+class MyTile* GetTile2(const int tileX, const int tileY, const int zoom);
+bool GetTile3(MyTile* t, TArray<GGeom>& geoms);

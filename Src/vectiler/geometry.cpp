@@ -614,7 +614,7 @@ bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes
 {
 	CStopWatch sw;
 
-	LOG("Saving bin file: %s\n", fname);
+	//LOG("Saving bin file: %s\n", fname);
 
 	CFile f;
 	if (!f.Open(fname, FILE_WRITE))
@@ -663,23 +663,18 @@ bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes
 			}
 
 			f.Write(mesh->indices.data(), mesh->indices.size() * sizeof(int));
-			//WriteMeshBin(f, meshArr[l][k], layerNames[l], k);
 			statNumVertices += mesh->vertices.size();
 			statNumTriangles += mesh->indices.size() / 3;
 
-			LOG("Wrote: %s\n", meshname.Str());
+			//LOG("Wrote: %s\n", meshname.Str());
 		}
 	}
-
-	LOG("Objects: %ld\n", nMeshes);
-	LOG("Triangles: %ld\n", statNumTriangles);
-	LOG("Vertices: %ld\n", statNumVertices);
-	LOG("Saved file in %.1fms\n", sw.GetMs());
+	LOG("Saved %s in %.1fms. Meshes: %d, Tris: %d, Vtx: %d\n", fname, sw.GetMs(), nMeshes, statNumTriangles, statNumVertices);
 
 	return true;
 }
 //-----------------------------------------------------------------------------
-bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr)
+bool LoadBin(const char* fname, TArray<GGeom>& geomArr)
 {
 	CStopWatch sw;
 
@@ -734,7 +729,7 @@ bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr)
 		f.Read(idxs, ni * sizeof(uint32));
 		geom.SetMaterial(layerNames[type]);
 
-		LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
+		//LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
 	}
 
 	LOG("Loaded %s in %.1fms\n", fname, sw.GetMs());

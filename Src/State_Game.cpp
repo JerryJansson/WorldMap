@@ -5,8 +5,7 @@
 #include "../../../Source/Modules/Landscape/LandscapeEnvironment.h"
 #include "State_Game.h"
 #include "Worldmap.h"
-#include "vectiler\projection.h"
-#include "vectiler\jerry.h"
+#include "vectiler\tilemanager.h"
 
 bool allowGuiInput = true;
 //-----------------------------------------------------------------------------
@@ -43,6 +42,7 @@ bool CState_Game::Init()
 //-----------------------------------------------------------------------------
 void CState_Game::Deinit()
 {
+	gTileManager.Stop();
 	UnloadCourse(gViewer.GetGameCamera());
 	gViewer.Destroy();
 	CState::Deinit();
@@ -176,118 +176,3 @@ void CState_Game::Render2d()
 	if (gEditorEnabled)
 		Editor_Render2d();
 }
-
-
-
-
-
-#define ZZZOOM 16
-//-----------------------------------------------------------------------------
-void TileManager::Update(CCamera* cam)
-{
-	if (!m_Initialized)
-	{
-		m_Initialized = true;
-		//m_LongLat = Vec2d(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
-		m_LongLat = Vec2d(-74.0130, 40.703);	// 19294, 24642 - Manhattan
-
-		Vec2d meters	= LonLatToMeters(m_LongLat);
-		Vec2i tile		= MetersToTile(meters, ZZZOOM);
-		Vec2d tileMin	= TileMin(tile, ZZZOOM);
-		Vec2d tileMax	= TileMax(tile, ZZZOOM);
-		m_TileSize		= tileMax.x - tileMin.x;
-		// Set world origo at corner of tile
-		m_WorldOrigo	= tileMin;
-
-		// Set camera in center of tile
-		cam->SetWorldPos(Vec3(m_TileSize*0.5f, 40.0f, -m_TileSize*0.5f));
-
-		m_LastTile = Vec3i(0, 0, -1);
-	}
-
-	// Which tile is the camera in?
-	const Vec2d camMercator	= GlToMercator(cam->GetWorldPos());
-	const Vec2i _camtile	= MetersToTile(camMercator, ZZZOOM);
-	const Vec3i camtile		= Vec3i(_camtile.x, _camtile.y, ZZZOOM);
-	const uint32 frame		= Engine_GetFrameNumber();
-
-	// We changed tile. The new tile is the new center of the world. Make camera position relative the
-	// new world origo
-	if (m_LastTile != camtile)
-	{
-		m_WorldOrigo = TileMin(_camtile, ZZZOOM);
-		Vec3 pos = MercatorToGl(camMercator);
-		pos.y = cam->GetWorldPos().y;
-		cam->SetPos(pos);
-
-		// Relocate tiles relative new origo
-		for (int i = 0; i < m_Tiles.Num(); i++)
-		{
-			MyTile* tile = m_Tiles[i].val;
-			tile->SetPos(MercatorToGl(tile->m_OrigoMercator));
-		}
-	}
-
-	
-	const int range = 0;
-	for (int ty = -range; ty <= range; ty++)
-	{
-		for (int tx = -range; tx <= range; tx++)
-		{
-			const Vec3i t(camtile.x + tx, camtile.y + ty, camtile.z);
-			MyTile* tile = m_Tiles.Get(t);
-
-			// Cached
-			if (!tile)
-			{
-				tile = GetTile2(t.x, t.y, ZZZOOM);
-				if (tile)
-				{
-					m_Tiles.Add(tile->m_Tms, tile);
-					Vec3 pos = MercatorToGl(tile->m_OrigoMercator);
-					tile->SetPos(pos);
-				}
-			}
-
-			if (tile)
-			{
-				tile->m_Frame = frame;
-			}
-		}
-	}
-
-	m_LastTile = camtile;
-
-	// Release tiles
-	/*for (int i = 0; i < m_Tiles.Num();)
-	{
-		MyTile* tile = m_Tiles[i].val;
-
-		if (tile->m_Frame == frame)
-		{
-			i++;
-			continue;
-		}
-
-		m_Tiles.Remove(tile->m_Tms);
-		delete tile;
-	}*/
-
-	for (int y = 0; y < 3; y++)
-	{
-		for (int x = 0; x < 3; x++)
-		{
-			Caabb a;
-			a.m_Min = CVec3(x*m_TileSize, 0, y*m_TileSize);
-			a.m_Max = CVec3((x+1)*m_TileSize, 10, (y+1)*m_TileSize);
-			DrawWireAabb3d(a, gRGBA_Red);
-
-			float center_x = ((float)x + 0.5f) * m_TileSize;
-			float center_y = ((float)y + 0.5f) * m_TileSize;
-
-			DrawWireCube(CVec3(center_x, 1.0f, center_y), 1, gRGBA_Red);
-		}
-	}
-}
-
-TileManager gTileManager;

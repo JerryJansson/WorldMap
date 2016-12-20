@@ -208,7 +208,6 @@ void CreatePedestalMeshes(const Tile& tile, const HeightData* heightMap, Polygon
 //-----------------------------------------------------------------------------
 void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
 {
-	CStopWatch sw;
 	for (PolygonMesh* mesh : meshes)
 	{
 		// This mesh is to big. Throw it away
@@ -227,17 +226,16 @@ void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<Polyg
 		}
 	}
 
-	LOG("Merged (%.1fms) %d meshes into:\n", sw.GetMs(), meshes.size());
-	for (int i = 0; i < eNumLayerTypes; i++)
+	/*for (int i = 0; i < eNumLayerTypes; i++)
 	{
 		if(meshArr[i].size())
 			LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
-	}
+	}*/
 }
 //-----------------------------------------------------------------------------
 bool vectiler2(const Params2 params)
 {
-	LOG("Using API key %s\n", params.apiKey);
+	//LOG("Using API key %s\n", params.apiKey);
 
 	HeightData* heightMap = NULL;
 	TileVectorData* vectorTileData = NULL;
@@ -270,15 +268,9 @@ bool vectiler2(const Params2 params)
 
 	std::vector<PolygonMesh*> meshes;
 
-	//v2 offset;
-	//Tile origin = tiles[0];
-
-	LOG("---- Building tile data ----\n");
-	CStopWatch sw;
 	// Build meshes for the tile
-	//offset.x = (tile.x - origin.x) * 2;
-	//offset.y = -(tile.y - origin.y) * 2;
-
+	CStopWatch sw;
+	
 	// Build terrain mesh
 	if (params.terrain)
 	{
@@ -347,12 +339,14 @@ bool vectiler2(const Params2 params)
 		}
 	}
 
-	LOG("Built PolygonMeshes from layers in %.1fms\n", sw.GetMs(true));
-
+	float t_BuildMeshes = sw.GetMs(true);
 	// Separate all meshes in it's respective layer
 	// Merge all meshes from same layer into 1 big mesh. If this mesh gets vcount>65536 the mesh is split
 	std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
 	MergeLayerMeshes(meshes, meshArr);
+	float t_MergeMeshes = sw.GetMs();
+
+	LOG("Built %d layermeshes (%.1fms). Merged meshes (%.1fms)\n", meshes.size(), t_BuildMeshes, t_MergeMeshes);
 
 	// Save output BIN file
 	CStrL fname = Str_Printf("%d_%d_%d.bin", tile.x, tile.y, tile.z);

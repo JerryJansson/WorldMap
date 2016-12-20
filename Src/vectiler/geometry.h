@@ -52,7 +52,7 @@ bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst);
 //bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
 
 bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
-bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr);
+bool LoadBin(const char* fname, TArray<GGeom>& geomArr);
 
 //-----------------------------------------------------------------------------
 PolygonMesh* CreateMeshFromFeature(
