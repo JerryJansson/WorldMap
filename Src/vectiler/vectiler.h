@@ -1,11 +1,10 @@
-#ifndef VECTILER_H
-#define VECTILER_H
+#pragma once
 
-// JJ
 // http://www.codepool.biz/build-use-libcurl-vs2015-windows.html
+// https://mapzen.com/documentation/vector-tiles/layers/
 
-
-struct Params2 {
+struct Params2
+{
 	const char* apiKey;
 	int			tilex, tiley, tilez;
 	bool		terrain;
@@ -16,13 +15,9 @@ struct Params2 {
 	float		buildingsExtrusionScale;
 	bool		roads;
 	float		roadsHeight;
-	float		roadsExtrusionWidth;
+	//float		roadsExtrusionWidth;
 	//int pedestal;
 	//float pedestalHeight;
 };
 
 bool vectiler2(const Params2 params);
-
-
-
-#endif

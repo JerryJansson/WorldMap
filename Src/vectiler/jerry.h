@@ -57,9 +57,29 @@ namespace std {
 		}
 	};
 }
+//-----------------------------------------------------------------------------
+enum ELayerType
+{
+	eLayerUnknown,		// 0
+
+	eLayerTerrain,		// 1
+	eLayerWater,		// 2
+	eLayerBuildings,	// 3
+	eLayerPlaces,		// 4
+	eLayerTransit,		// 5
+	eLayerPois,			// 6
+	eLayerBoundaries,	// 7
+	eLayerRoads,		// 8
+	eLayerEarth,		// 9
+	eLayerLanduse,		// 10
+
+	eNumLayerTypes
+};
+//-----------------------------------------------------------------------------
+extern const char* layerNames[eNumLayerTypes + 1];
 
 //-----------------------------------------------------------------------------
 
 //int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName);
-class MyTile* GetTile2(const int tileX, const int tileY, const int zoom);
-bool GetTile3(MyTile* t, TArray<GGeom>& geoms);
+//class MyTile* GetTile2(const int tileX, const int tileY, const int zoom);
+bool GetTile3(class MyTile* t, TArray<GGeom>& geoms);

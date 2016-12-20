@@ -8,23 +8,6 @@
 #include "earcut.h"
 #include "../../../Source/Modules/Shared/SceneNew.h"
 //-----------------------------------------------------------------------------
-const char* layerNames[eNumLayerTypes + 1] =
-{
-	"unknown",
-	"terrain",
-	"water",
-	"buildings",
-	"places",
-	"transit",
-	"pois",
-	"boundaries",
-	"roads",
-	"earth",
-	"landuse",
-	
-	NULL		// For IndexFromStringTable
-};
-//-----------------------------------------------------------------------------
 #define EPSILON 1e-5f
 //-----------------------------------------------------------------------------
 v3 perp(const v3& v) { return glm::normalize(v3(-v.y, v.x, 0.0)); }
@@ -305,7 +288,7 @@ PolygonMesh* CreateMeshFromFeature(
 	const float height,
 	const HeightData* heightMap,
 	const float scale,				// tile.invScale
-	const float lineExtrusionWidth, // params.roadsExtrusionWidth
+	//const float lineExtrusionWidth, // params.roadsExtrusionWidth
 	const float lineExtrusionHeight // params.roadsHeight
 )
 {
@@ -328,7 +311,7 @@ PolygonMesh* CreateMeshFromFeature(
 	//if (params.roads)
 	else if (feature.geometryType == GeometryType::lines)
 	{
-		const float extrudeW = lineExtrusionWidth * scale;
+		const float extrudeW = feature.road_width * scale;
 		const float extrudeH = lineExtrusionHeight * scale;
 		for (const Line& line : feature.lines)
 		{
@@ -420,6 +403,7 @@ PolygonMesh* CreateMeshFromFeature(
 	return mesh;
 }
 //-----------------------------------------------------------------------------
+#if 0
 void addFaces(std::ostream& file, const PolygonMesh& mesh, size_t indexOffset, bool normals)
 {
 	for (size_t i = 0; i < mesh.indices.size(); i += 3)
@@ -462,7 +446,6 @@ void addPositions(std::ostream& file, const PolygonMesh& mesh, float offsetx, fl
 -----------------------------------------------------------------------------*/
 bool saveOBJ(const char* outputOBJ,
 	bool splitMeshes,
-	//std::vector<std::unique_ptr<PolygonMesh>>& meshes,
 	std::vector<PolygonMesh*>& meshes,
 	float offsetx,
 	float offsety,
@@ -607,6 +590,7 @@ bool saveOBJ(const char* outputOBJ,
 
 	return false;
 }
+#endif
 //-----------------------------------------------------------------------------
 #define VER 1
 //-----------------------------------------------------------------------------

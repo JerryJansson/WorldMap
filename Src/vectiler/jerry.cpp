@@ -4,6 +4,23 @@
 #include "geometry.h"
 #include "tilemanager.h"
 //-----------------------------------------------------------------------------
+const char* layerNames[eNumLayerTypes + 1] =
+{
+	"unknown",
+	"terrain",
+	"water",
+	"buildings",
+	"places",
+	"transit",
+	"pois",
+	"boundaries",
+	"roads",
+	"earth",
+	"landuse",
+
+	NULL		// For IndexFromStringTable
+};
+//-----------------------------------------------------------------------------
 Tile::Tile(int x, int y, int z) : x(x), y(y), z(z)
 {
 	Vec4d bounds = TileBounds(Vec2i(x, y), z);
@@ -103,32 +120,14 @@ bool GetTile3(MyTile* t, TArray<GGeom>& geoms)
 		1.0f,					// buildingsExtrusionScale
 		true,					// roads. Whether to export roads geometry
 		0.2f,					// roadsHeight
-		3.0f					// roadsExtrusionWidth,
+		//3.0f					// roadsExtrusionWidth,
 	};
 
 	if (!vectiler2(params))
 		return false;
 
-	//TStackArray<GGeom, 64> geoms;
 	if (!LoadBin(fname, geoms))
 		return false;
-
-	/*MyTile* tileEntity = new MyTile(tileKey);
-
-	for (int i = 0; i < geoms.Num(); i++)
-	{
-		CMesh* mesh = CreateMeshFromGeoms(geoms[i].name, &geoms[i], 1);
-		Entity* e = new Entity(geoms[i].name);
-		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
-		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
-		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete);
-		//e->SetPos(CVec3(0, 10, 0));
-		//gScene.AddEntity(entity);
-		tileEntity->AddChild(e);
-	}
-
-	gScene.AddEntity(tileEntity);
-	return tileEntity;*/
 
 	return true;
 }

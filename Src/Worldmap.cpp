@@ -100,6 +100,7 @@ bool CViewer::Create()
 	sun->IndirectModifier = 0.3f;
 	sun->IndirectCol = Crgba(255, 240, 210);
 	
+	sm_UpdateReduction = 0;
 	return true;
 }
 //-----------------------------------------------------------------------------

@@ -37,7 +37,7 @@ void GeoJson::extractPoly(const rapidjson::Value& _in, Polygon2& _out, const Til
     }
 }
 //-----------------------------------------------------------------------------
-void GeoJson::extractFeature(const rapidjson::Value& _in, Feature& _out, const Tile& _tile)
+void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value& _in, Feature& _out, const Tile& _tile)
 {
     const rapidjson::Value& properties = _in["properties"];
 
@@ -45,27 +45,39 @@ void GeoJson::extractFeature(const rapidjson::Value& _in, Feature& _out, const T
 	{
         const auto& member = itr->name.GetString();
         const rapidjson::Value& prop = properties[member];
+		
+		//if (strcmp(member, "height") == 0)		{ _out.props.numericProps[member] = prop.GetDouble(); continue; }
+		//if (strcmp(member, "min_height") == 0)	{ _out.props.numericProps[member] = prop.GetDouble(); continue; }
+		//if (prop.IsNumber()) { //_out.props.numericProps[member] = prop.GetDouble(); }
+		//else if (prop.IsString()) { //_out.props.stringProps[member] = prop.GetString(); }
+		if (strcmp(member, "height") == 0)			_out.height		= prop.GetDouble();
+        else if (strcmp(member, "min_height") == 0) _out.min_height = prop.GetDouble();
+		else if (strcmp(member, "sort_rank") == 0)  _out.sort_rank	= prop.GetInt();
+		else if (layerType == eLayerRoads)
+		{
+			if (strcmp(member, "kind") == 0)
+			{
+				float w = 0.1f;
+				const char* kind = prop.GetString();
+				if (strcmp(kind, "highway") == 0)			w = 8;
+				else if(strcmp(kind, "major_road") == 0)	w = 5;
+				else if (strcmp(kind, "minor_road") == 0)	w = 3;
+				else if (strcmp(kind, "rail") == 0)			w = 1;
+				else if (strcmp(kind, "path") == 0)			w = 0.5f;
+				else if (strcmp(kind, "ferry") == 0)		w = 2;
+				else if (strcmp(kind, "piste") == 0)		w = 5;
+				else if (strcmp(kind, "aerialway") == 0)	w = 6;
+				else if (strcmp(kind, "aeroway") == 0)		w = 8;
+				else if (strcmp(kind, "racetrack") == 0)	w = 3;
+				else if (strcmp(kind, "portage_way") == 0)	w = 1;
+				else
+				{
+					int abba = 10;
+				}
 
-        if (strcmp(member, "height") == 0)
-		{
-            _out.props.numericProps[member] = prop.GetDouble();
-            continue;
-        }
-
-        if (strcmp(member, "min_height") == 0)
-		{
-            _out.props.numericProps[member] = prop.GetDouble();
-            continue;
-        }
-
-        if (prop.IsNumber()) 
-		{
-            //_out.props.numericProps[member] = prop.GetDouble();
-        } 
-		else if (prop.IsString()) 
-		{
-            //_out.props.stringProps[member] = prop.GetString();
-        }
+				_out.road_width = w;
+			}
+		}
     }
 
     // Copy geometry into tile data
@@ -132,6 +144,6 @@ void GeoJson::extractLayer(const rapidjson::Value& _in, Layer& _out, const Tile&
     for (auto featureJson = features.Begin(); featureJson != features.End(); ++featureJson) 
 	{
         _out.features.emplace_back();
-        extractFeature(*featureJson, _out.features.back(), _tile);
+        extractFeature(_out.layerType, *featureJson, _out.features.back(), _tile);
     }
 }

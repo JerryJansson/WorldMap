@@ -235,12 +235,8 @@ void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<Polyg
 //-----------------------------------------------------------------------------
 bool vectiler2(const Params2 params)
 {
-	//LOG("Using API key %s\n", params.apiKey);
-
 	HeightData* heightMap = NULL;
 	TileVectorData* vectorTileData = NULL;
-
-	v2 offset(0.0f, 0.0f);
 	Tile tile(params.tilex, params.tiley, params.tilez);
 
 	if (params.terrain)
@@ -276,7 +272,6 @@ bool vectiler2(const Params2 params)
 	{
 		PolygonMesh* mesh = CreateTerrainMesh(tile, heightMap, params.terrainSubdivision);
 		computeNormals(mesh);	// Compute faces normals
-		mesh->offset = offset;
 		meshes.push_back(mesh);
 
 		/// Build pedestal
@@ -295,15 +290,15 @@ bool vectiler2(const Params2 params)
 	if (vectorTileData)
 	{
 		const TileVectorData* data = vectorTileData;
-		const static std::string keyHeight("height");
-		const static std::string keyMinHeight("min_height");
+		//const static std::string keyHeight("height");
+		//const static std::string keyMinHeight("min_height");
 		const float scale = tile.invScale * params.buildingsExtrusionScale;
 
 		for (auto layer : data->layers)
 		{
-			const int typeIdx = IndexFromStringTable(layer.name.c_str(), layerNames);
-			const ELayerType type = typeIdx >= 0 ? (ELayerType)typeIdx : eLayerUnknown;
-
+			//const int typeIdx = IndexFromStringTable(layer.name.c_str(), layerNames);
+			//const ELayerType type = typeIdx >= 0 ? (ELayerType)typeIdx : eLayerUnknown;
+			const ELayerType type = layer.layerType;
 			if (type == eLayerBuildings && !params.buildings) continue;	// Skip buildings
 			if (type == eLayerRoads && !params.roads) continue;			// Skip roads
 
@@ -314,27 +309,25 @@ bool vectiler2(const Params2 params)
 				if (heightMap && type != eLayerBuildings && type != eLayerRoads) continue;
 
 				// Height
-				float height = default_height;
+				const float height = feature.height > 0 ? feature.height : default_height;
+				/*float height = default_height;
 				auto itHeight = feature.props.numericProps.find(keyHeight);
 				if (itHeight != feature.props.numericProps.end())
-					height = itHeight->second * scale;
+					height = itHeight->second * scale;*/
 
 				if (heightMap && (type != eLayerRoads) && (height == 0.0f))
 					continue;
 
 				// Min height
-				double minHeight = 0.0;
+				const float minHeight = feature.min_height > 0 ? feature.min_height : default_height;
+				/*double minHeight = 0.0;
 				auto itMinHeight = feature.props.numericProps.find(keyMinHeight);
 				if (itMinHeight != feature.props.numericProps.end())
-					minHeight = itMinHeight->second * scale;
+					minHeight = itMinHeight->second * scale;*/
 
-				auto mesh = CreateMeshFromFeature(type, feature, minHeight, height, heightMap, tile.invScale, params.roadsExtrusionWidth, params.roadsHeight);
+				auto mesh = CreateMeshFromFeature(type, feature, minHeight, height, heightMap, tile.invScale, params.roadsHeight);
 				if (mesh)
-				{
-					// Add local mesh offset
-					mesh->offset = offset;
 					meshes.push_back(mesh);
-				}
 			}
 		}
 	}
