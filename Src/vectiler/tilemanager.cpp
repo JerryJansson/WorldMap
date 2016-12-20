@@ -7,6 +7,8 @@
 #include <thread>
 #include <mutex>
 //-----------------------------------------------------------------------------
+static CVar tile_QuadTree("tile_QuadTree", false);
+//-----------------------------------------------------------------------------
 #define ZZZOOM 16
 const int numThreads = 1;
 std::thread threads[numThreads];
@@ -15,6 +17,7 @@ std::mutex tileLock;
 std::mutex poolLock;
 std::mutex doneLock;
 MyTile* tileToStream = NULL;
+//-----------------------------------------------------------------------------
 struct StreamResult : ListNode<StreamResult>
 {
 	MyTile* tile;
@@ -22,7 +25,6 @@ struct StreamResult : ListNode<StreamResult>
 };
 MemPoolDynamic<StreamResult> geomPool(8);
 List2<StreamResult> doneList;
-
 //-----------------------------------------------------------------------------
 MyTile::MyTile(const Vec3i& tms)
 {
@@ -120,11 +122,14 @@ Vec3i TileManager::ShiftOrigo(CCamera* cam)
 			MyTile* tile = m_Tiles[i].val;
 			tile->SetPos(MercatorToGl(tile->m_Origo, 5.0f));
 		}
+
+		m_LastTile = camtile;
 	}
 
 	return camtile;
 }
-
+//-----------------------------------------------------------------------------
+static TArray<Vec3i> neededTiles(256);
 //-----------------------------------------------------------------------------
 void TileManager::Update(CCamera* cam)
 {
@@ -132,47 +137,41 @@ void TileManager::Update(CCamera* cam)
 		Initialize(cam);
 
 	const Vec3i camtile = ShiftOrigo(cam);
+
+	// Determine needed tiles
+	neededTiles.Clear();
+	if (tile_QuadTree)	UpdateQTree(cam);
+	else				UpdateRegularGrid(cam);
+
+	// Determine missing tiles
 	const uint32 frame = Engine_GetFrameNumber();
-	// range = 0 -> 1x1
-	// range = 1 -> 3x3
-	// range = 2 -> 5x5
-	// range = 3 -> 7x7
-	const int range = 1;
-	const int maxTiles = (range*2 + 1) * (range*2+1);
-	static TArray<Vec3i> tilesToLoad;
-	tilesToLoad.Clear();
-	tilesToLoad.EnsureCapacity(maxTiles);
-
-	for (int ty = -range; ty <= range; ty++)
+	static TArray<Vec3i> missingTiles(256);
+	missingTiles.Clear();
+	for (int i = 0; i < neededTiles.Num(); i++)
 	{
-		for (int tx = -range; tx <= range; tx++)
-		{
-			const Vec3i t(camtile.x + tx, camtile.y + ty, camtile.z);
-			MyTile* tile = m_Tiles.Get(t);
-
-			if (!tile)
-				tilesToLoad.Add(t);
-
-			if (tile)
-				tile->m_Frame = frame;
-		}
+		const Vec3i& t = neededTiles[i];
+		MyTile* tile = m_Tiles.Get(t);
+		if(tile) tile->m_Frame = frame;
+		else	 missingTiles.Add(t);
 	}
 
-	// Add tile(s) to queue to stream
-	if (tilesToLoad.Num()>0 && !tileToStream)
+	// Add tile to queue to stream
+	if (missingTiles.Num()>0 && !tileToStream)
 	{
+		MyTile* newtile = NULL;
 		if (tileLock.try_lock())
 		{
 			if (!tileToStream)
-				tileToStream = new MyTile(tilesToLoad[0]);
-			// Must be inside lock. Otherwise a thread might set tileToStream to NULL before we
-			// add it to the hash table
-			m_Tiles.Add(tileToStream->m_Tms, tileToStream);
-
+			{
+				tileToStream = new MyTile(missingTiles[0]);
+				newtile = tileToStream;
+			}
 			LOG("Added %d,%d for streaming in frame %d\n", tileToStream->m_Tms.x, tileToStream->m_Tms.y, frame);
-			
 			tileLock.unlock();
 		}
+		
+		if(newtile)
+			m_Tiles.Add(newtile->m_Tms, newtile);
 	}
 
 	// Any tiles done streaming?
@@ -187,11 +186,10 @@ void TileManager::Update(CCamera* cam)
 
 		if (r)
 		{
-			LOG("Received %d, %d in frame %d\n", r->tile->m_Tms.x, r->tile->m_Tms.y, frame);
-			r->tile->m_Status = MyTile::eLoaded;
-			//CVec3 pos = MercatorToGl(r->tile->m_Origo, 5.0f);
-			//r->tile->SetPos(pos);
-			//LOG("pos: <%.1f, %.1f, %.1f>\n", pos.x, pos.y, pos.z);
+			MyTile* t = r->tile;
+			LOG("Received %d, %d in frame %d\n", t->m_Tms.x, t->m_Tms.y, frame);
+			t->m_Status = MyTile::eLoaded;
+			t->m_Frame = frame;
 
 			for (int i = 0; i < r->geoms.Num(); i++)
 			{
@@ -200,13 +198,12 @@ void TileManager::Update(CCamera* cam)
 				MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
 				meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
 				meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete); // Resets dirty flag
-				r->tile->AddChild(e);
+				t->AddChild(e);
 			}
 
-			r->tile->SetPos(MercatorToGl(r->tile->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
+			t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
 
-			gScene.AddEntity(r->tile);
-			
+			gScene.AddEntity(t);
 
 			r->tile = NULL;
 			// Release geom memory
@@ -215,52 +212,43 @@ void TileManager::Update(CCamera* cam)
 			poolLock.unlock();
 		}
 	}
+}
 
-	/*const int range = 0;
+//-----------------------------------------------------------------------------
+void TileManager::UpdateRegularGrid(CCamera* cam)
+{
+	// Which tile is the camera in?
+	const Vec2d camMercator = GlToMercator2d(cam->GetWorldPos());
+	const Vec2i _camtile = MetersToTile(camMercator, ZZZOOM);
+	const Vec3i camtile = Vec3i(_camtile.x, _camtile.y, ZZZOOM);
+
+	// range = 0 -> 1x1
+	// range = 1 -> 3x3
+	// range = 2 -> 5x5
+	// range = 3 -> 7x7
+	const int range = 1;
+	const int maxTiles = (range*2 + 1) * (range*2+1);
+	//static TArray<Vec3i> tilesToLoad;
+	//tilesToLoad.Clear();
+	neededTiles.EnsureCapacity(maxTiles);
+
 	for (int ty = -range; ty <= range; ty++)
 	{
-	for (int tx = -range; tx <= range; tx++)
-	{
-	const Vec3i t(camtile.x + tx, camtile.y + ty, camtile.z);
-	MyTile* tile = m_Tiles.Get(t);
+		for (int tx = -range; tx <= range; tx++)
+		{
+			const Vec3i t(camtile.x + tx, camtile.y + ty, camtile.z);
+			neededTiles.Add(t);
+			/*MyTile* tile = m_Tiles.Get(t);
 
-	// Cached
-	if (!tile)
-	{
-	tile = GetTile2(t.x, t.y, ZZZOOM);
-	if (tile)
-	{
-	m_Tiles.Add(tile->m_Tms, tile);
-	Vec3 pos = MercatorToGl(tile->m_OrigoMercator);
-	tile->SetPos(pos);
-	}
+			if (!tile)
+				tilesToLoad.Add(t);
+
+			if (tile)
+				tile->m_Frame = frame;*/
+		}
 	}
 
-	if (tile)
-	{
-	tile->m_Frame = frame;
-	}
-	}
-	}*/
-
-	m_LastTile = camtile;
-
-	// Release tiles
-	/*for (int i = 0; i < m_Tiles.Num();)
-	{
-	MyTile* tile = m_Tiles[i].val;
-
-	if (tile->m_Frame == frame)
-	{
-	i++;
-	continue;
-	}
-
-	m_Tiles.Remove(tile->m_Tms);
-	delete tile;
-	}*/
-
-	for (int y = 0; y < 3; y++)
+	/*for (int y = 0; y < 3; y++)
 	{
 		for (int x = 0; x < 3; x++)
 		{
@@ -274,9 +262,7 @@ void TileManager::Update(CCamera* cam)
 
 			DrawWireCube(CVec3(center_x, 1.0f, center_y), 1, gRGBA_Red);
 		}
-	}
-
-	UpdateQTree(cam);
+	} */
 }
 //-----------------------------------------------------------------------------
 inline double Distance_ToTile(const Vec3d &p, const Vec3d& mini, const Vec3d& maxi)
@@ -301,15 +287,10 @@ inline double Distance_ToTile(const Vec3d &p, const Vec3d& mini, const Vec3d& ma
 	return sqrt(dist);
 }
 //-----------------------------------------------------------------------------
-static TArray<Vec3i> neededTiles(256);
+
 //-----------------------------------------------------------------------------
 void TileManager::UpdateQTree(CCamera* cam)
 {
-	if (!m_Initialized)
-		Initialize(cam);
-
-	//ShiftOrigo(cam);
-	
 	const uint32 frame	= Engine_GetFrameNumber();
 	const Vec3 camGlPos = cam->GetWorldPos();
 	const Vec3d camMercator3d = GlToMercator3d(camGlPos);

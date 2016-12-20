@@ -8,7 +8,7 @@ public:
 public:
 	Vec3i	m_Tms;		// Tms grid coord xyz (z=zoom)
 	Vec2d	m_Origo;	// Tile origo (lower left corner) in mercator coordinates
-	uint32	m_Frame;	// Last frame bump
+	uint32	m_Frame;	// Last frame we needed this tile
 
 	MyTile(const Vec3i& tms);
 	EStatus Status() const { return m_Status; }
@@ -38,13 +38,16 @@ public:
 		return Vec3(x, y, z);
 	}
 
-	void Initialize(CCamera* cam);
-	Vec3i ShiftOrigo(CCamera* cam);
 	void Update(CCamera* cam);
+	void UpdateRegularGrid(CCamera* cam);
 	void UpdateQTree(CCamera* cam);
 	void Stop();
 
 	void RenderDebug2d(CCamera* cam	);
+
+private:
+	void Initialize(CCamera* cam);
+	Vec3i ShiftOrigo(CCamera* cam);
 };
 
 extern TileManager gTileManager;
