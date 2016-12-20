@@ -31,7 +31,7 @@ struct PolygonMesh
 	PolygonMesh(ELayerType type) : layerType(type) {}
 };
 //-----------------------------------------------------------------------------
-void computeNormals(PolygonMesh& mesh);
+void computeNormals(PolygonMesh* mesh);
 //-----------------------------------------------------------------------------
 bool saveOBJ(const char* outputOBJ,
 	bool splitMeshes,
@@ -44,7 +44,21 @@ bool saveOBJ(const char* outputOBJ,
 
 bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst);
 
-bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
+//bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
 
 bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
 bool LoadBin(const char* fname);
+
+//-----------------------------------------------------------------------------
+PolygonMesh* CreateMeshFromFeature(
+	const ELayerType layerType,
+	const struct Feature& feature,
+	const float minHeight,
+	const float height,
+	const struct HeightData* heightMap,
+	const float scale,				// tile.invScale
+	const float lineExtrusionWidth, // params.roadsExtrusionWidth
+	const float lineExtrusionHeight // params.roadsHeight
+);
+//-----------------------------------------------------------------------------
+float sampleElevation(v2 position, const HeightData* heightMap);

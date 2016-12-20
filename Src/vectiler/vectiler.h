@@ -31,8 +31,31 @@ struct Params {
 
 int vectiler(struct Params parameters, CStrL& outFileName);
 
-#ifdef VECTILER_UNIT_TESTS
-#include "tiledata.h"
-#endif
+struct Params2 {
+	const char* apiKey;
+	int tilex, tiley, tilez;
+	//float offset[2];
+	//bool splitMesh;
+	//int aoSizeHint;
+	//int aoSamples;
+	//bool aoBaking;
+	//bool append;
+	bool terrain;
+	int terrainSubdivision;
+	float terrainExtrusionScale;
+	bool buildings;
+	float buildingsHeight;
+	float buildingsExtrusionScale;
+	bool roads;
+	float roadsHeight;
+	float roadsExtrusionWidth;
+	//bool normals;
+	//int pedestal;
+	//float pedestalHeight;
+};
+
+bool vectiler2(Params2 params);
+
+
 
 #endif

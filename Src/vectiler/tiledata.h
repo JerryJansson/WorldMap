@@ -41,3 +41,9 @@ struct Layer {
 struct TileVectorData {
     std::vector<Layer> layers;
 };
+//-----------------------------------------------------------------------------
+struct HeightData {
+	std::vector<std::vector<float>> elevation;
+	int width;
+	int height;
+};
