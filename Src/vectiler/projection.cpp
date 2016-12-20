@@ -81,7 +81,9 @@ Vec2i MetersToTile(const Vec2d& m, const int zoom)
 // Returns lower left corner of the given tile in EPSG:900913 coordinates
 //-----------------------------------------------------------------------------
 Vec2d TileMin(const Vec2i& t, const int zoom) { return PixelsToMeters(Vec2d(t.x * dTileSize, t.y * dTileSize), zoom);				}
+Vec2d TileMin(const Vec3i& t)				  { return PixelsToMeters(Vec2d(t.x * dTileSize, t.y * dTileSize), t.z);				}
 Vec2d TileMax(const Vec2i& t, const int zoom) { return PixelsToMeters(Vec2d((t.x + 1) * dTileSize, (t.y + 1) * dTileSize), zoom);	}
+Vec2d TileMax(const Vec3i& t)				  { return PixelsToMeters(Vec2d((t.x + 1) * dTileSize, (t.y + 1) * dTileSize), t.z); }
 //-----------------------------------------------------------------------------
 // Returns bounds of the given tile in EPSG:900913 coordinates
 //-----------------------------------------------------------------------------

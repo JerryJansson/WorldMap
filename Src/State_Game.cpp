@@ -173,6 +173,8 @@ void CState_Game::Render2d()
 
 	//RenderTerrainStreamProgress(0);
 
+	gTileManager.RenderDebug2d(gViewer.GetGameCamera());
+
 	if (gEditorEnabled)
 		Editor_Render2d();
 }
