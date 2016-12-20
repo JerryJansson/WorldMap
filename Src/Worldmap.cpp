@@ -13,7 +13,6 @@
 //-----------------------------------------------------------------------------
 CStateManager	gStateManager;
 CViewer			gViewer;
-extern CStrL	gStrCourse;
 Entity*			root = NULL;
 
 //-----------------------------------------------------------------------------
@@ -97,9 +96,9 @@ bool CViewer::Create()
 	sun->DiffuseModifier = 1.6f;
 	sun->LightCol = Crgba(255,255,200);
 	sun->AmbientModifier = 0.5f;
-	sun->SkyCol = Crgba(0, 200, 255);
+	sun->SkyCol = Crgba(100, 200, 255);
 	sun->IndirectModifier = 0.3f;
-	sun->IndirectCol = Crgba(255, 255, 255);
+	sun->IndirectCol = Crgba(255, 240, 210);
 	
 	return true;
 }
@@ -254,21 +253,39 @@ bool MyApp_Init()
 	gViewer.Create();
 
 	
-	float Latitude = 39.921864f;
-	float Longitude = 32.818442f;
-	int Range = 3;
+	//float Latitude = 39.921864f;
+	//float Longitude = 32.818442f;
+	//int Range = 3;
 	//float TileSize = 100;
 
-	v4d bounds = TileBoundsInMeters(v2d(19294, 24642), 16);
-	v2d mini = v2d(bounds.x, bounds.y);
-	v2d maxi = v2d(bounds.z, bounds.w);
-	v2d extent = maxi - mini;
-	v2d center = mini + extent * 0.5;
-	v2d tile = MetersToTile(center, 16);
+	// Longitude growths at E, decreases to W (x-axis)
+	// Latitude growths to N, decreases to S (y-axis)
 
-	v2d lonlat(Longitude, Latitude);
-	v2d tmp1 = lonLatToMeters(lonlat);
+	// Stockholm Stadion
+	float Longitude = 18.080f;
+	float Latitude = 59.346f;
+	
+	Vec4d b1 = TileBoundsInMeters(Vec2i(0, 0), 0);
+	//Vec4d b2 = TileBounds2(0, 0, 0);
+
+
+	//v4d bounds = TileBoundsInMeters(v2d(19294, 24642), 16);
+	Vec4d bounds = TileBoundsInMeters(Vec2i(36059, 19267), 16);
+	//Vec4d bounds2 = TileBounds2(36059, 19267, 16);
+
+	Vec2d mini = Vec2d(bounds.x, bounds.y);
+	Vec2d maxi = Vec2d(bounds.z, bounds.w);
+	Vec2d extent = maxi - mini;
+	Vec2d center = mini + extent * 0.5;
+	//Vec2d center = Vec2d(center_glm.x, center_glm.y);
+	Vec2i tile = MetersToTile(center, 16);
+
+	Vec2d lonlat(Longitude, Latitude);
+	Vec2d tmp1 = lonLatToMeters(lonlat);
 	v2d tmp2 = LatLonToMeters(Latitude, Longitude);
+	CVec2i tile2 = MetersToTile(tmp1, 16);
+
+	//v2d lonlat2 = MetersToLonLat(center);
 
 	const char* tileX = NULL;
 	const char* tileY = NULL;

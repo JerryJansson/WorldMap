@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-//#include <memory>
 #include "jerry.h"
 //-----------------------------------------------------------------------------
 struct PolygonVertex {
@@ -10,16 +9,23 @@ struct PolygonVertex {
 //-----------------------------------------------------------------------------
 enum ELayerType
 {
-	eLayerTerrain,
-	eLayerBuildings,
-	eLayerRoads,
-	eLayerWater,
-	eLayerOther,
+	eLayerUnknown,		// 0
+
+	eLayerTerrain,		// 1
+	eLayerWater,		// 2
+	eLayerBuildings,	// 3
+	eLayerPlaces,		// 4
+	eLayerTransit,		// 5
+	eLayerPois,			// 6
+	eLayerBoundaries,	// 7
+	eLayerRoads,		// 8
+	eLayerEarth,		// 9
+	eLayerLanduse,		// 10
 
 	eNumLayerTypes
 };
 //-----------------------------------------------------------------------------
-extern const char* layerNames[eNumLayerTypes];
+extern const char* layerNames[eNumLayerTypes + 1];
 //-----------------------------------------------------------------------------
 struct PolygonMesh
 {
@@ -35,7 +41,6 @@ void computeNormals(PolygonMesh* mesh);
 //-----------------------------------------------------------------------------
 bool saveOBJ(const char* outputOBJ,
 	bool splitMeshes,
-	//std::vector<std::unique_ptr<PolygonMesh>>& meshes,
 	std::vector<PolygonMesh*>& meshes,
 	float offsetx,
 	float offsety,
@@ -47,7 +52,7 @@ bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst);
 //bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
 
 bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
-bool LoadBin(const char* fname);
+bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr);
 
 //-----------------------------------------------------------------------------
 PolygonMesh* CreateMeshFromFeature(

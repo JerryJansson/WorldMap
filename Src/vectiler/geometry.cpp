@@ -8,13 +8,21 @@
 #include "earcut.h"
 #include "../../../Source/Modules/Shared/SceneNew.h"
 //-----------------------------------------------------------------------------
-const char* layerNames[eNumLayerTypes] =
+const char* layerNames[eNumLayerTypes + 1] =
 {
+	"unknown",
 	"terrain",
-	"buildings",
-	"roads",
 	"water",
-	"other"
+	"buildings",
+	"places",
+	"transit",
+	"pois",
+	"boundaries",
+	"roads",
+	"earth",
+	"landuse",
+	
+	NULL		// For IndexFromStringTable
 };
 //-----------------------------------------------------------------------------
 #define EPSILON 1e-5f
@@ -252,7 +260,8 @@ v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
 	}
 	else {
 		float theta = atan2f(d1.y, d1.x) - atan2f(d0.y, d0.x);
-		if (theta < 0.f) { theta += 2 * M_PI; }
+		if (theta < 0.f) 
+			theta += 2 * F_PI;
 		miter *= 1.f / std::max<float>(sin(theta * 0.5f), EPSILON);
 	}
 
@@ -400,6 +409,12 @@ PolygonMesh* CreateMeshFromFeature(
 		//if (params.terrain)
 		if(heightMap)
 			computeNormals(mesh);
+	}
+
+	if (mesh->vertices.size() == 0)
+	{
+		delete mesh;
+		mesh = NULL;
 	}
 
 	return mesh;
@@ -658,6 +673,7 @@ bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerType
 
 
 //-----------------------------------------------------------------------------
+#if 0
 void WriteMeshBin(CFile& f, const PolygonMesh* mesh, const char* layerName, const int meshIdx)
 {
 	if (mesh->vertices.size() == 0)
@@ -690,10 +706,15 @@ void WriteMeshBin(CFile& f, const PolygonMesh* mesh, const char* layerName, cons
 		f.Write(&u16, sizeof(u16));
 	}*/
 }
+#endif
 #define VER 1
 //-----------------------------------------------------------------------------
 bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
 {
+	CStopWatch sw;
+
+	LOG("Saving bin file: %s\n", fname);
+
 	CFile f;
 	if (!f.Open(fname, FILE_WRITE))
 		return false;
@@ -710,23 +731,54 @@ bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes
 
 	for (int l = 0; l < eNumLayerTypes; l++)
 	{
+		CStrL layername = CStrL(layerNames[l]) + "_";
+
 		for (size_t k = 0; k < meshArr[l].size(); k++)
 		{
-			WriteMeshBin(f, meshArr[l][k], layerNames[l], k);
-			statNumVertices += meshArr[l][k]->vertices.size();
-			statNumTriangles += meshArr[l][k]->indices.size() / 3;
+			const PolygonMesh* mesh = meshArr[l][k];
+			if (mesh->vertices.size() == 0)
+				continue;
+
+			CStrL meshname = layername;
+			meshname += (int)k;
+
+			f.WriteInt(meshname.Len());
+			f.Write(meshname.Str(), meshname.Len() * sizeof(char));
+			f.WriteInt(mesh->layerType);
+			f.WriteInt(mesh->vertices.size());
+			f.WriteInt(mesh->indices.size());
+			
+			for (auto v : mesh->vertices)
+			{
+				// Flip
+				float p[6];
+				p[0] = v.position.x;
+				p[1] = v.position.z;
+				p[2] = -v.position.y;
+				p[3] = v.normal.x;
+				p[4] = v.normal.z;
+				p[5] = -v.normal.y;
+				f.Write(p, sizeof(float) * 6);
+			}
+
+			f.Write(mesh->indices.data(), mesh->indices.size() * sizeof(int));
+			//WriteMeshBin(f, meshArr[l][k], layerNames[l], k);
+			statNumVertices += mesh->vertices.size();
+			statNumTriangles += mesh->indices.size() / 3;
+
+			LOG("Wrote: %s\n", meshname.Str());
 		}
 	}
 
-	LOG("Saved obj file: %s\n", fname);
 	LOG("Objects: %ld\n", nMeshes);
 	LOG("Triangles: %ld\n", statNumTriangles);
 	LOG("Vertices: %ld\n", statNumVertices);
+	LOG("Saved file in %.1fms\n", sw.GetMs());
 
 	return true;
 }
 //-----------------------------------------------------------------------------
-bool LoadBin(const char* fname)
+bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr)
 {
 	CFile f;
 	if (!f.Open(fname, FILE_READ))
@@ -741,8 +793,12 @@ bool LoadBin(const char* fname)
 	}
 
 	int nMeshes = f.ReadInt();
+	geomArr.SetNum(nMeshes);
 
-	GGeom geom;
+	//Entity* rootEntity = new Entity(fname);
+	//gScene.AddEntity(rootEntity);
+
+	//GGeom geom;
 	for(int m=0; m<nMeshes; m++)
 	{
 		int nlen = f.ReadInt();
@@ -751,6 +807,9 @@ bool LoadBin(const char* fname)
 			gLogger.Warning("Name to long");
 			return false;
 		}
+
+		//GGeom* geom = new GGeom();
+		GGeom& geom = geomArr[m];
 
 		char name[64];
 		int type, nv, ni;
@@ -762,6 +821,7 @@ bool LoadBin(const char* fname)
 		f.Read(&ni, sizeof(ni));
 
 		geom.Prepare(nv, ni);
+		geom.SetName(name);
 		GVertex* vtx = geom.VertexPtr();
 		uint32* idxs = geom.IndexPtr();
 
@@ -774,24 +834,22 @@ bool LoadBin(const char* fname)
 		}
 
 		f.Read(idxs, ni * sizeof(uint32));
-
-		if (type == eLayerTerrain) geom.SetMaterial("grass");
-		else if (type == eLayerBuildings) geom.SetMaterial("buildings");
-		else if (type == eLayerRoads) geom.SetMaterial("roads");
-		else if (type == eLayerWater) geom.SetMaterial("water");
-		else if (type == eLayerOther) geom.SetMaterial("other");
-
-		Entity* entity = new Entity(name);
-		MeshComponent* meshcomp = entity->CreateComponent<MeshComponent>();
-		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
-
-		CMesh* mesh = CreateMeshFromGeoms(name, &geom, 1);
-		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete);
-
-		entity->SetPos(CVec3(0, 10, -10));
-		gScene.AddEntity(entity);
+		geom.SetMaterial(layerNames[type]);
 
 		LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
+		/*
+		
+		CMesh* mesh = CreateMeshFromGeoms(name, &geom, 1);
+
+		LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
+
+		Entity* e = new Entity(name);
+		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
+		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
+		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete);
+		//e->SetPos(CVec3(0, 10, 0));
+		//gScene.AddEntity(entity);
+		rootEntity->AddChild(e);*/
 	}
 	
 	return true;

@@ -1,13 +1,15 @@
 #include "Precompiled.h"
+#include "..\..\..\..\Source\Modules\Shared\SceneNew.h"
 #include "vectiler.h"
 #include "geometry.h"
 #if 1
-bool GetTile2(const int tileX, const int tileY, const int zoom)
+MyTile* GetTile2(const int tileX, const int tileY, const int zoom)
 {
-	CStrL fname = Str_Printf("%d_%d_%d.bin", tileX, tileY, zoom);
+	const CStrL tileName = Str_Printf("%d_%d_%d", tileX, tileY, zoom);
+	const CStrL fname = tileName + ".bin";
 	
-	if (LoadBin(fname))
-		return true;
+	//if (LoadBin(fname))
+	//	return true;
 	
 	struct Params2 params =
 	{
@@ -26,12 +28,29 @@ bool GetTile2(const int tileX, const int tileY, const int zoom)
 		3.0f						// roadsExtrusionWidth,
 	};
 	
-	if (vectiler2(params))
+	if (!vectiler2(params))
+		return NULL;
+
+	TStackArray<GGeom, 64> geoms;
+	if (!LoadBin(fname, geoms))
+		return NULL;
+
+	MyTile* tileEntity = new MyTile(tileX, tileY, zoom);
+
+	for (int i = 0; i < geoms.Num(); i++)
 	{
-		return LoadBin(fname);
+		CMesh* mesh = CreateMeshFromGeoms(geoms[i].name, &geoms[i], 1);
+		Entity* e = new Entity(geoms[i].name);
+		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
+		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
+		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete);
+		//e->SetPos(CVec3(0, 10, 0));
+		//gScene.AddEntity(entity);
+		tileEntity->AddChild(e);
 	}
 
-	return false;
+	gScene.AddEntity(tileEntity);
+	return tileEntity;
 }
 #endif
 

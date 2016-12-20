@@ -3,10 +3,16 @@
 //-----------------------------------------------------------------------------
 #include "../../../Source/Modules/CamFly.h"
 //-----------------------------------------------------------------------------
+/*class CCamera_Tile : public CCamera_Fly
+{
+public:
+	CVec2d  m_LongLat;
+};*/
+//-----------------------------------------------------------------------------
 class CViewer
 {
 private:
-	CCamera_Fly	 m_DefaultGameCam;
+	CCamera_Fly m_DefaultGameCam;
 	CCamera_Fly	 m_DebugCam;
 
 	CCamera*	 m_ActiveGameCam;	// Usually points to m_DefaultGameCam, but can be set to another camera (See mode DetailEdit)

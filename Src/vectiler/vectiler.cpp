@@ -290,7 +290,8 @@ void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<Polyg
 	LOG("Merged (%.1fms) %d meshes into:\n", sw.GetMs(), meshes.size());
 	for (int i = 0; i < eNumLayerTypes; i++)
 	{
-		LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
+		if(meshArr[i].size())
+			LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
 	}
 }
 //-----------------------------------------------------------------------------
@@ -392,10 +393,8 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
 				for (auto layer : data->layers)
 				{
-					ELayerType type = eLayerOther;
-					if (layer.name == "water")			type = eLayerWater;
-					else if (layer.name == "buildings") type = eLayerBuildings;
-					else if (layer.name == "roads")		type = eLayerRoads;
+					const int typeIdx = IndexFromStringTable(layer.name.c_str(), layerNames);
+					const ELayerType type = typeIdx >= 0 ? (ELayerType)typeIdx : eLayerUnknown;
 					
 					if (type == eLayerBuildings && !exportParams.buildings) continue;	// Skip buildings
 					if (type == eLayerRoads && !exportParams.roads) continue;			// Skip roads
@@ -404,7 +403,6 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
 					for (auto feature : layer.features)
 					{
-						//if (textureData && !layerBuildings && !layerRoads) continue;
 						if (heightMap && type != eLayerBuildings && type != eLayerRoads) continue;
 
 						// Height
@@ -426,10 +424,12 @@ int vectiler(Params exportParams, CStrL& outFileName)
 						// JJ 
 						//auto mesh = new PolygonMesh(type);
 						auto mesh = CreateMeshFromFeature(type, feature, minHeight, height, heightMap, tile.invScale, exportParams.roadsExtrusionWidth, exportParams.roadsHeight);
-
-						// Add local mesh offset
-						mesh->offset = offset;
-						meshes.push_back(mesh);
+						if (mesh)
+						{
+							// Add local mesh offset
+							mesh->offset = offset;
+							meshes.push_back(mesh);
+						}
 					}
 				}
 			}
@@ -620,8 +620,8 @@ bool vectiler2(Params2 params)
 		}*/
 	}
 
-	/// Build vector tile mesh
-	if (vectorTileData && (params.buildings || params.roads))
+	/// Build vector tile meshes
+	if (vectorTileData)
 	{
 		const TileVectorData* data = vectorTileData;
 		const static std::string keyHeight("height");
@@ -630,10 +630,8 @@ bool vectiler2(Params2 params)
 
 		for (auto layer : data->layers)
 		{
-			ELayerType type = eLayerOther;
-			if (layer.name == "water")			type = eLayerWater;
-			else if (layer.name == "buildings") type = eLayerBuildings;
-			else if (layer.name == "roads")		type = eLayerRoads;
+			const int typeIdx = IndexFromStringTable(layer.name.c_str(), layerNames);
+			const ELayerType type = typeIdx >= 0 ? (ELayerType)typeIdx : eLayerUnknown;
 
 			if (type == eLayerBuildings && !params.buildings) continue;	// Skip buildings
 			if (type == eLayerRoads && !params.roads) continue;			// Skip roads
@@ -660,10 +658,12 @@ bool vectiler2(Params2 params)
 					minHeight = itMinHeight->second * scale;
 
 				auto mesh = CreateMeshFromFeature(type, feature, minHeight, height, heightMap, tile.invScale, params.roadsExtrusionWidth, params.roadsHeight);
-
-				// Add local mesh offset
-				mesh->offset = offset;
-				meshes.push_back(mesh);
+				if (mesh)
+				{
+					// Add local mesh offset
+					mesh->offset = offset;
+					meshes.push_back(mesh);
+				}
 			}
 		}
 	}

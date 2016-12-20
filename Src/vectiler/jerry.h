@@ -1,6 +1,8 @@
 #pragma once
+#include "..\..\..\..\Source\Modules\GameObject\Entity.h"
 
-#define M_PI 3.1415926535897932384626433832795f
+#define D_PI 3.1415926535897932384626433832795
+#define F_PI 3.1415926535897932384626433832795f
 #define USE_GLM
 
 #ifdef USE_GLM
@@ -24,5 +26,25 @@ typedef CVec4d	v4d;
 #define myClamp Clamp
 #endif
 
+//-----------------------------------------------------------------------------
+class MyTile : public Entity
+{
+public:
+	enum Status { NOT_LOADED, LOADED, IN_SCENE } m_Status;
+public:
+	Vec3i	m_Grid;
+	uint32	m_Frame;
+
+	MyTile(int x, int y, int zoom)
+	{
+		m_Frame = 0;
+		m_Grid = Vec3i(x, y, zoom);
+		const CStrL tileName = Str_Printf("%d_%d_%d", x, y, zoom);
+		SetName(tileName);
+	}
+};
+//-----------------------------------------------------------------------------
+
 int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName);
-bool GetTile2(const int tileX, const int tileY, const int zoom);
+//bool GetTile2(const int tileX, const int tileY, const int zoom);
+MyTile* GetTile2(const int tileX, const int tileY, const int zoom);

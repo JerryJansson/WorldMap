@@ -5,14 +5,14 @@ const double dTileSize = 256.0;
 const int iTileSize = 256;
 const double inv_tileSize = 1.0 / dTileSize;
 #define R_EARTH 6378137.0
-#define PI M_PI
+#define PI D_PI
 constexpr static double INV_360 = 1.0 / 360.0;
 constexpr static double INV_180 = 1.0 / 180.0;
 constexpr static double HALF_CIRCUMFERENCE = PI * R_EARTH;
 //-----------------------------------------------------------------------------
-v2d lonLatToMeters(const v2d _lonLat)
+Vec2d lonLatToMeters(const Vec2d& _lonLat)
 {
-    v2d meters;
+    Vec2d meters;
     meters.x = _lonLat.x * HALF_CIRCUMFERENCE * INV_180;
     meters.y = log(tan(PI * 0.25 + _lonLat.y * PI * INV_360)) * (double)R_EARTH;
     return meters;
@@ -34,6 +34,17 @@ glm::dvec4 tileBounds(int x, int y, int z)
         pixelsToMeters({ (x + 1) * iTileSize, (y + 1) * iTileSize }, z)
     );
 }
+//-----------------------------------------------------------------------------
+/*Vec4d TileBounds2(const int x, const int y, const int zoom)
+{
+	Vec4d b;
+	double res = (2.0 * HALF_CIRCUMFERENCE) / (1 << zoom);
+	b.x = x * res - HALF_CIRCUMFERENCE;
+	b.y = y * res - HALF_CIRCUMFERENCE;
+	b.z = (x+1) * res - HALF_CIRCUMFERENCE;
+	b.w = (y+1) * res - HALF_CIRCUMFERENCE;
+	return b;
+}*/
 
 //-----------------------------------------------------------------------------
 v2d tileCenter(int x, int y, int z)
@@ -49,8 +60,9 @@ v2d tileCenter(int x, int y, int z)
 
 //SOURCE: http://stackoverflow.com/questions/12896139/geographic-coordinates-converter
 const int EarthRadius = 6378137;
-const double InitialResolution = 2 * M_PI * EarthRadius / dTileSize;
-const double OriginShift = 2 * M_PI * EarthRadius / 2;
+const double InitialResolution = 2.0 * D_PI * EarthRadius / dTileSize;
+//const double OriginShift = 2.0 * D_PI * EarthRadius / 2.0;
+const double OriginShift = D_PI * EarthRadius;
 //-----------------------------------------------------------------------------
 // Converts given lat/lon in WGS84 Datum to XY in Spherical Mercator EPSG:900913
 //-----------------------------------------------------------------------------
@@ -72,15 +84,15 @@ v2d LatLonToMeters(const v2d v)
 //-----------------------------------------------------------------------------
 double Resolution(int zoom)
 {
-	return InitialResolution / (pow(2, zoom));
+	return InitialResolution / (1 << zoom);// (pow(2, zoom));
 }
 //-----------------------------------------------------------------------------
 // Converts pixel coordinates in given zoom level of pyramid to EPSG:900913
 //-----------------------------------------------------------------------------
-v2d PixelsToMeters(const v2d p, const int zoom)
+Vec2d PixelsToMeters(const Vec2d& p, const int zoom)
 {
 	double res = Resolution(zoom);
-	v2d met;
+	Vec2d met;
 	met.x = (p.x * res - OriginShift);
 	met.y = -(p.y * res - OriginShift);
 	return met;
@@ -88,10 +100,10 @@ v2d PixelsToMeters(const v2d p, const int zoom)
 //-----------------------------------------------------------------------------
 // Converts EPSG:900913 to pyramid pixel coordinates in given zoom level
 //-----------------------------------------------------------------------------
-v2d MetersToPixels(const v2d m, int zoom)
+Vec2d MetersToPixels(const Vec2d& m, int zoom)
 {
 	double res = Resolution(zoom);
-	v2d pix;
+	Vec2d pix;
 	pix.x = ((m.x + OriginShift) / res);
 	pix.y = ((-m.y + OriginShift) / res);
 	return pix;
@@ -99,12 +111,9 @@ v2d MetersToPixels(const v2d m, int zoom)
 //-----------------------------------------------------------------------------
 // Returns a TMS (NOT Google!) tile covering region in given pixel coordinates
 //-----------------------------------------------------------------------------
-v2d PixelsToTile(const v2d p)
+Vec2i PixelsToTile(const Vec2d& p)
 {
-	v2d t;
-	t.x = (int)ceil(p.x / dTileSize) - 1;
-	t.y = (int)ceil(p.y / dTileSize) - 1;
-	return t;
+	return Vec2i((int)ceil(p.x / dTileSize) - 1, (int)ceil(p.y / dTileSize) - 1);
 }
 //-----------------------------------------------------------------------------
 v2d PixelsToRaster(const v2d p, int zoom)
@@ -115,27 +124,29 @@ v2d PixelsToRaster(const v2d p, int zoom)
 //-----------------------------------------------------------------------------
 // Returns tile for given mercator coordinates
 //-----------------------------------------------------------------------------
-v2d MetersToTile(v2d m, int zoom)
+Vec2i MetersToTile(const Vec2d& m, const int zoom)
 {
-	v2d p = MetersToPixels(m, zoom);
+	const Vec2d p = MetersToPixels(m, zoom);
 	return PixelsToTile(p);
 }
 //-----------------------------------------------------------------------------
 // Returns bounds of the given tile in EPSG:900913 coordinates
 //-----------------------------------------------------------------------------
-v4d TileBoundsInMeters(v2d t, int zoom)
+Vec4d TileBoundsInMeters(const Vec2i& t, const int zoom)
 {
-	v2d min = PixelsToMeters(v2d(t.x * dTileSize, t.y * dTileSize), zoom);
-	v2d max = PixelsToMeters(v2d((t.x + 1) * dTileSize, (t.y + 1) * dTileSize), zoom);
-	return v4d(min, max);// -min);
+	const Vec2d min = PixelsToMeters(Vec2d(t.x * dTileSize, t.y * dTileSize), zoom);
+	const Vec2d max = PixelsToMeters(Vec2d((t.x + 1) * dTileSize, (t.y + 1) * dTileSize), zoom);
+	return Vec4d(min, max);// -min);
 }
 //-----------------------------------------------------------------------------
-v2d MetersToLatLon(const v2d m)
+// Jerry
+// was: v2d MetersToLatLon(const v2d& m)
+v2d MetersToLonLat(const v2d& m)
 {
 	v2d ll;
-	ll.x = (m.x / OriginShift) * 180.0f;
-	ll.y = (m.y / OriginShift) * 180.0f;
-	ll.y = 180.0f / PI * (2.0f * atan(exp(ll.y * PI / 180.0f)) - PI / 2.0f);
+	ll.x = (m.x / OriginShift) * 180.0;
+	ll.y = (m.y / OriginShift) * 180.0;
+	ll.y = 180.0 / PI * (2.0 * atan(exp(ll.y * PI / 180.0)) - PI / 2.0);
 	return ll;
 }
 //-----------------------------------------------------------------------------
