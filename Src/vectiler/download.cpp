@@ -7,13 +7,11 @@ MemoryStruct::~MemoryStruct() { free(memory); }
 void MemoryStruct::clear() { size = 0; }
 void MemoryStruct::add(const char* data, int count)
 {
-	//LOG("Add: %db\n", count);
 	int needed = size + count + 1;
 	if (needed > cap)
 	{
 		cap = Max(cap * 2, needed);
 		memory = (char*)realloc(memory, cap);
-		//LOG("realloc: %db\n", cap);
 	}
 	memcpy(&(memory[size]), data, count);
 	size += count;
@@ -59,26 +57,12 @@ bool DownloadData(MemoryStruct& out, const char* url)
 	CURLcode result = curl_easy_perform(curl);
 
 	if (result == CURLE_OK)
-		LOG("Downloaded tile in %.1fms\n", sw.GetMs());
+		LOG("Downloaded tile in %.1fms (%d kb uncompressed)\n", sw.GetMs(), out.size/1024);
 	else
 		LOG(" -- Failure: %s\n", curl_easy_strerror(result));
 
 	return result == CURLE_OK;// && out.rdbuf()->in_avail();
 }
-//-----------------------------------------------------------------------------
-/*inline std::string vectorTileURL(const Tile& tile, const std::string& apiKey) {
-	return "https://tile.mapzen.com/mapzen/vector/v1/all/"
-		+ std::to_string(tile.z) + "/"
-		+ std::to_string(tile.x) + "/"
-		+ std::to_string(tile.y) + ".json?api_key=" + apiKey;
-}
-//-----------------------------------------------------------------------------
-inline std::string terrainURL(const Tile& tile, const std::string& apiKey) {
-	return "https://tile.mapzen.com/mapzen/terrain/v1/terrarium/"
-		+ std::to_string(tile.z) + "/"
-		+ std::to_string(tile.x) + "/"
-		+ std::to_string(tile.y) + ".png?api_key=" + apiKey;
-}*/
 //-----------------------------------------------------------------------------
 CStrL VectorTileURL(int x, int y, int z, const char* apiKey)
 {

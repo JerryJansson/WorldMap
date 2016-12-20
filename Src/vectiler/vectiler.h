@@ -30,15 +30,7 @@ struct Params {
     float pedestalHeight;
 };
 
-/*#ifdef __cplusplus
-extern "C" {
-#endif*/
-
 int vectiler(struct Params parameters);
-
-/*#ifdef __cplusplus
-}
-#endif*/
 
 #ifdef VECTILER_UNIT_TESTS
 #include "tiledata.h"

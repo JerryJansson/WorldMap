@@ -694,9 +694,10 @@ int vectiler(Params exportParams)
 
 						// Height
 						double height = 0.0;
-                        auto itHeight = feature.props.numericProps.find(keyHeight);
                         if (layerBuildings)
 							height = exportParams.buildingsHeight * tile.invScale;
+
+						auto itHeight = feature.props.numericProps.find(keyHeight);
                         if (itHeight != feature.props.numericProps.end()) 
                             height = itHeight->second * scale;
          

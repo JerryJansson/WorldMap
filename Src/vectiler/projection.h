@@ -5,17 +5,12 @@
 #include <cmath>
 #include <functional>
 #include <bitset>
-//-----------------------------------------------------------------------------
-#define R_EARTH 6378137.0
-#define PI M_PI
-constexpr static double INV_360 = 1.0 / 360.0;
-constexpr static double INV_180 = 1.0 / 180.0;
-constexpr static double HALF_CIRCUMFERENCE = PI * R_EARTH;
+
 //-----------------------------------------------------------------------------
 v2d lonLatToMeters(const v2d _lonLat);
-v2d pixelsToMeters(const v2d _pix, const int _zoom, double _invTileSize);
-v4d tileBounds(int x, int y, int z, double _tileSize);
-v2d tileCenter(int x, int y, int z, double _tileSize);
+v2d pixelsToMeters(const v2d _pix, const int _zoom);
+v4d tileBounds(int x, int y, int z);
+v2d tileCenter(int x, int y, int z);
 //-----------------------------------------------------------------------------
 enum Border {
     right,
@@ -38,10 +33,14 @@ struct Tile {
 
     Tile(int x, int y, int z) : x(x), y(y), z(z)
 	{
-        v4d bounds = tileBounds(x, y, z, 256.0);
+        v4d bounds = tileBounds(x, y, z);
         tileOrigin = v2d(0.5 * (bounds.x + bounds.z), -0.5 * (bounds.y + bounds.w));
-        double scale = 0.5 * myAbs(bounds.x - bounds.z);
-        invScale = 1.0 / scale;
+        
+		// JJ
+		//double scale = 0.5 * myAbs(bounds.x - bounds.z);
+        //invScale = 1.0 / scale;
+		invScale = 1.0f;
+
         borders = 0;
     }
 };
@@ -54,3 +53,10 @@ namespace std {
         }
     };
 }
+
+//-----------------------------------------------------------------------------
+v2d lonLatToMeters(const v2d _lonLat);
+//-----------------------------------------------------------------------------
+v2d LatLonToMeters(double lat, double lon);
+v4d TileBoundsInMeters(v2d t, int zoom);
+v2d MetersToTile(v2d m, int zoom);

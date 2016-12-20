@@ -7,6 +7,7 @@
 #include "State_Game.h"
 #include "vectiler/jerry.h"
 #include "tinyobjloader/tiny_obj_loader.h"
+#include "vectiler/projection.h"
 
 //-----------------------------------------------------------------------------
 CStateManager	gStateManager;
@@ -201,6 +202,24 @@ bool MyApp_Init()
 	gStateManager.SetActiveState(state_game);
 
 	gViewer.Create();
+
+	//
+	float Latitude = 39.921864f;
+	float Longitude = 32.818442f;
+	int Range = 3;
+	int Zoom = 16;
+	//float TileSize = 100;
+
+	v4d bounds = TileBoundsInMeters(v2d(19294, 24642), 16);
+	v2d mini = v2d(bounds.x, bounds.y);
+	v2d maxi = v2d(bounds.z, bounds.w);
+	v2d extent = maxi - mini;
+	v2d center = mini + extent * 0.5;
+	v2d tile = MetersToTile(center, 16);
+
+	v2d lonlat(Longitude, Latitude);
+	v2d tmp1 = lonLatToMeters(lonlat);
+	v2d tmp2 = LatLonToMeters(Latitude, Longitude);
 
 	GetTile("19294", "24642", 16);
 	LoadObj("19294.24642.16.obj");
