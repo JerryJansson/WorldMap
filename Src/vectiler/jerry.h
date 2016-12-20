@@ -64,13 +64,15 @@ class MyTile : public Entity
 public:
 	enum Status { NOT_LOADED, LOADED, IN_SCENE } m_Status;
 public:
-	Vec3i	m_Grid;
-	uint32	m_Frame;
+	Vec3i	m_Tms;				// Tms grid coord xyz
+	Vec2d	m_OrigoMercator;	// This tile origo (lower left corner) in mercator coordinates
+	uint32	m_Frame;			// Last frame bump
 
 	MyTile(int x, int y, int zoom)
 	{
 		m_Frame = 0;
-		m_Grid = Vec3i(x, y, zoom);
+		m_Tms = Vec3i(x, y, zoom);
+		m_OrigoMercator = TileBounds(m_Tms.xy(), m_Tms.z).xy();
 		const CStrL tileName = Str_Printf("%d_%d_%d", x, y, zoom);
 		SetName(tileName);
 	}

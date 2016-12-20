@@ -6,6 +6,7 @@
 #include "State_Game.h"
 #include "Worldmap.h"
 #include "vectiler\projection.h"
+#include "vectiler\jerry.h"
 
 bool allowGuiInput = true;
 //-----------------------------------------------------------------------------
@@ -187,81 +188,78 @@ void TileManager::Update(CCamera* cam)
 	if (!m_Initialized)
 	{
 		m_Initialized = true;
-		m_LongLat = Vec2d(18.080, 59.346);	// Stockholm stadion
+		//m_LongLat = Vec2d(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
+		m_LongLat = Vec2d(-74.0130, 40.703);	// 19294, 24642 - Manhattan
 
-		Vec2d meters	 = LonLatToMeters(m_LongLat);
-		Vec2i tile		 = MetersToTile(meters, ZZZOOM);
-		Vec4d tileBounds = TileBounds(tile, ZZZOOM);
-		Vec2d tileMin	 = tileBounds.xy();
-		Vec2d tileMax	 = tileBounds.zw();
-		m_TileSize		 = tileMax.x - tileMin.x;
+		Vec2d meters	= LonLatToMeters(m_LongLat);
+		Vec2i tile		= MetersToTile(meters, ZZZOOM);
+		Vec2d tileMin	= TileMin(tile, ZZZOOM);
+		Vec2d tileMax	= TileMax(tile, ZZZOOM);
+		m_TileSize		= tileMax.x - tileMin.x;
 		// Set world origo at corner of tile
-		m_WorldOrigo.x	= tileMin.x;
-		m_WorldOrigo.y	= 0.0f;
-		m_WorldOrigo.z	= tileMin.y;
+		m_WorldOrigo	= tileMin;
 
 		// Set camera in center of tile
-		cam->SetWorldPos(Vec3(m_TileSize*0.5f, 20.0f, -m_TileSize*0.5f));
+		cam->SetWorldPos(Vec3(m_TileSize*0.5f, 40.0f, -m_TileSize*0.5f));
 
 		m_LastTile = Vec3i(0, 0, -1);
 	}
 
 	// Which tile is the camera in?
-	/*Vec2d mercatorMeters = m_WorldOrigo.xz();
-	mercatorMeters.x += cam->GetWorldPos().x;
-	mercatorMeters.y += cam->GetWorldPos().z;
-	Vec2i _camtile = MetersToTile(mercatorMeters, ZZZOOM);
-	Vec3i camtile;
-	camtile.x = _camtile.x;
-	camtile.y = _camtile.y;
-	camtile.z = ZZZOOM;
+	const Vec2d camMercator	= GlToMercator(cam->GetWorldPos());
+	const Vec2i _camtile	= MetersToTile(camMercator, ZZZOOM);
+	const Vec3i camtile		= Vec3i(_camtile.x, _camtile.y, ZZZOOM);
+	const uint32 frame		= Engine_GetFrameNumber();
 
-	const uint32 frame = Engine_GetFrameNumber();
-
-	//if (m_LastTile != camtile)
+	// We changed tile. The new tile is the new center of the world. Make camera position relative the
+	// new world origo
+	if (m_LastTile != camtile)
 	{
-		const int range = 0;
-		for (int ty = -range; ty <= range; ty++)
+		m_WorldOrigo = TileMin(_camtile, ZZZOOM);
+		Vec3 pos = MercatorToGl(camMercator);
+		pos.y = cam->GetWorldPos().y;
+		cam->SetPos(pos);
+
+		// Relocate tiles relative new origo
+		for (int i = 0; i < m_Tiles.Num(); i++)
 		{
-			for (int tx = -range; tx <= range; tx++)
-			{
-				Vec3i t(camtile.x + tx, camtile.y + ty, camtile.z);
-				MyTile* tile = m_Tiles.Get(t);
-
-				// Cached
-				if (tile)
-				{
-					// New origo
-					if (m_LastTile != camtile)
-					{
-						float xx = m_TileSize * (tx + 0.5f);
-						float zz = m_TileSize * (ty + 0.5f);
-						tile->SetPos(xx, 10.0f, zz);
-					}
-				}
-				else
-				{
-					tile = GetTile2(tx, ty, ZZZOOM);
-					if (tile)
-					{
-						float xx = m_TileSize * (tx + 0.5f);
-						float zz = m_TileSize * (ty + 0.5f);
-						tile->SetPos(xx, 10.0f, zz);
-					}
-				}
-
-				if (tile)
-				{
-					tile->m_Frame = frame;
-				}
-			}
+			MyTile* tile = m_Tiles[i].val;
+			tile->SetPos(MercatorToGl(tile->m_OrigoMercator));
 		}
-
-		m_LastTile = camtile;
 	}
 
+	
+	const int range = 0;
+	for (int ty = -range; ty <= range; ty++)
+	{
+		for (int tx = -range; tx <= range; tx++)
+		{
+			const Vec3i t(camtile.x + tx, camtile.y + ty, camtile.z);
+			MyTile* tile = m_Tiles.Get(t);
+
+			// Cached
+			if (!tile)
+			{
+				tile = GetTile2(t.x, t.y, ZZZOOM);
+				if (tile)
+				{
+					m_Tiles.Add(tile->m_Tms, tile);
+					Vec3 pos = MercatorToGl(tile->m_OrigoMercator);
+					tile->SetPos(pos);
+				}
+			}
+
+			if (tile)
+			{
+				tile->m_Frame = frame;
+			}
+		}
+	}
+
+	m_LastTile = camtile;
+
 	// Release tiles
-	for (int i = 0; i < m_Tiles.Num();)
+	/*for (int i = 0; i < m_Tiles.Num();)
 	{
 		MyTile* tile = m_Tiles[i].val;
 
@@ -271,7 +269,7 @@ void TileManager::Update(CCamera* cam)
 			continue;
 		}
 
-		m_Tiles.Remove(tile->m_Grid);
+		m_Tiles.Remove(tile->m_Tms);
 		delete tile;
 	}*/
 

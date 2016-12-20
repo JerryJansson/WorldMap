@@ -133,7 +133,7 @@ TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey)
 	CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
 	MemoryStruct out;
 	if (!DownloadData(out, url))
-		return nullptr;
+		return NULL;
 
 	// Parse written data into a JSON object
 	CStopWatch sw;
@@ -145,7 +145,7 @@ TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey)
 		LOG("Error parsing tile\n");
 		rapidjson::ParseErrorCode code = doc.GetParseError();
 		size_t errOffset = doc.GetErrorOffset();
-		return nullptr;
+		return NULL;
 	}
 
 	float tJson = sw.GetMs(true);

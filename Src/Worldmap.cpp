@@ -262,8 +262,7 @@ bool MyApp_Init()
 	//LoadObj(outFileName);
 	LoadBin(outFileName);*/
 
-	//GetTile2(tX, tY, zoom);
-	GetTile2(tile_tms.x, tile_tms.y, zoom);
+	//GetTile2(tile_tms.x, tile_tms.y, zoom);
 
 	return true;
 }

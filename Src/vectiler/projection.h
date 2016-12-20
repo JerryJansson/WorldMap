@@ -50,6 +50,8 @@ Vec2i MetersToTile(const Vec2d& m, const int zoom);
 //-----------------------------------------------------------------------------
 // Returns bounds of the given tile in EPSG:900913 coordinates
 //-----------------------------------------------------------------------------
+Vec2d TileMin(const Vec2i& t, const int zoom);
+Vec2d TileMax(const Vec2i& t, const int zoom);
 Vec4d TileBounds(const Vec2i& t, const int zoom);
 //-----------------------------------------------------------------------------
 // Converts TMS tile coordinates to Google Tile coordinates

@@ -681,6 +681,8 @@ bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes
 //-----------------------------------------------------------------------------
 bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr)
 {
+	CStopWatch sw;
+
 	CFile f;
 	if (!f.Open(fname, FILE_READ))
 		return false;
@@ -696,10 +698,6 @@ bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr)
 	int nMeshes = f.ReadInt();
 	geomArr.SetNum(nMeshes);
 
-	//Entity* rootEntity = new Entity(fname);
-	//gScene.AddEntity(rootEntity);
-
-	//GGeom geom;
 	for(int m=0; m<nMeshes; m++)
 	{
 		int nlen = f.ReadInt();
@@ -709,7 +707,6 @@ bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr)
 			return false;
 		}
 
-		//GGeom* geom = new GGeom();
 		GGeom& geom = geomArr[m];
 
 		char name[64];
@@ -738,20 +735,9 @@ bool LoadBin(const char* fname, TStackArray<GGeom, 64>& geomArr)
 		geom.SetMaterial(layerNames[type]);
 
 		LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
-		/*
-		
-		CMesh* mesh = CreateMeshFromGeoms(name, &geom, 1);
-
-		LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
-
-		Entity* e = new Entity(name);
-		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
-		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
-		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete);
-		//e->SetPos(CVec3(0, 10, 0));
-		//gScene.AddEntity(entity);
-		rootEntity->AddChild(e);*/
 	}
+
+	LOG("Loaded %s in %.1fms\n", fname, sw.GetMs());
 	
 	return true;
 }
