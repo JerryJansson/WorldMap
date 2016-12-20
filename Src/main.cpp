@@ -10,7 +10,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	w *= 0.95f;
 	h *= 0.95f;
 	
-	if (!Engine_Init(NULL, "SimView2", "1.0", w, h, "", "sandbox_worldmap/"))//, eInvisible/*|eFullScreen*/))
+	if (!Engine_Init(NULL, "World Map", "1.0", w, h, "", "sandbox_worldmap/"))//, eInvisible/*|eFullScreen*/))
 		return 0;
 
 	//E_SetWindowPos(550, 550);

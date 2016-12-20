@@ -38,6 +38,6 @@ struct Layer {
     std::vector<Feature> features;
 };
 //-----------------------------------------------------------------------------
-struct TileData {
+struct TileVectorData {
     std::vector<Layer> layers;
 };

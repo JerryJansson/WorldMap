@@ -1,6 +1,11 @@
 #include "Precompiled.h"
 #include "download.h"
+#include "tiledata.h"
+#include "geojson.h"
+#include "rapidjson/document.h"
 #include <curl/curl.h>
+//#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 //-----------------------------------------------------------------------------
 MemoryStruct::MemoryStruct() { memory = NULL; size = 0; cap = 0; }
 MemoryStruct::~MemoryStruct() { free(memory); }
@@ -72,4 +77,87 @@ CStrL VectorTileURL(int x, int y, int z, const char* apiKey)
 CStrL TerrainURL(int x, int y, int z, const char* apiKey)
 {
 	return Str_Printf("https://tile.mapzen.com/mapzen/terrain/v1/terrarium/%d/%d/%d.png?api_key=%s", z,x,y, apiKey);
+}
+//-----------------------------------------------------------------------------
+HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float extrusionScale)
+{
+	CStrL url = TerrainURL(tile.x, tile.y, tile.z, apiKey);
+	MemoryStruct out;
+	if (!DownloadData(out, url))
+		return nullptr;
+
+	// Decode texture PNG
+	int width, height, comp;
+	unsigned char* pixels = stbi_load_from_memory((stbi_uc*)out.memory, out.size, &width, &height, &comp, STBI_rgb_alpha);
+
+	if (comp != STBI_rgb_alpha)
+	{
+		printf("Failed to decompress PNG file\n");
+		return nullptr;
+	}
+
+	HeightData* data = new HeightData();
+
+	data->elevation.resize(height);
+	for (int i = 0; i < height; ++i)
+		data->elevation[i].resize(width);
+
+	data->width = width;
+	data->height = height;
+
+	unsigned char* pixel = pixels;
+	for (int i = 0; i < width * height; i++, pixel += 4)
+	{
+		float red = *(pixel + 0);
+		float green = *(pixel + 1);
+		float blue = *(pixel + 2);
+
+		// Decode the elevation packed data from color component
+		float elevation = (red * 256 + green + blue / 256) - 32768;
+
+		int y = i / height;
+		int x = i % width;
+
+		assert(x >= 0 && x <= width && y >= 0 && y <= height);
+
+		data->elevation[x][y] = elevation * extrusionScale;
+	}
+
+	return data;
+}
+//-----------------------------------------------------------------------------
+TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey)
+{
+	CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
+	MemoryStruct out;
+	if (!DownloadData(out, url))
+		return nullptr;
+
+	// Parse written data into a JSON object
+	CStopWatch sw;
+	rapidjson::Document doc;
+	doc.Parse(out.memory);
+
+	if (doc.HasParseError())
+	{
+		LOG("Error parsing tile\n");
+		rapidjson::ParseErrorCode code = doc.GetParseError();
+		size_t errOffset = doc.GetErrorOffset();
+		return nullptr;
+	}
+
+	float tJson = sw.GetMs(true);
+
+	TileVectorData* data = new TileVectorData();
+	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
+	{
+		data->layers.emplace_back(std::string(layer->name.GetString()));
+		GeoJson::extractLayer(layer->value, data->layers.back(), tile);
+	}
+
+	float tLayers = sw.GetMs();
+
+	LOG("Parsed json in %.1fms. Built GeoJson structures in %.1fms\n", tJson, tLayers);
+
+	return data;
 }

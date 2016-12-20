@@ -1,20 +1,12 @@
 #include "Precompiled.h"
 #include <fstream>
 #include <unordered_map>
-#include <memory>
-
-#include "rapidjson/document.h"
-
-#include "geojson.h"
 #include "tiledata.h"
 #include "vectiler.h"
 #include "earcut.h"
 
 #include "download.h"
 #include "geometry.h"
-
-//#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 #ifdef AOBAKER
 #include "aobaker.h"
@@ -36,19 +28,13 @@ int aobaker_bake(
 
 #define EPSILON 1e-5f
 //-----------------------------------------------------------------------------
-struct HeightData {
-    std::vector<std::vector<float>> elevation;
-    int width;
-    int height;
-};
-//-----------------------------------------------------------------------------
 bool withinTileRange(const v2& pos) { return pos.x >= -1.0 && pos.x <= 1.0 && pos.y >= -1.0 && pos.y <= 1.0; }
 /*-----------------------------------------------------------------------------
  * Sample elevation using bilinear texture sampling
  * - position: must lie within tile range [-1.0, 1.0]
  * - textureData: the elevation tile data, may be null
  //-----------------------------------------------------------------------------*/
-float sampleElevation(v2 position, const std::unique_ptr<HeightData>& textureData)
+float sampleElevation(v2 position, const HeightData* textureData)
 {
     if (!textureData)
 		return 0.0;
@@ -175,7 +161,7 @@ float buildPolygonExtrusion(const Polygon2& polygon,
     double height,
     std::vector<PolygonVertex>& outVertices,
     std::vector<unsigned int>& outIndices,
-    const std::unique_ptr<HeightData>& elevation,
+    const HeightData* elevation,
     float inverseTileScale)
 {
     int vertexDataOffset = outVertices.size();
@@ -243,7 +229,7 @@ void buildPolygon(const Polygon2& polygon,
     double height,
     std::vector<PolygonVertex>& outVertices,
     std::vector<unsigned int>& outIndices,
-    const std::unique_ptr<HeightData>& elevation,
+    const HeightData* elevation,
     float centroidHeight,
     float inverseTileScale)
 {
@@ -282,43 +268,26 @@ void buildPolygon(const Polygon2& polygon,
 void buildPedestalPlanes(const Tile& tile,
     std::vector<PolygonVertex>& outVertices,
     std::vector<unsigned int>& outIndices,
-    const std::unique_ptr<HeightData>& elevation,
+    const HeightData* elevation,
     unsigned int subdiv,
     float pedestalHeight)
 {
-    float offset = 1.0 / subdiv;
-    int vertexDataOffset = outVertices.size();
+    const float offset = 1.0 / subdiv;
+	const v3 upVector(0.0, 0.0, 1.0);
+	int vertexDataOffset = outVertices.size();
 
-    for (size_t i = 0; i < tile.borders.size(); ++i) {
-        if (!tile.borders[i]) {
-            continue;
-        }
+    for (size_t i = 0; i < tile.borders.size(); ++i)
+	{
+        if (!tile.borders[i]) continue;
 
-        for (float x = -1.0; x < 1.0; x += offset) {
-            static const v3 upVector(0.0, 0.0, 1.0);
-            v3 v0, v1;
+        for (float x = -1.0; x < 1.0; x += offset) 
+		{ 
+            v3 v0, v1, normalVector;
 
-            if (i == Border::right) {
-                v0 = v3(1.0, x + offset, 0.0);
-                v1 = v3(1.0, x, 0.0);
-            }
-
-            if (i == Border::left) {
-                v0 = v3(-1.0, x + offset, 0.0);
-                v1 = v3(-1.0, x, 0.0);
-            }
-
-            if (i == Border::top) {
-                v0 = v3(x + offset, 1.0, 0.0);
-                v1 = v3(x, 1.0, 0.0);
-            }
-
-            if (i == Border::bottom) {
-                v0 = v3(x + offset, -1.0, 0.0);
-                v1 = v3(x, -1.0, 0.0);
-            }
-
-            v3 normalVector;
+            if (i == Border::right)		{ v0 = v3(1.0, x + offset, 0.0);	v1 = v3(1.0, x, 0.0);	}
+            if (i == Border::left)		{ v0 = v3(-1.0, x + offset, 0.0);	v1 = v3(-1.0, x, 0.0);	}
+            if (i == Border::top)		{ v0 = v3(x + offset, 1.0, 0.0);	v1 = v3(x, 1.0, 0.0);	}
+            if (i == Border::bottom)	{ v0 = v3(x + offset, -1.0, 0.0);	v1 = v3(x, -1.0, 0.0);	}
 
             normalVector = glm::cross(upVector, v0 - v1);
             normalVector = glm::normalize(normalVector);
@@ -358,10 +327,7 @@ void buildPedestalPlanes(const Tile& tile,
 //-----------------------------------------------------------------------------
 v3 perp(const v3& v) { return glm::normalize(v3(-v.y, v.x, 0.0)); }
 //-----------------------------------------------------------------------------
-v3 computeMiterVector(const v3& d0,
-    const v3& d1,
-    const v3& n0,
-    const v3& n1)
+v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
 {
     v3 miter = glm::normalize(n0 + n1);
     float miterl2 = glm::dot(miter, miter);
@@ -406,7 +372,7 @@ void addPolygonPolylinePoint(Line& line,
     }
 }
 //-----------------------------------------------------------------------------
-void adjustTerrainEdges(std::unordered_map<Tile, std::unique_ptr<HeightData>>& heightData)
+void adjustTerrainEdges(std::unordered_map<Tile, HeightData*>& heightData)
 {
     for (auto& tileData0 : heightData)
 	{
@@ -444,89 +410,6 @@ void adjustTerrainEdges(std::unordered_map<Tile, std::unique_ptr<HeightData>>& h
             }
         }
     }
-}
-//-----------------------------------------------------------------------------
-std::unique_ptr<HeightData> DownloadHeightmapTile(const Tile& tile, const char* apiKey, float extrusionScale)
-{
-	CStrL url = TerrainURL(tile.x, tile.y, tile.z, apiKey);
-	MemoryStruct out;
-	if (!DownloadData(out, url))
-		return nullptr;
-
-	// Decode texture PNG
-	int width, height, comp;
-	unsigned char* pixels = stbi_load_from_memory((stbi_uc*)out.memory, out.size, &width, &height, &comp, STBI_rgb_alpha);
-
-	if (comp != STBI_rgb_alpha)
-	{
-		printf("Failed to decompress PNG file\n");
-		return nullptr;
-	}
-
-	std::unique_ptr<HeightData> data = std::unique_ptr<HeightData>(new HeightData());
-
-	data->elevation.resize(height);
-	for (int i = 0; i < height; ++i)
-		data->elevation[i].resize(width);
-
-	data->width = width;
-	data->height = height;
-
-	unsigned char* pixel = pixels;
-	for (int i = 0; i < width * height; i++, pixel += 4)
-	{
-		float red = *(pixel + 0);
-		float green = *(pixel + 1);
-		float blue = *(pixel + 2);
-
-		// Decode the elevation packed data from color component
-		float elevation = (red * 256 + green + blue / 256) - 32768;
-
-		int y = i / height;
-		int x = i % width;
-
-		assert(x >= 0 && x <= width && y >= 0 && y <= height);
-
-		data->elevation[x][y] = elevation * extrusionScale;
-	}
-
-	return data;
-}
-//-----------------------------------------------------------------------------
-std::unique_ptr<TileData> DownloadTile(const Tile& tile, const char* apiKey)
-{
-	CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
-	MemoryStruct out;
-	if (!DownloadData(out, url))
-		return nullptr;
-
-	// Parse written data into a JSON object
-	CStopWatch sw;
-	rapidjson::Document doc;
-	doc.Parse(out.memory);
-
-	if (doc.HasParseError())
-	{
-		LOG("Error parsing tile\n");
-		rapidjson::ParseErrorCode code = doc.GetParseError();
-		size_t errOffset = doc.GetErrorOffset();
-		return nullptr;
-	}
-
-	float tJson = sw.GetMs(true);
-
-	std::unique_ptr<TileData> data = std::unique_ptr<TileData>(new TileData());
-	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
-	{
-		data->layers.emplace_back(std::string(layer->name.GetString()));
-		GeoJson::extractLayer(layer->value, data->layers.back(), tile);
-	}
-
-	float tLayers = sw.GetMs();
-
-	LOG("Parsed json in %.1fms. Built GeoJson structures in %.1fms\n", tJson, tLayers);
-
-	return data;
 }
 //-----------------------------------------------------------------------------
 bool extractTileRange(const CStr& range, int& start, int& end)
@@ -580,8 +463,10 @@ int vectiler(Params exportParams, CStrL& outFileName)
 	const char* apiKey = exportParams.apiKey;
 	LOG("Using API key %s\n", apiKey);
 
-    std::unordered_map<Tile, std::unique_ptr<HeightData>> heightData;
-    std::unordered_map<Tile, std::unique_ptr<TileData>> vectorTileData;
+    //std::unordered_map<Tile, std::unique_ptr<HeightData>> heightData;
+    //std::unordered_map<Tile, std::unique_ptr<TileData>> vectorTileData;
+	std::unordered_map<Tile, HeightData*> heightData;
+	std::unordered_map<Tile, TileVectorData*> vectorTileData;
 
 	/// Download data
 	LOG("---- Downloading tile data ----\n");
@@ -600,7 +485,7 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
 		if (exportParams.buildings || exportParams.roads)
 		{
-			auto tileData = DownloadTile(tile, apiKey);
+			auto tileData = DownloadVectorTile(tile, apiKey);
 
 			if (!tileData)
 				LOG("Failed to download vector tile data for tile %d %d %d\n", tile.x, tile.y, tile.z);
@@ -627,12 +512,13 @@ int vectiler(Params exportParams, CStrL& outFileName)
         offset.x =  (tile.x - origin.x) * 2;
         offset.y = -(tile.y - origin.y) * 2;
 
-        const auto& textureData = heightData[tile];
+        //const auto& textureData = heightData[tile];
+		const auto heightMap = heightData[tile];
 
 		/// Build terrain mesh
 		if (exportParams.terrain)
 		{
-			if (!textureData)
+			if (!heightMap)
 				continue;
 
 			/// Extract a plane geometry, vertices in [-1.0,1.0], for terrain mesh
@@ -646,7 +532,7 @@ int vectiler(Params exportParams, CStrL& outFileName)
 				for (auto& vertex : mesh->vertices)
 				{
 					v2 tilePosition = v2(vertex.position.x, vertex.position.y);
-					float extrusion = sampleElevation(tilePosition, textureData);
+					float extrusion = sampleElevation(tilePosition, heightMap);
 
 					// Scale the height within the tile scale
 					vertex.position.z = extrusion * tile.invScale;
@@ -674,7 +560,7 @@ int vectiler(Params exportParams, CStrL& outFileName)
 				for (auto& vertex : ground->vertices)
 					vertex.position.z = exportParams.pedestalHeight * tile.invScale;
 
-				buildPedestalPlanes(tile, wall->vertices, wall->indices, textureData, exportParams.terrainSubdivision, exportParams.pedestalHeight);
+				buildPedestalPlanes(tile, wall->vertices, wall->indices, heightMap, exportParams.terrainSubdivision, exportParams.pedestalHeight);
 
 				ground->offset = offset;
 				//meshes.push_back(std::move(ground));
@@ -710,18 +596,13 @@ int vectiler(Params exportParams, CStrL& outFileName)
 					//if (layerRoads && !exportParams.roads) continue;			// Skip roads
 					if (type == eLayerBuildings && !exportParams.buildings) continue;	// Skip buildings
 					if (type == eLayerRoads && !exportParams.roads) continue;			// Skip roads
-		
-					/*std::vector<PolygonMesh*>*	meshArr = &meshes_other;
-					if (layerBuildings)			meshArr = &meshes_buildings;
-					else if (layerWater)		meshArr = &meshes_water;
-					else if (layerRoads)		meshArr = &meshes_roads;*/
 
 					const float default_height = type == eLayerBuildings ? exportParams.buildingsHeight * tile.invScale : 0.0f;
 
                     for (auto feature : layer.features) 
 					{
                         //if (textureData && !layerBuildings && !layerRoads) continue;
-						if (textureData && type != eLayerBuildings && type != eLayerRoads) continue;
+						if (heightMap && type != eLayerBuildings && type != eLayerRoads) continue;
 
 						// Height
 						float height = default_height;
@@ -730,7 +611,7 @@ int vectiler(Params exportParams, CStrL& outFileName)
                             height = itHeight->second * scale;
          
                         //if (textureData && !layerRoads && height == 0.0f)
-						if (textureData && type!=eLayerRoads && height == 0.0f)
+						if (heightMap && type!=eLayerRoads && height == 0.0f)
                             continue;
 
 						// Min height
@@ -750,9 +631,9 @@ int vectiler(Params exportParams, CStrL& outFileName)
 							{
                                 float centroidHeight = 0.f;
                                 if (minHeight != height)
-                                    centroidHeight = buildPolygonExtrusion(polygon, minHeight, height, mesh->vertices, mesh->indices, textureData, tile.invScale);
+                                    centroidHeight = buildPolygonExtrusion(polygon, minHeight, height, mesh->vertices, mesh->indices, heightMap, tile.invScale);
 
-                                buildPolygon(polygon, height, mesh->vertices, mesh->indices, textureData, centroidHeight, tile.invScale);
+                                buildPolygon(polygon, height, mesh->vertices, mesh->indices, heightMap, centroidHeight, tile.invScale);
                             }
                         }
 
@@ -826,11 +707,11 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
                                 buildPolygon(polygon, exportParams.roadsHeight * tile.invScale, mesh->vertices, mesh->indices, nullptr, 0.f, tile.invScale);
 
-                                if (textureData) 
+                                if (heightMap)
 								{
                                     for (auto it = mesh->vertices.begin() + offset; it != mesh->vertices.end(); ++it) 
 									{
-                                        it->position.z += sampleElevation(v2(it->position.x, it->position.y), textureData) * tile.invScale;
+                                        it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap) * tile.invScale;
                                     }
                                 }
                             }
@@ -854,10 +735,6 @@ int vectiler(Params exportParams, CStrL& outFileName)
 
 	// Separate all meshes in it's respective layer
 	std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
-	//for (PolygonMesh* mesh : meshes)
-	//	meshArr[mesh->layerType].push_back(mesh);
-
-	//PolygonMesh bigMesh[eNumLayerTypes];
 	
 	// Merge all meshes from same layer into 1 big mesh. If this mesh gets vcount>65536 the mesh is split
 	for (PolygonMesh* mesh : meshes)
@@ -867,7 +744,7 @@ int vectiler(Params exportParams, CStrL& outFileName)
 		// This mesh is to big. Throw it away
 		if (nv > 65536)
 		{
-			gLogger.Warning("Mesh > 65536. Must implement splitting");
+			gLogger.Warning("Mesh > 65536. Must implement mesh splitting");
 			continue;
 		}
 

@@ -424,10 +424,14 @@ bool LoadBin(const char* fname)
 
 		f.Read(idxs, ni * sizeof(uint32));
 		
-		geom.SetMaterial("testDiffuseSpec");
+		//geom.SetMaterial("testDiffuseSpec");
 
-		if (type == eLayerRoads)
-			geom.SetMaterial("$default");
+
+		if (type == eLayerTerrain) geom.SetMaterial("grass");
+		else if (type == eLayerBuildings) geom.SetMaterial("buildings");
+		else if (type == eLayerRoads) geom.SetMaterial("roads");
+		else if (type == eLayerWater) geom.SetMaterial("water");
+		else if (type == eLayerOther) geom.SetMaterial("other");
 
 		Entity* entity = new Entity(name);
 		MeshComponent* meshcomp = entity->CreateComponent<MeshComponent>();

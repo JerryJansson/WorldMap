@@ -244,7 +244,7 @@ bool MyApp_Init()
 	if (!gScene.Create(NULL))
 		return false;
 
-	gMaterialCategory = gResourceFactory.LoadMaterialLib("content_simview2/simview2.smt");
+	gMaterialCategory = gResourceFactory.LoadMaterialLib("content_worldmap/materials.smt");
 
 	CState_Game* state_game = new CState_Game("Game", "");
 	state_game->SetFadeTimes(0.3f, 0.3f);
@@ -253,9 +253,7 @@ bool MyApp_Init()
 
 	gViewer.Create();
 
-	//LoadObj("jerry.obj");
-	//return true;
-	//
+	
 	float Latitude = 39.921864f;
 	float Longitude = 32.818442f;
 	int Range = 3;
