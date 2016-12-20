@@ -124,8 +124,8 @@ v2 centroid(const std::vector<std::vector<v3>>& polygon)
 }
 //-----------------------------------------------------------------------------
 float buildPolygonExtrusion(const Polygon2& polygon,
-	double minHeight,
-	double height,
+	const float minHeight,
+	const float height,
 	std::vector<PolygonVertex>& outVertices,
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation,
@@ -194,7 +194,7 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 }
 //-----------------------------------------------------------------------------
 void buildPolygon(const Polygon2& polygon,
-	double height,
+	const float height,
 	std::vector<PolygonVertex>& outVertices,
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation,
@@ -284,35 +284,50 @@ void addPolygonPolylinePoint(Line& line,
 PolygonMesh* CreateMeshFromFeature(
 	const ELayerType layerType,
 	const Feature& feature,
-	const float minHeight,
-	const float height,
 	const HeightData* heightMap,
-	const float scale,				// tile.invScale
-	//const float lineExtrusionWidth, // params.roadsExtrusionWidth
-	const float lineExtrusionHeight // params.roadsHeight
+	const float scale				// tile.invScale
 )
 {
 	// JJ 
 	auto mesh = new PolygonMesh(layerType);
+
+	const float sortHeight = feature.sort_rank / (500.0f);
 
 	//if (exportParams.buildings)
 	if (feature.geometryType == GeometryType::polygons)
 	{
 		for (const Polygon2& polygon : feature.polygons)
 		{
-			float centroidHeight = 0.f;
-			if (minHeight != height)
-				centroidHeight = buildPolygonExtrusion(polygon, minHeight, height, mesh->vertices, mesh->indices, heightMap, scale);
+			if (feature.min_height > feature.height)
+			{
+				int abba = 10;
+			}
 
-			buildPolygon(polygon, height, mesh->vertices, mesh->indices, heightMap, centroidHeight, scale);
+			float centroidHeight = 0.f;
+			if (feature.min_height != feature.height)
+			{
+				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap, scale);
+				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight, scale);
+			}
+			else
+				buildPolygon(polygon, feature.height+sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight, scale);
 		}
 	}
 
 	//if (params.roads)
 	else if (feature.geometryType == GeometryType::lines)
 	{
+		if (layerType == eLayerRoads)
+		{
+			int abba = 10;
+		}
+		else
+		{
+			int abba = 10;
+		}
 		const float extrudeW = feature.road_width * scale;
-		const float extrudeH = lineExtrusionHeight * scale;
+		//const float extrudeH = lineExtrusionHeight * scale;
+		const float extrudeH = sortHeight;
 		for (const Line& line : feature.lines)
 		{
 			Polygon2 polygon;
@@ -376,7 +391,7 @@ PolygonMesh* CreateMeshFromFeature(
 			size_t offset = mesh->vertices.size();
 
 			if (extrudeH > 0)
-				buildPolygonExtrusion(polygon, 0.0, extrudeH, mesh->vertices, mesh->indices, nullptr, scale);
+				buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr, scale);
 
 			buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f, scale);
 

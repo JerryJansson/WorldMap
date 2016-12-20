@@ -11,10 +11,10 @@ struct Params2
 	int			terrainSubdivision;
 	float		terrainExtrusionScale;
 	bool		buildings;
-	float		buildingsHeight;
-	float		buildingsExtrusionScale;
+	//float		buildingsHeight;
+	//float		buildingsExtrusionScale;
 	bool		roads;
-	float		roadsHeight;
+	//float		roadsHeight;
 	//float		roadsExtrusionWidth;
 	//int pedestal;
 	//float pedestalHeight;

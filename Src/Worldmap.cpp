@@ -80,7 +80,7 @@ CViewer::CViewer()
 //-----------------------------------------------------------------------------
 bool CViewer::Create()
 {
-	m_DefaultGameCam.PerspectiveY(50.0f, 0.5f, 5000.0f);
+	m_DefaultGameCam.PerspectiveY(50.0f, 0.5f, 10000.0f);
 	m_DebugCam.PerspectiveY(50.0f, 0.5f, 5000.0f);
 	m_DefaultGameCam.SetName("Game Cam");
 	m_DebugCam.SetName("Debug Cam");

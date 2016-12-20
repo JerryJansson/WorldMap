@@ -262,9 +262,8 @@ bool vectiler2(const Params2 params)
 			LOG("Failed to download vector tile data for tile %d %d %d\n", tile.x, tile.y, tile.z);
 	}
 
-	std::vector<PolygonMesh*> meshes;
-
 	// Build meshes for the tile
+	std::vector<PolygonMesh*> meshes;
 	CStopWatch sw;
 	
 	// Build terrain mesh
@@ -290,42 +289,19 @@ bool vectiler2(const Params2 params)
 	if (vectorTileData)
 	{
 		const TileVectorData* data = vectorTileData;
-		//const static std::string keyHeight("height");
-		//const static std::string keyMinHeight("min_height");
-		const float scale = tile.invScale * params.buildingsExtrusionScale;
 
 		for (auto layer : data->layers)
 		{
-			//const int typeIdx = IndexFromStringTable(layer.name.c_str(), layerNames);
-			//const ELayerType type = typeIdx >= 0 ? (ELayerType)typeIdx : eLayerUnknown;
 			const ELayerType type = layer.layerType;
 			if (type == eLayerBuildings && !params.buildings) continue;	// Skip buildings
 			if (type == eLayerRoads && !params.roads) continue;			// Skip roads
 
-			const float default_height = type == eLayerBuildings ? params.buildingsHeight * tile.invScale : 0.0f;
-
 			for (auto feature : layer.features)
 			{
-				if (heightMap && type != eLayerBuildings && type != eLayerRoads) continue;
+				if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
+				if (heightMap && (type != eLayerRoads) && (feature.height == 0.0f))	continue;
 
-				// Height
-				const float height = feature.height > 0 ? feature.height : default_height;
-				/*float height = default_height;
-				auto itHeight = feature.props.numericProps.find(keyHeight);
-				if (itHeight != feature.props.numericProps.end())
-					height = itHeight->second * scale;*/
-
-				if (heightMap && (type != eLayerRoads) && (height == 0.0f))
-					continue;
-
-				// Min height
-				const float minHeight = feature.min_height > 0 ? feature.min_height : default_height;
-				/*double minHeight = 0.0;
-				auto itMinHeight = feature.props.numericProps.find(keyMinHeight);
-				if (itMinHeight != feature.props.numericProps.end())
-					minHeight = itMinHeight->second * scale;*/
-
-				auto mesh = CreateMeshFromFeature(type, feature, minHeight, height, heightMap, tile.invScale, params.roadsHeight);
+				auto mesh = CreateMeshFromFeature(type, feature, heightMap, tile.invScale);
 				if (mesh)
 					meshes.push_back(mesh);
 			}

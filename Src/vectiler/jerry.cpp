@@ -102,8 +102,8 @@ bool GetTile3(MyTile* t, TArray<GGeom>& geoms)
 	Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
 	LOG("GetTile tms: <%d,%d>, google: <%d, %d>\n", tms.x, tms.y, google.x, google.y);
 
-	if (LoadBin(fname, geoms))
-		return true;
+	//if (LoadBin(fname, geoms))
+	//	return true;
 
 	// Mapzen uses google xyz indexing
 	struct Params2 params =
@@ -116,10 +116,10 @@ bool GetTile3(MyTile* t, TArray<GGeom>& geoms)
 		64,						// terrainSubdivision
 		1.0f,					// terrainExtrusionScale
 		true,					// buildings. Whether to export building geometry
-		10.0f,					// buildingsHeight
-		1.0f,					// buildingsExtrusionScale
-		true,					// roads. Whether to export roads geometry
-		0.2f,					// roadsHeight
+		//10.0f,					// buildingsHeight
+		//1.0f,					// buildingsExtrusionScale
+		true					// roads. Whether to export roads geometry
+		//0.2f,					// roadsHeight
 		//3.0f					// roadsExtrusionWidth,
 	};
 

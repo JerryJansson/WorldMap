@@ -37,9 +37,11 @@ void GeoJson::extractPoly(const rapidjson::Value& _in, Polygon2& _out, const Til
     }
 }
 //-----------------------------------------------------------------------------
-void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value& _in, Feature& _out, const Tile& _tile)
+void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value& _in, Feature& _out, const Tile& _tile, const float defaultHeight)
 {
     const rapidjson::Value& properties = _in["properties"];
+
+	_out.height = defaultHeight;
 
     for (auto itr = properties.MemberBegin(); itr != properties.MemberEnd(); ++itr)
 	{
@@ -53,6 +55,8 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		if (strcmp(member, "height") == 0)			_out.height		= prop.GetDouble();
         else if (strcmp(member, "min_height") == 0) _out.min_height = prop.GetDouble();
 		else if (strcmp(member, "sort_rank") == 0)  _out.sort_rank	= prop.GetInt();
+		else if (strcmp(member, "name") == 0)		_out.name		= prop.GetString();
+		else if (strcmp(member, "id") == 0)			_out.id			= prop.GetInt64(); // Can be signed
 		else if (layerType == eLayerRoads)
 		{
 			if (strcmp(member, "kind") == 0)
@@ -79,6 +83,12 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 			}
 		}
     }
+
+	if (_out.min_height > _out.height)
+	{
+		int abba = 10;
+	}
+
 
     // Copy geometry into tile data
     const rapidjson::Value& geometry = _in["geometry"];
@@ -140,10 +150,13 @@ void GeoJson::extractLayer(const rapidjson::Value& _in, Layer& _out, const Tile&
         return;
     }
 
+	// Default values
+	float defaultHeight = _out.layerType == eLayerBuildings ? 9.0f : 0.0f;
+	
     const auto& features = featureIter->value;
     for (auto featureJson = features.Begin(); featureJson != features.End(); ++featureJson) 
 	{
         _out.features.emplace_back();
-        extractFeature(_out.layerType, *featureJson, _out.features.back(), _tile);
+        extractFeature(_out.layerType, *featureJson, _out.features.back(), _tile, defaultHeight);
     }
 }

@@ -28,8 +28,10 @@ struct Feature
     std::vector<Polygon2> polygons;
 
     //Properties props;
-	float height = 0;
-	float min_height = 0;
+	float	height = 0;
+	float	min_height = 0;
+	int64	id = 0;
+	CStr	name;
 	// 0 - 9: Under everything.Tip : disable earth layer.
 	// 190 - 199 : Under water.Above earth and most landuse.
 	// 290 - 299 : Under roads.Above borders, water, landuse, and earth.Your classic “underlay”.
