@@ -202,7 +202,6 @@ void buildPolygon(const Polygon2& polygon,
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation,
 	float centroidHeight)
-	//float inverseTileScale)
 {
 	mapbox::Earcut<float, unsigned int> earcut;
 	earcut(polygon);
@@ -226,7 +225,6 @@ void buildPolygon(const Polygon2& polygon,
 
 	static v3 normal(0.0, 0.0, 1.0);
 	outVertices.reserve(outVertices.size() + earcut.vertices.size());
-	//centroidHeight *= inverseTileScale;
 
 	for (auto& p : earcut.vertices)
 	{
@@ -284,7 +282,7 @@ void addPolygonPolylinePoint(Line& line,
 	}
 }
 //-----------------------------------------------------------------------------
-PolygonMesh* CreateMeshFromFeature(const ELayerType layerType,	const Feature& feature,	const HeightData* heightMap)
+PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& feature, const HeightData* heightMap)
 {
 	CStopWatch sw;
 
@@ -293,9 +291,10 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType,	const Feature& fe
 		int abba = 10;
 	}
 
-	// JJ 
-	auto mesh = new PolygonMesh(layerType);
+	if (feature.geometryType == GeometryType::unknown || feature.geometryType == GeometryType::points)
+		return NULL;
 
+	auto mesh = new PolygonMesh(layerType);
 	const float sortHeight = feature.sort_rank / (500.0f);
 
 	//if (exportParams.buildings)
@@ -311,11 +310,11 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType,	const Feature& fe
 			float centroidHeight = 0.f;
 			if (feature.min_height != feature.height)
 			{
-				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap);// , scale);
-				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight);// , scale);
+				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap);
+				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight);
 			}
 			else
-				buildPolygon(polygon, feature.height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);// , scale);
+				buildPolygon(polygon, feature.height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);
 		}
 	}
 
@@ -415,12 +414,11 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType,	const Feature& fe
 	}
 
 	float time = sw.GetMs();
-	if (time > 100)
+	if (time > 10)
 	{
-		int abba = 10;
+		LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
 	}
-	LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
-
+	
 	if (mesh->vertices.size() == 0)
 	{
 		delete mesh;

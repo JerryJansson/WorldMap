@@ -203,18 +203,72 @@ void CreatePedestalMeshes(const Tile& tile, const HeightData* heightMap, Polygon
 	meshes[1] = wall;
 }
 //-----------------------------------------------------------------------------
+// Split mesh into meshes for 16-bit indexing
+//-----------------------------------------------------------------------------
+static inline int SplitMesh(const PolygonMesh* src, std::vector<PolygonMesh*>& dstArr)
+{
+	const int src_nv = src->vertices.size();
+	
+	// No splitting needed
+	if (src_nv <= 65536)
+		return 0;
+
+	int* remap = new int[src_nv];
+
+	uint32 i = 0;
+	while (i < src->indices.size())
+	{
+		PolygonMesh* dst = new PolygonMesh(src->layerType);
+		dstArr.push_back(dst);
+
+		for (int k = 0; k < src_nv; k++)
+			remap[k] = -1;
+
+		while (i < src->indices.size() && dst->vertices.size() <= (65536 - 3))
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				const uint32 old_idx = src->indices[i + k];
+				int new_idx = remap[old_idx];
+
+				if (new_idx == -1)
+				{
+					new_idx = dst->vertices.size();
+					remap[old_idx] = new_idx;
+					dst->vertices.push_back(src->vertices[old_idx]);
+				}
+
+				dst->indices.push_back(new_idx);
+			}
+
+			i += 3;
+		}
+	}
+
+	LOG("Split mesh: v: %d, t:%d into:\n", src->vertices.size(), src->indices.size()/3);
+	for (size_t i = 0; i < dstArr.size(); i++)
+	{
+		LOG("%d: v: %d, t: %d\n", i, dstArr[i]->vertices.size(), dstArr[i]->indices.size()/3);
+	}
+	
+
+	return dstArr.size();
+}
+//-----------------------------------------------------------------------------
 // Separate all meshes in it's respective layer
-// Merge all meshes from same layer into 1 big mesh. If this mesh gets vcount>65536 the mesh is split
+// Merge as many small meshes together as possible (<65536 vertices)
 //-----------------------------------------------------------------------------
 void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
 {
 	for (PolygonMesh* mesh : meshes)
 	{
 		// This mesh is to big. Throw it away
-		if (mesh->vertices.size() > 65536) {
+		/*if (mesh->vertices.size() > 65536)
+		{
 			gLogger.Warning("Mesh > 65536. Must implement mesh splitting");
+			//SplitMesh()
 			continue;
-		}
+		}*/
 
 		std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
 		PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
@@ -231,6 +285,21 @@ void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<Polyg
 		if(meshArr[i].size())
 			LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
 	}*/
+}
+//-----------------------------------------------------------------------------
+static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpSplitArr, std::vector<PolygonMesh*>& outmeshes)
+{
+	int numSplits = SplitMesh(mesh, tmpSplitArr);
+	if (numSplits == 0)
+	{
+		outmeshes.push_back(mesh);
+	}
+	else
+	{
+		delete mesh;
+		outmeshes.insert(outmeshes.end(), tmpSplitArr.begin(), tmpSplitArr.end());
+		tmpSplitArr.clear();
+	}
 }
 //-----------------------------------------------------------------------------
 bool vectiler2(const Params2 params)
@@ -264,6 +333,7 @@ bool vectiler2(const Params2 params)
 
 	// Build meshes for the tile
 	std::vector<PolygonMesh*> meshes;
+	std::vector<PolygonMesh*> tmpSplitArr;
 	CStopWatch sw;
 	
 	// Build terrain mesh
@@ -271,7 +341,8 @@ bool vectiler2(const Params2 params)
 	{
 		PolygonMesh* mesh = CreateTerrainMesh(tile, heightMap, params.terrainSubdivision);
 		computeNormals(mesh);	// Compute faces normals
-		meshes.push_back(mesh);
+		//meshes.push_back(mesh);
+		AddNewMesh(mesh, tmpSplitArr, meshes);
 
 		/// Build pedestal
 		/*if (params.pedestal)
@@ -301,26 +372,38 @@ bool vectiler2(const Params2 params)
 				if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
 				if (heightMap && (type != eLayerRoads) && (feature.height == 0.0f))	continue;
 
-				auto mesh = CreateMeshFromFeature(type, feature, heightMap);// , tile.invScale);
+				auto mesh = CreateMeshFromFeature(type, feature, heightMap);
 				if (mesh)
-					meshes.push_back(mesh);
+					//meshes.push_back(mesh);
+					AddNewMesh(mesh, tmpSplitArr, meshes);
 			}
 		}
 	}
 
 	float t_BuildMeshes = sw.GetMs(true);
+
 	// Separate all meshes in it's respective layer
 	// Merge all meshes from same layer into 1 big mesh. If this mesh gets vcount>65536 the mesh is split
 	std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
 	MergeLayerMeshes(meshes, meshArr);
-	float t_MergeMeshes = sw.GetMs();
-
+	float t_MergeMeshes = sw.GetMs(true);
+	
 	LOG("Built %d layermeshes (%.1fms). Merged meshes (%.1fms)\n", meshes.size(), t_BuildMeshes, t_MergeMeshes);
 
 	// Save output BIN file
 	CStrL fname = Str_Printf("%d_%d_%d.bin", tile.x, tile.y, tile.z);
 	SaveBin(fname, meshArr);
 
+	// Delete all meshes
+	for (size_t i = 0; i < meshes.size(); i++)
+		delete meshes[i];
+
+	for (size_t i = 0; i < eNumLayerTypes; i++)
+	{
+		for (size_t k = 0; k < meshArr[i].size(); k++)
+			delete meshArr[i][k];
+	}
+	
 	/*std::string outFile = std::to_string(origin.x) + "." + std::to_string(origin.y) + "." + std::to_string(origin.z);
 	std::string outputOBJ = outFile + ".obj";
 	

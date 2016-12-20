@@ -11,7 +11,7 @@ static CVar tile_QuadTree("tile_QuadTree", false);
 //-----------------------------------------------------------------------------
 //#define ZZZOOM 16
 #define ZZZOOM 16					// Regular grid uses a fixed zoom
-const bool useSingleTile = false;	// Only load 1 tile. Good for debugging
+const bool useSingleTile = true;	// Only load 1 tile. Good for debugging
 const Vec3i singleTile(1204, 2554, 12);
 //const Vec3i singleTile(19294, 40893, 16);
 //const Vec3i singleTile(9647, 20446, 15);
