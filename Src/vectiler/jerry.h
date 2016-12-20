@@ -40,8 +40,6 @@ struct Tile {
 	int z;
 
 	std::bitset<4> borders;
-
-	//double invScale = 0.0;
 	Vec2d tileOrigin;
 
 	bool operator==(const Tile& rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z; }
@@ -49,14 +47,14 @@ struct Tile {
 	Tile(int x, int y, int z);
 };
 
-namespace std {
+/*namespace std {
 	template<>
 	struct hash<Tile> {
 		size_t operator()(const Tile &tile) const {
 			return std::hash<int>()(tile.x) ^ std::hash<int>()(tile.y) ^ std::hash<int>()(tile.z);
 		}
 	};
-}
+}*/
 //-----------------------------------------------------------------------------
 enum ELayerType
 {
@@ -77,9 +75,5 @@ enum ELayerType
 };
 //-----------------------------------------------------------------------------
 extern const char* layerNames[eNumLayerTypes + 1];
-
 //-----------------------------------------------------------------------------
-
-//int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName);
-//class MyTile* GetTile2(const int tileX, const int tileY, const int zoom);
-bool GetTile3(class MyTile* t, TArray<GGeom>& geoms);
+bool GetTile(class MyTile* t, TArray<GGeom>& geoms);

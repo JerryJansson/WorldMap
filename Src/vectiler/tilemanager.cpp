@@ -71,7 +71,7 @@ void StreamTile(int threadIdx)
 		poolLock.unlock();
 
 		result->tile = t;
-		GetTile3(result->tile, result->geoms);
+		GetTile(result->tile, result->geoms);
 
 		doneLock.lock();
 		doneList.PushBack(result);
@@ -82,8 +82,20 @@ void StreamTile(int threadIdx)
 void TileManager::Stop()
 {
 	stop = true;
+
+	// Wait for all streaming threads
 	for (int i = 0; i < numThreads; i++)
 		threads[i].join();
+
+	// Receive all streamed tiles
+	while (ReceiveLoadedTile()) {}
+
+	/*for (int i = 0; i < m_Tiles.Num(); i++)
+	{
+	MyTile* t = m_Tiles[i];
+	gScene.RemoveEntity(t);
+	m_Tiles.Remove
+	}*/
 }
 //-----------------------------------------------------------------------------
 void TileManager::Initialize(CCamera* cam)
@@ -195,6 +207,50 @@ int TileManager::ChooseTileToLoad(CCamera* cam, const TArray<Vec3i>& tiles)
 	return minidx;
 }
 //-----------------------------------------------------------------------------
+bool TileManager::ReceiveLoadedTile()
+{
+	// No tiles waiting to be received
+	if (doneList.IsEmpty())
+		return false;
+
+	StreamResult* r = NULL;
+	if (doneLock.try_lock())
+	{
+		r = doneList.PopFront();
+		doneLock.unlock();
+	}
+
+	if (!r)
+		return false;
+
+	MyTile* t = r->tile;
+	LOG("Received %d, %d in frame %d\n", t->m_Tms.x, t->m_Tms.y, Engine_GetFrameNumber());
+	t->m_Status = MyTile::eLoaded;
+	t->m_Frame = Engine_GetFrameNumber();
+
+	for (int i = 0; i < r->geoms.Num(); i++)
+	{
+		CMesh* mesh = CreateMeshFromGeoms(r->geoms[i].name, &r->geoms[i], 1);
+		Entity* e = new Entity(r->geoms[i].name);
+		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
+		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
+		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete); // Resets dirty flag
+		t->AddChild(e);
+	}
+
+	t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
+
+	gScene.AddEntity(t);
+
+	r->tile = NULL;
+	// Release geom memory
+	poolLock.lock();
+	geomPool.Free(r);
+	poolLock.unlock();
+
+	return true;
+}
+//-----------------------------------------------------------------------------
 static TArray<Vec3i> neededTiles(256);
 //-----------------------------------------------------------------------------
 void TileManager::Update(CCamera* cam)
@@ -249,43 +305,7 @@ void TileManager::Update(CCamera* cam)
 	}
 
 	// Any tiles done streaming?
-	if (!doneList.IsEmpty())
-	{
-		StreamResult* r = NULL;
-		if (doneLock.try_lock())
-		{
-			r = doneList.PopFront();
-			doneLock.unlock();
-		}
-
-		if (r)
-		{
-			MyTile* t = r->tile;
-			LOG("Received %d, %d in frame %d\n", t->m_Tms.x, t->m_Tms.y, frame);
-			t->m_Status = MyTile::eLoaded;
-			t->m_Frame = frame;
-
-			for (int i = 0; i < r->geoms.Num(); i++)
-			{
-				CMesh* mesh = CreateMeshFromGeoms(r->geoms[i].name, &r->geoms[i], 1);
-				Entity* e = new Entity(r->geoms[i].name);
-				MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
-				meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
-				meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete); // Resets dirty flag
-				t->AddChild(e);
-			}
-
-			t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
-
-			gScene.AddEntity(t);
-
-			r->tile = NULL;
-			// Release geom memory
-			poolLock.lock();
-			geomPool.Free(r);
-			poolLock.unlock();
-		}
-	}
+	ReceiveLoadedTile();
 }
 
 //-----------------------------------------------------------------------------
@@ -387,14 +407,10 @@ void TileManager::UpdateQTree(CCamera* cam)
 			int zoom = t.z + 1;
 			int x = t.x << 1;
 			int y = t.y << 1;
-			Vec3i c0 = Vec3i(x, y, zoom);
-			Vec3i c1 = Vec3i(x+1, y, zoom);
-			Vec3i c2 = Vec3i(x+1, y+1, zoom);
-			Vec3i c3 = Vec3i(x, y+1, zoom);
-			stack.Push(c0);
-			stack.Push(c1);
-			stack.Push(c2);
-			stack.Push(c3);
+			stack.Push(Vec3i(x, y, zoom));
+			stack.Push(Vec3i(x + 1, y, zoom));
+			stack.Push(Vec3i(x + 1, y + 1, zoom));
+			stack.Push(Vec3i(x, y + 1, zoom));
 		}
 	}
 }
@@ -405,12 +421,16 @@ void TileManager::RenderDebug2d(CCamera* cam)
 	int sh = gRenderer->GetScreenHeight();
 	Vec2 screenpos(sw / 2, sh / 2);
 
-	float scale = 1.0f / 100.0f;
-
 	const Vec2d camMercator2d = GlToMercator2d(cam->GetWorldPos());
 
 	int minz = 200;
 	int maxz = 0;
+
+	if (neededTiles.Num() < 100)
+	{
+		int abba = 10;
+	}
+
 	for (int i = 0; i < neededTiles.Num(); i++)
 	{
 		const Vec3i& t = neededTiles[i];

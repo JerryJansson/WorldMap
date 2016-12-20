@@ -1,5 +1,5 @@
 #include "Precompiled.h"
-#include <unordered_map>
+//#include <unordered_map>
 #include "tiledata.h"
 #include "vectiler.h"
 #include "download.h"
@@ -126,7 +126,7 @@ void buildPedestalPlanes(const Tile& tile,
 	}
 }
 //-----------------------------------------------------------------------------
-void adjustTerrainEdges(std::unordered_map<Tile, HeightData*>& heightData)
+/*void adjustTerrainEdges(std::unordered_map<Tile, HeightData*>& heightData)
 {
 	for (auto& tileData0 : heightData)
 	{
@@ -164,7 +164,7 @@ void adjustTerrainEdges(std::unordered_map<Tile, HeightData*>& heightData)
 			}
 		}
 	}
-}
+}*/
 //-----------------------------------------------------------------------------
 // Extract a plane geometry, vertices in [-1.0,1.0], for terrain mesh
 //-----------------------------------------------------------------------------
@@ -180,8 +180,7 @@ PolygonMesh* CreateTerrainMesh(const Tile& tile, const HeightData* heightMap, co
 	for (auto& vertex : mesh->vertices)
 	{
 		v2 tilePosition = v2(vertex.position.x, vertex.position.y);
-		float extrusion = sampleElevation(tilePosition, heightMap);
-		vertex.position.z = extrusion;// *tile.invScale;				// Scale the height within the tile scale
+		vertex.position.z = sampleElevation(tilePosition, heightMap);
 	}
 
 	return mesh;
@@ -195,7 +194,7 @@ void CreatePedestalMeshes(const Tile& tile, const HeightData* heightMap, Polygon
 	buildPlane(ground->vertices, ground->indices, 2.0, 2.0, terrainSubdivision, terrainSubdivision, true);
 
 	for (auto& vertex : ground->vertices)
-		vertex.position.z = pedestalHeight;// *tile.invScale;
+		vertex.position.z = pedestalHeight;
 
 	buildPedestalPlanes(tile, wall->vertices, wall->indices, heightMap, terrainSubdivision, pedestalHeight);
 
@@ -302,7 +301,7 @@ static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpS
 	}
 }
 //-----------------------------------------------------------------------------
-bool vectiler2(const Params2 params)
+bool vectiler(const Params2& params)
 {
 	HeightData* heightMap = NULL;
 	TileVectorData* vectorTileData = NULL;
@@ -341,7 +340,6 @@ bool vectiler2(const Params2 params)
 	{
 		PolygonMesh* mesh = CreateTerrainMesh(tile, heightMap, params.terrainSubdivision);
 		computeNormals(mesh);	// Compute faces normals
-		//meshes.push_back(mesh);
 		AddNewMesh(mesh, tmpSplitArr, meshes);
 
 		/// Build pedestal
@@ -374,7 +372,6 @@ bool vectiler2(const Params2 params)
 
 				auto mesh = CreateMeshFromFeature(type, feature, heightMap);
 				if (mesh)
-					//meshes.push_back(mesh);
 					AddNewMesh(mesh, tmpSplitArr, meshes);
 			}
 		}
@@ -404,19 +401,5 @@ bool vectiler2(const Params2 params)
 			delete meshArr[i][k];
 	}
 	
-	/*std::string outFile = std::to_string(origin.x) + "." + std::to_string(origin.y) + "." + std::to_string(origin.z);
-	std::string outputOBJ = outFile + ".obj";
-	
-	// Save output OBJ file
-	bool saved = saveOBJ(outputOBJ.c_str(),
-		exportParams.splitMesh, meshes,
-		exportParams.offset[0],
-		exportParams.offset[1],
-		exportParams.append,
-		exportParams.normals);
-
-	if (!saved)
-		return EXIT_FAILURE;*/
-
 	return true;
 }

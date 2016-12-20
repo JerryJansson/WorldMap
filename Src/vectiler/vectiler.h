@@ -11,13 +11,7 @@ struct Params2
 	int			terrainSubdivision;
 	float		terrainExtrusionScale;
 	bool		buildings;
-	//float		buildingsHeight;
-	//float		buildingsExtrusionScale;
 	bool		roads;
-	//float		roadsHeight;
-	//float		roadsExtrusionWidth;
-	//int pedestal;
-	//float pedestalHeight;
 };
 
-bool vectiler2(const Params2 params);
+bool vectiler(const Params2& params);

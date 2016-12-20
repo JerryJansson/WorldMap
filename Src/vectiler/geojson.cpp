@@ -5,8 +5,9 @@
 bool GeoJson::extractPoint(const rapidjson::Value& _in, Point& _out, const Tile& _tile, Point* last)
 {
     const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
-	_out.x = (pos.x - _tile.tileOrigin.x);// *_tile.invScale;
-	_out.y = (pos.y - _tile.tileOrigin.y);// *_tile.invScale;
+	_out.x = (pos.x - _tile.tileOrigin.x);
+	_out.y = (pos.y - _tile.tileOrigin.y);
+	_out.z = 0;
     if (last && glm::length(_out - *last) < 1e-5f) {
         return false;
     }

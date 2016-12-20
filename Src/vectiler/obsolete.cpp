@@ -420,6 +420,61 @@ int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName)
 
 	return vectiler(parameters, outFileName);
 }
+//-----------------------------------------------------------------------------
+/*MyTile* GetTile2(const Vec3i tms)
+{
+const CStrL tileName = Str_Printf("%d_%d_%d", tms.x, tms.y, tms.z);
+const CStrL fname = tileName + ".bin";
+
+Vec2i google = TmsToGoogleTile(Vec2i(tileKey.x, tms.y), tms.z);
+LOG("GetTile tms: <%d,%d>, google: <%d, %d>\n", tms.x, tms.y, google.x, google.y);
+
+//if (LoadBin(fname))
+//	return true;
+
+
+// Mapzen uses google xyz indexing
+struct Params2 params =
+{
+"vector-tiles-qVaBcRA",	// apiKey
+tms.x,					// Tile X
+tms.y,					// Tile Y
+tms.z,					// Tile Z (zoom)
+false,					// terrain. Generate terrain elevation topography
+64,						// terrainSubdivision
+1.0f,					// terrainExtrusionScale
+true,					// buildings. Whether to export building geometry
+10.0f,					// buildingsHeight
+1.0f,					// buildingsExtrusionScale
+true,					// roads. Whether to export roads geometry
+0.2f,					// roadsHeight
+3.0f					// roadsExtrusionWidth,
+};
+
+if (!vectiler2(params))
+return NULL;
+
+TStackArray<GGeom, 64> geoms;
+if (!LoadBin(fname, geoms))
+return NULL;
+
+MyTile* tileEntity = new MyTile(tileKey);
+
+for (int i = 0; i < geoms.Num(); i++)
+{
+CMesh* mesh = CreateMeshFromGeoms(geoms[i].name, &geoms[i], 1);
+Entity* e = new Entity(geoms[i].name);
+MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
+meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
+meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete);
+//e->SetPos(CVec3(0, 10, 0));
+//gScene.AddEntity(entity);
+tileEntity->AddChild(e);
+}
+
+gScene.AddEntity(tileEntity);
+return tileEntity;
+}*/
 
 //-----------------------------------------------------------------------------
 
@@ -484,3 +539,192 @@ bool SaveOBJ2(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerType
 
 	return true;
 }
+//-----------------------------------------------------------------------------
+#if 0
+void addFaces(std::ostream& file, const PolygonMesh& mesh, size_t indexOffset, bool normals)
+{
+	for (size_t i = 0; i < mesh.indices.size(); i += 3)
+	{
+		file << "f " << mesh.indices[i] + indexOffset + 1 << (normals ? "//" + std::to_string(mesh.indices[i] + indexOffset + 1) : "");
+		file << " ";
+		file << mesh.indices[i + 1] + indexOffset + 1 << (normals ? "//" + std::to_string(mesh.indices[i + 1] + indexOffset + 1) : "");
+		file << " ";
+		file << mesh.indices[i + 2] + indexOffset + 1 << (normals ? "//" + std::to_string(mesh.indices[i + 2] + indexOffset + 1) : "");
+		file << "\n";
+	}
+}
+//-----------------------------------------------------------------------------
+void addNormals(std::ostream& file, const PolygonMesh& mesh)
+{
+	// JJ Flip
+	for (auto v : mesh.vertices)
+		file << "vn " << v.normal.x << " " << v.normal.z << " " << -v.normal.y << "\n";
+	//for (auto vertex : mesh.vertices)
+	//	file << "vn " << vertex.normal.x << " " << vertex.normal.y << " " << vertex.normal.z << "\n";
+}
+//-----------------------------------------------------------------------------
+void addPositions(std::ostream& file, const PolygonMesh& mesh, float offsetx, float offsety)
+{
+	for (auto v : mesh.vertices)
+	{
+		// JJ - flip
+		file << "v " << v.position.x + offsetx + mesh.offset.x << " " << v.position.z << " " << -v.position.y + offsety + mesh.offset.y << "\n";
+		//file << "v " << v.position.x + offsetx + mesh.offset.x << " " << v.position.y + offsety + mesh.offset.y << " " << v.position.z << "\n";
+	}
+}
+/*-----------------------------------------------------------------------------
+* Save an obj file for the set of meshes
+* - outputOBJ: the output filename of the wavefront object file
+* - splitMeshes: will enable exporting meshes as single objects within
+*   the wavefront file
+* - offsetx/y: are global offset, additional to the inner mesh offset
+* - append: option will append meshes to an existing obj file
+*   (filename should be the same)
+-----------------------------------------------------------------------------*/
+bool saveOBJ(const char* outputOBJ,
+	bool splitMeshes,
+	std::vector<PolygonMesh*>& meshes,
+	float offsetx,
+	float offsety,
+	bool append,
+	bool normals)
+{
+	size_t maxindex = 0;
+
+	/// Find max index from previously existing wavefront vertices
+	{
+		std::ifstream filein(outputOBJ, std::ios::in);
+		std::string token;
+
+		if (filein.good() && append)
+		{
+			// TODO: optimize this
+			while (!filein.eof())
+			{
+				filein >> token;
+				if (token == "f") {
+					std::string faceLine;
+					getline(filein, faceLine);
+
+					for (unsigned int i = 0; i < faceLine.length(); ++i)
+					{
+						if (faceLine[i] == '/')
+							faceLine[i] = ' ';
+					}
+
+					std::stringstream ss(faceLine);
+					std::string faceToken;
+
+					for (int i = 0; i < 6; ++i)
+					{
+						ss >> faceToken;
+						if (faceToken.find_first_not_of("\t\n ") != std::string::npos)
+						{
+							size_t index = atoi(faceToken.c_str());
+							maxindex = index > maxindex ? index : maxindex;
+						}
+					}
+				}
+			}
+
+			filein.close();
+		}
+	}
+
+	/// Save obj file
+	{
+		std::ofstream file(outputOBJ);
+
+		if (append)
+			file.seekp(std::ios_base::end);
+
+		if (file.is_open())
+		{
+			size_t nVertex = 0;
+			size_t nTriangles = 0;
+
+			file << "# exported with vectiler: https://github.com/karimnaaji/vectiler" << "\n";
+			file << "\n";
+
+			int indexOffset = maxindex;
+
+			if (splitMeshes)
+			{
+				int meshCnt = 0;
+
+				for (const auto& mesh : meshes)
+				{
+					if (mesh->vertices.size() == 0) { continue; }
+
+					file << "o mesh" << meshCnt++ << "\n";
+
+					addPositions(file, *mesh, offsetx, offsety);
+					nVertex += mesh->vertices.size();
+
+					if (normals)
+						addNormals(file, *mesh);
+
+					addFaces(file, *mesh, indexOffset, normals);
+					nTriangles += mesh->indices.size() / 3;
+
+					file << "\n";
+
+					indexOffset += mesh->vertices.size();
+				}
+			}
+			else
+			{
+				file << "o " << outputOBJ << "\n";
+
+				for (const auto& mesh : meshes)
+				{
+					if (mesh->vertices.size() == 0) continue;
+					addPositions(file, *mesh, offsetx, offsety);
+					nVertex += mesh->vertices.size();
+				}
+
+				if (normals)
+				{
+					for (const auto& mesh : meshes)
+					{
+						if (mesh->vertices.size() == 0) continue;
+						addNormals(file, *mesh);
+					}
+				}
+
+				for (const auto& mesh : meshes)
+				{
+					if (mesh->vertices.size() == 0) continue;
+					addFaces(file, *mesh, indexOffset, normals);
+					indexOffset += mesh->vertices.size();
+					nTriangles += mesh->indices.size() / 3;
+				}
+			}
+
+			file.close();
+
+			// Print infos
+			{
+				LOG("Saved obj file: %s\n", outputOBJ);
+				LOG("Triangles: %ld\n", nTriangles);
+				LOG("Vertices: %ld\n", nVertex);
+
+				std::ifstream in(outputOBJ, std::ifstream::ate | std::ifstream::binary);
+				if (in.is_open())
+				{
+					int size = (int)in.tellg();
+					LOG("File size: %fmb\n", float(size) / (1024 * 1024));
+					in.close();
+				}
+			}
+
+			return true;
+		}
+		else {
+			LOG("Can't open file %s\n", outputOBJ);
+		}
+	}
+
+	return false;
+}
+#endif

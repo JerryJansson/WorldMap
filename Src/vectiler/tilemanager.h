@@ -45,9 +45,10 @@ public:
 	void RenderDebug2d(CCamera* cam	);
 
 private:
-	void Initialize(CCamera* cam);
-	Vec3i ShiftOrigo(CCamera* cam);
-	int ChooseTileToLoad(CCamera* cam, const TArray<Vec3i>& tiles);
+	void	Initialize(CCamera* cam);
+	Vec3i	ShiftOrigo(CCamera* cam);
+	int		ChooseTileToLoad(CCamera* cam, const TArray<Vec3i>& tiles);
+	bool	ReceiveLoadedTile();
 };
 
 extern TileManager gTileManager;
