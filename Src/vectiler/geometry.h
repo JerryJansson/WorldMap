@@ -8,13 +8,8 @@ struct PolygonVertex {
 	v3 normal;
 };
 //-----------------------------------------------------------------------------
-/*struct HeightData {
-	std::vector<std::vector<float>> elevation;
-	int width;
-	int height;
-};*/
-//-----------------------------------------------------------------------------
-struct PolygonMesh {
+struct PolygonMesh
+{
 	std::vector<unsigned int> indices;
 	std::vector<PolygonVertex> vertices;
 	v2 offset;

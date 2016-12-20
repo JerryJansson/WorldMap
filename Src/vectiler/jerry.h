@@ -24,4 +24,4 @@ typedef CVec4d	v4d;
 #define myClamp Clamp
 #endif
 
-int GetTile(const char* tileX = "19294", const char* tileY = "24642", int tileZ = 16);
+int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName);

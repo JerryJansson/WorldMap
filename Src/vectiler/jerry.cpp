@@ -1,7 +1,7 @@
 #include "Precompiled.h"
 #include "vectiler.h"
 
-int GetTile(const char* tileX, const char* tileY, int tileZ)
+int GetTile(const char* tileX, const char* tileY, int tileZ, CStrL& outFileName)
 {
 	// Default parameters
 	int aoAtlasSize = 512;
@@ -11,8 +11,8 @@ int GetTile(const char* tileX, const char* tileY, int tileZ)
 	int terrainSubdivision = 64;
 	float terrainExtrusionScale = 1.f;
 	float buildingsExtrusionScale = 1.f;
-	float buildingsHeight = 0.f;
-	float roadsHeight = 1.f;
+	float buildingsHeight = 10.0f; //0.0f
+	float roadsHeight = 0.2f; // 1.0f
 	float roadsExtrusionWidth = 5.f;
 	const char* apiKey = "vector-tiles-qVaBcRA";
 
@@ -60,7 +60,7 @@ int GetTile(const char* tileX, const char* tileY, int tileZ)
 		terrainSubdivision, terrainExtrusionScale, 
 		true,						// buildings. Whether to export building geometry
 		buildingsExtrusionScale,
-		false,						// roads. Whether to export roads geometry
+		true,						// roads. Whether to export roads geometry
 		roadsHeight, roadsExtrusionWidth, 
 		true,						// normals. Export with normals
 		buildingsHeight, pedestal,
@@ -76,5 +76,5 @@ int GetTile(const char* tileX, const char* tileY, int tileZ)
 		return EXIT_FAILURE;
 	}
 
-	return vectiler(parameters);
+	return vectiler(parameters, outFileName);
 }

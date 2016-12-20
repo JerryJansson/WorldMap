@@ -15,7 +15,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	//E_SetWindowPos(550, 550);
 	//E_ShowWindow(true);
-	
+
 
 	gConsole.ExecuteFile("content_simview2/engine.cfg");
 

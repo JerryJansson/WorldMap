@@ -188,6 +188,14 @@ int gMaterialCategory = -1;
 //-----------------------------------------------------------------------------
 bool MyApp_Init()
 {
+	for (int i = 0; i < 10; i++)
+	{
+		int a = pow(2, i);
+		int b = 1 << i;
+
+		LOG("%d: %d, %d\n", i, a, b);
+	}
+
 	Input_SetMouseMode(MOUSE_MODE_HIDDEN);
 	Editor_Init();
 	
@@ -207,7 +215,6 @@ bool MyApp_Init()
 	float Latitude = 39.921864f;
 	float Longitude = 32.818442f;
 	int Range = 3;
-	int Zoom = 16;
 	//float TileSize = 100;
 
 	v4d bounds = TileBoundsInMeters(v2d(19294, 24642), 16);
@@ -221,8 +228,38 @@ bool MyApp_Init()
 	v2d tmp1 = lonLatToMeters(lonlat);
 	v2d tmp2 = LatLonToMeters(Latitude, Longitude);
 
-	GetTile("19294", "24642", 16);
-	LoadObj("19294.24642.16.obj");
+	
+	int tX = 19294;
+	int tY = 24642;
+
+
+	const char* tileX = NULL;
+	const char* tileY = NULL;
+	int zoom = 16;
+	// Manhattan
+	if (1)
+	{
+		tileX = "19294";
+		tileY = "24642";
+	}
+	// Stadion?
+	else if (0)
+	{
+		tileX = "36059";
+		tileY = "19267";	// Google tile coords
+		//tileY = "46268";
+	}
+	else if (0)
+	{
+		tileX = "36059";
+		tileY = "19268";	// Google tile coords
+	}
+	
+	CStrL outFileName;
+	int result = GetTile(tileX, tileY, zoom, outFileName);
+	if (result == EXIT_FAILURE)
+		return false;
+	LoadObj(outFileName);
 
 	return true;
 }

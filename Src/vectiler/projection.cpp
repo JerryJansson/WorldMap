@@ -68,7 +68,7 @@ v2d LatLonToMeters(const v2d v)
 	return LatLonToMeters(v.x, v.y);
 }
 //-----------------------------------------------------------------------------
-//Resolution (meters/pixel) for given zoom level (measured at Equator)
+// Resolution (meters/pixel) for given zoom level (measured at Equator)
 //-----------------------------------------------------------------------------
 double Resolution(int zoom)
 {

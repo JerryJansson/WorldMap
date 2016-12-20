@@ -563,7 +563,7 @@ bool ExtractTiles(const char* tilex, const char* tiley, const int tilez, std::ve
 	return true;
 }
 //-----------------------------------------------------------------------------
-int vectiler(Params exportParams)
+int vectiler(Params exportParams, CStrL& outFileName)
 {
 	/// Parse tile params
     std::vector<Tile> tiles;
@@ -607,6 +607,10 @@ int vectiler(Params exportParams)
         adjustTerrainEdges(heightData);
 
     std::vector<std::unique_ptr<PolygonMesh>> meshes;
+	/*std::vector<PolygonMesh*> meshes_buildings;
+	std::vector<PolygonMesh*> meshes_roads;
+	std::vector<PolygonMesh*> meshes_water;
+	std::vector<PolygonMesh*> meshes_other;*/
 
     v2 offset;
     Tile origin = tiles[0];
@@ -687,21 +691,19 @@ int vectiler(Params exportParams)
 					const bool layerWater = layer.name == "water";
 					const bool layerBuildings = layer.name == "buildings";
 					const bool layerRoads = layer.name == "roads";
+					const float default_height = layerBuildings ? exportParams.buildingsHeight * tile.invScale : 0.0f;
 
                     for (auto feature : layer.features) 
 					{
                         if (textureData && !layerBuildings && !layerRoads) continue;
 
 						// Height
-						double height = 0.0;
-                        if (layerBuildings)
-							height = exportParams.buildingsHeight * tile.invScale;
-
+						float height = default_height;
 						auto itHeight = feature.props.numericProps.find(keyHeight);
                         if (itHeight != feature.props.numericProps.end()) 
                             height = itHeight->second * scale;
          
-                        if (textureData && !layerRoads && height == 0.0)
+                        if (textureData && !layerRoads && height == 0.0f)
                             continue;
 
 						// Min height
@@ -726,10 +728,10 @@ int vectiler(Params exportParams)
 
                         if (exportParams.roads)
 						{
+							const float extrude = exportParams.roadsExtrusionWidth * tile.invScale;
                             for (Line& line : feature.lines)
 							{
                                 Polygon2 polygon;
-                                float extrude = exportParams.roadsExtrusionWidth * tile.invScale;
                                 polygon.emplace_back();
                                 Line& polygonLine = polygon.back();
 
@@ -826,6 +828,7 @@ int vectiler(Params exportParams)
 
     std::string outputOBJ = outFile + ".obj";
 
+	outFileName = outputOBJ.c_str();
     // Save output OBJ file
     bool saved = saveOBJ(outputOBJ.c_str(),
         exportParams.splitMesh, meshes,
