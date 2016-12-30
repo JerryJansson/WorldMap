@@ -4,6 +4,8 @@
 #include "geometry.h"
 #include "tilemanager.h"
 //-----------------------------------------------------------------------------
+extern CVar tile_DiscCache;
+//-----------------------------------------------------------------------------
 const char* layerNames[eNumLayerTypes + 1] =
 {
 	"unknown",
@@ -39,8 +41,11 @@ bool GetTile(MyTile* t, TArray<GGeom>& geoms)
 	Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
 	LOG("GetTile tms: <%d,%d>, google: <%d, %d>\n", tms.x, tms.y, google.x, google.y);
 
-	if (LoadBin(fname, geoms))
-		return true;
+	if (tile_DiscCache)
+	{
+		if (LoadBin(fname, geoms))
+			return true;
+	}
 
 	// Mapzen uses google xyz indexing
 	struct Params2 params =
@@ -52,8 +57,7 @@ bool GetTile(MyTile* t, TArray<GGeom>& geoms)
 		false,					// terrain. Generate terrain elevation topography
 		64,						// terrainSubdivision
 		1.0f,					// terrainExtrusionScale
-		true,					// buildings. Whether to export building geometry
-		true					// roads. Whether to export roads geometry
+		true					// vectorData. Buildings, roads, landuse, pois, etc...
 	};
 
 	if (!vectiler(params))

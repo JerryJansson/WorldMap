@@ -153,7 +153,6 @@ TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey)
 	TileVectorData* data = new TileVectorData();
 	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
 	{
-		//data->layers.emplace_back(std::string(layer->name.GetString()));
 		data->layers.emplace_back(layer->name.GetString());
 		GeoJson::extractLayer(layer->value, data->layers.back(), tile);
 	}

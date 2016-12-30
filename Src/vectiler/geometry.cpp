@@ -123,16 +123,12 @@ v2 centroid(const std::vector<std::vector<v3>>& polygon)
 	return centroid;
 }
 //-----------------------------------------------------------------------------
-float buildPolygonExtrusion(const Polygon2& polygon,
-	const float minHeight,
-	const float height,
+float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	const float height,
 	std::vector<PolygonVertex>& outVertices,
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation)
 {
 	int vertexDataOffset = outVertices.size();
-	
-	v3 normalVector;
 	float minz = 0.f;
 	float cz = 0.f;
 
@@ -143,34 +139,33 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 		cz = sampleElevation(centroid(polygon), elevation);
 		minz = std::numeric_limits<float>::max();
 
-		for (auto& line : polygon)
+		for (auto& linestring : polygon)
 		{
-			for (size_t i = 0; i < line.size(); i++) {
-				v3 p(line[i]);
-
+			for (size_t i = 0; i < linestring.size(); i++)
+			{
+				v3 p(linestring[i]);
 				float pz = sampleElevation(v2(p.x, p.y), elevation);
-
 				minz = std::min(minz, pz);
 			}
 		}
 	}
 
 	const v3 upVector(0.0f, 0.0f, 1.0f);
-	for (auto& line : polygon)
+	for (auto& linestring : polygon)
 	{
-		size_t lineSize = line.size();
+		const size_t lineSize = linestring.size();
 
 		outVertices.reserve(outVertices.size() + lineSize * 4);
 		outIndices.reserve(outIndices.size() + lineSize * 6);
 
 		for (size_t i = 0; i < lineSize - 1; i++)
 		{
-			v3 a(line[i]);
-			v3 b(line[i + 1]);
+			v3 a(linestring[i]);
+			v3 b(linestring[i + 1]);
 
 			if (a == b) { continue; }
 
-			normalVector = glm::cross(upVector, b - a);
+			v3 normalVector = glm::cross(upVector, b - a);
 			normalVector = glm::normalize(normalVector);
 
 			a.z = height + cz;
@@ -196,8 +191,7 @@ float buildPolygonExtrusion(const Polygon2& polygon,
 	return cz;
 }
 //-----------------------------------------------------------------------------
-void buildPolygon(const Polygon2& polygon,
-	const float height,
+void buildPolygon(const Polygon2& polygon, const float height,
 	std::vector<PolygonVertex>& outVertices,
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation,
@@ -252,7 +246,7 @@ v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
 	return miter;
 }
 //-----------------------------------------------------------------------------
-void addPolygonPolylinePoint(Line& line,
+void addPolygonPolylinePoint(LineString& linestring,
 	const v3& curr,
 	const v3& next,
 	const v3& last,
@@ -267,8 +261,8 @@ void addPolygonPolylinePoint(Line& line,
 
 	if ((i == 1 && forward) || (i == lineDataSize - 2 && !forward))
 	{
-		line.push_back(last + n0 * extrude);
-		line.push_back(last - n0 * extrude);
+		linestring.push_back(last + n0 * extrude);
+		linestring.push_back(last - n0 * extrude);
 	}
 
 	if (right)
@@ -276,12 +270,12 @@ void addPolygonPolylinePoint(Line& line,
 		v3 d0 = glm::normalize(last - curr);
 		v3 d1 = glm::normalize(next - curr);
 		v3 miter = computeMiterVector(d0, d1, n0, n1);
-		line.push_back(curr - miter * extrude);
+		linestring.push_back(curr - miter * extrude);
 	}
 	else
 	{
-		line.push_back(curr - n0 * extrude);
-		line.push_back(curr - n1 * extrude);
+		linestring.push_back(curr - n0 * extrude);
+		linestring.push_back(curr - n1 * extrude);
 	}
 }
 //-----------------------------------------------------------------------------
@@ -307,7 +301,12 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 {
 	CStopWatch sw;
 
-	if (feature.lines.size() > 3000)
+	if (strstr(feature.name.Str(), "Deutsches Patent") != 0)
+	{
+		int abba = 10;
+	}
+
+	if (feature.lineStrings.size() > 3000)
 	{
 		int abba = 10;
 	}
@@ -318,7 +317,6 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 	auto mesh = new PolygonMesh(layerType);
 	const float sortHeight = feature.sort_rank / (500.0f);
 
-	//if (exportParams.buildings)
 	if (feature.geometryType == GeometryType::polygons)
 	{
 		for (const Polygon2& polygon : feature.polygons)
@@ -340,6 +338,9 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 	}
 	else if (feature.geometryType == GeometryType::lines)
 	{
+		float t1 = 0;
+		float t2 = 0;
+		CStopWatch sw1;
 		if (layerType == eLayerRoads)
 		{
 			int abba = 10;
@@ -354,17 +355,18 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 
 		Polygon2 polygon;
 		polygon.emplace_back();
-		Line& polygonLine = polygon.back();
+		LineString& polygonLine = polygon.back();
 
-		for (const Line& line : feature.lines)
+		for (const LineString& linestring : feature.lineStrings)
 		{
 			polygonLine.clear();
-			const size_t n = line.size();
+			const size_t n = linestring.size();
 
+			sw1.Start();
 			if (n == 2)
 			{
-				const v3& curr = line[0];
-				const v3& next = line[1];
+				const v3& curr = linestring[0];
+				const v3& next = linestring[1];
 				v3 n0 = perp(next - curr);
 				n0 *= extrudeW;
 
@@ -375,20 +377,20 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 			}
 			else
 			{
-				v3 last = line[0];
+				v3 last = linestring[0];
 				for (size_t i = 1; i < n - 1; ++i)
 				{
-					const v3& curr = line[i];
-					const v3& next = line[i + 1];
+					const v3& curr = linestring[i];
+					const v3& next = linestring[i + 1];
 					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, true);
 					last = curr;
 				}
 
-				last = line[n - 1];
+				last = linestring[n - 1];
 				for (int i = n - 2; i > 0; --i)
 				{
-					const v3& curr = line[i];
-					const v3& next = line[i - 1];
+					const v3& curr = linestring[i];
+					const v3& next = linestring[i - 1];
 					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, false);
 					last = curr;
 				}
@@ -434,11 +436,14 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 			polygonLine.push_back(polygonLine[0]);
 
 			const size_t offset = mesh->vertices.size();
+			t1 += sw1.GetMs(true);
 
 			if (extrudeH > 0)
 				buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr);
 
 			buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f);
+
+			t2 += sw1.GetMs();
 
 			if (heightMap)
 			{
@@ -452,13 +457,17 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 		//if (params.terrain)
 		if (heightMap)
 			computeNormals(mesh);
+
+		float time = sw.GetMs();
+		if (time > 100)
+		{
+			LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
+			LOG("LineBuilder: %.1f. PolyBuilder: %.1f\n", t1, t2);
+			//LOG("FeatureType: %d\n", feature.geometryType);
+		}
 	}
 
-	float time = sw.GetMs();
-	if (time > 100)
-	{
-		LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
-	}
+	
 
 	if (mesh->vertices.size() == 0)
 	{

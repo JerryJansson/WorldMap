@@ -74,6 +74,40 @@ enum ELayerType
 	eNumLayerTypes
 };
 //-----------------------------------------------------------------------------
+enum EFeatureKind
+{
+	eKindUnknown,
+
+	// Roads
+	eKindHighway,
+	eKindMajorRoad,
+	eKindMinorRoad,
+	eKindRail,
+	eKindPath,
+	eKindFerry,
+	eKindPiste,
+	eKindAerialway,
+	eKindAeroway,
+	eKindRacetrack,
+	eKindPortageway,
+
+	// Landuse
+	eKindAerodrome,
+	eKindAttraction,
+	eKindBeach,
+	eKindBridge,
+	eKindForest,
+	eKindGolfcourse,
+	eKindGrass,
+	eKindPark,
+	eKindPedestrian,
+	eKindRailway,
+	eKindRecreationground,
+	eKindResidential,
+
+	NUM_KINDS
+};
+//-----------------------------------------------------------------------------
 extern const char* layerNames[eNumLayerTypes + 1];
 //-----------------------------------------------------------------------------
 bool GetTile(class MyTile* t, TArray<GGeom>& geoms);

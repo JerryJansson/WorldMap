@@ -10,8 +10,7 @@ struct Params2
 	bool		terrain;
 	int			terrainSubdivision;
 	float		terrainExtrusionScale;
-	bool		buildings;
-	bool		roads;
+	bool		vectorData;
 };
 
 bool vectiler(const Params2& params);

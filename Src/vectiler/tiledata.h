@@ -16,22 +16,23 @@ enum GeometryType {
 };
 //-----------------------------------------------------------------------------
 typedef v3 Point;
-typedef std::vector<Point> Line;
-typedef std::vector<Line> Polygon2;
+typedef std::vector<Point> LineString;
+typedef std::vector<LineString> Polygon2;
 //-----------------------------------------------------------------------------
 struct Feature 
 {
     GeometryType geometryType = GeometryType::polygons;
 
     std::vector<Point> points;
-    std::vector<Line> lines;
+    std::vector<LineString> lineStrings;
     std::vector<Polygon2> polygons;
 
     //Properties props;
-	float	height = 0;
-	float	min_height = 0;
-	int64	id = 0;
-	CStr	name;
+	float			height = 0;
+	float			min_height = 0;
+	int64			id = 0;
+	CStr			name;
+	EFeatureKind	kind = eKindUnknown;
 	// 0 - 9: Under everything.Tip : disable earth layer.
 	// 190 - 199 : Under water.Above earth and most landuse.
 	// 290 - 299 : Under roads.Above borders, water, landuse, and earth.Your classic “underlay”.

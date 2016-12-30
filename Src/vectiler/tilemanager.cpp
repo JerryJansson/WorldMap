@@ -7,15 +7,23 @@
 #include <thread>
 #include <mutex>
 //-----------------------------------------------------------------------------
-static CVar tile_QuadTree("tile_QuadTree", true);
-//-----------------------------------------------------------------------------
-//#define ZZZOOM 16
-#define ZZZOOM 16						// Regular grid uses a fixed zoom
 const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
+CVar tile_QuadTree("tile_QuadTree", true);
+CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
+CVar tile_DiscCache("tile_DiscCache", false);
+
+//-----------------------------------------------------------------------------
+#define ZZZOOM 16							// Regular grid uses a fixed zoom
+//const Vec2d longLatStart(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
+//const Vec2d longLatStart(-74.0130, 40.703);	// 19294, 24642 - Manhattan
+const Vec2d longLatStart(13.3974, 52.4974);	// 19294, 24642 - Berlin. Building with holes
+const Vec3i singleTile(35207, 44036, 16);	// Berlin. Building with holes
 //const Vec3i singleTile(1204, 2554, 12);	// Contains a mesh > 65536 vertices
-const Vec3i singleTile(4820, 10224, 14);	// Contains a mesh == 65536 vertices
+//const Vec3i singleTile(4820, 10224, 14);	// Contains a mesh == 65536 vertices
 //const Vec3i singleTile(19294, 40893, 16);
 //const Vec3i singleTile(9647, 20446, 15);
+//const Vec3i singleTile(19288, 40894, 16);
+// http://tangrams.github.io/tangram/#52.49877546805043,13.397676944732667,17 // (complex building with holes)
 //-----------------------------------------------------------------------------
 // Threads & synchronization
 //-----------------------------------------------------------------------------
@@ -109,10 +117,7 @@ void TileManager::Initialize(CCamera* cam)
 	}
 	else
 	{
-		//m_LongLat = Vec2d(18.080, 59.346);		// 36059, 19267 - Stockholm Stadion
-		Vec2d longLat = Vec2d(-74.0130, 40.703);	// 19294, 24642 - Manhattan
-
-		Vec2d meters = LonLatToMeters(longLat);
+		Vec2d meters = LonLatToMeters(longLatStart);
 		Vec2i _tile = MetersToTile(meters, ZZZOOM);
 		tile = Vec3i(_tile.x, _tile.y, ZZZOOM);
 	}
@@ -209,6 +214,8 @@ int TileManager::ChooseTileToLoad(CCamera* cam, const TArray<Vec3i>& tiles)
 //-----------------------------------------------------------------------------
 bool TileManager::ReceiveLoadedTile()
 {
+	CStopWatch sw;
+	CStopWatch sw2;
 	// No tiles waiting to be received
 	if (doneList.IsEmpty())
 		return false;
@@ -220,6 +227,8 @@ bool TileManager::ReceiveLoadedTile()
 		doneLock.unlock();
 	}
 
+	float t_lock = sw.GetMs(true);
+
 	if (!r)
 		return false;
 
@@ -228,9 +237,14 @@ bool TileManager::ReceiveLoadedTile()
 	t->m_Status = MyTile::eLoaded;
 	t->m_Frame = Engine_GetFrameNumber();
 
+	float t_log = sw.GetMs(true);
+
 	for (int i = 0; i < r->geoms.Num(); i++)
 	{
-		CMesh* mesh = CreateMeshFromGeoms(r->geoms[i].name, &r->geoms[i], 1);
+		LoadMeshOptions o;
+		o.createCollision = false;
+		o.calculateTangentSpace = false;
+		CMesh* mesh = CreateMeshFromGeoms(r->geoms[i].name, &r->geoms[i], 1, &o);
 		Entity* e = new Entity(r->geoms[i].name);
 		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
 		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
@@ -238,15 +252,23 @@ bool TileManager::ReceiveLoadedTile()
 		t->AddChild(e);
 	}
 
+	float t_createMeshes = sw.GetMs(true);
+
 	t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
 
 	gScene.AddEntity(t);
+
+	float t_addToScene = sw.GetMs(true);
 
 	r->tile = NULL;
 	// Release geom memory
 	poolLock.lock();
 	geomPool.Free(r);
 	poolLock.unlock();
+
+	float t_lock2 = sw.GetMs(true);
+	float t_total = sw2.GetMs();
+	LOG("Process of receiving tile took %.1fms. Lock1: %.1f, Log: %.1f, CreateMeshes: %.1f, Add to scene: %.1f, lock2: %.1f \n", t_total, t_lock, t_log, t_createMeshes, t_addToScene, t_lock2);
 
 	return true;
 }
@@ -259,6 +281,11 @@ void TileManager::Update(CCamera* cam)
 		Initialize(cam);
 
 	ShiftOrigo(cam);
+
+	const Vec3 cpos = cam->GetWorldPos();
+	const Vec2d meters = GlToMercator2d(cpos);
+	const Vec2d ll = MetersToLongLat(meters);
+	DbgMsg("cam: gl-<%.1f, %.1f, %.1f>, long/lat <%.5f, %.5f>", cpos.x, cpos.y, cpos.z, ll.x, ll.y);
 
 	// Determine needed tiles
 	neededTiles.Clear();
@@ -284,11 +311,14 @@ void TileManager::Update(CCamera* cam)
 		else	 missingTiles.Add(t);
 	}
 
-	DbgMsg("Tiles to load: %d", missingTiles.Num());
+	DbgMsg("Needed tiles: %d", neededTiles.Num());
+	DbgMsg("Missing tiles: %d", missingTiles.Num());
+	DbgMsg("Tiles cached in memory: %d", m_Tiles.Num());
 
 	// Add tile to queue to stream
 	if (missingTiles.Num()>0 && !tileToStream)
 	{
+		CStopWatch sw;
 		int loadIdx = ChooseTileToLoad(cam, missingTiles);
 		
 		MyTile* newtile = NULL;
@@ -302,6 +332,9 @@ void TileManager::Update(CCamera* cam)
 		
 		if(newtile)
 			m_Tiles.Add(newtile->m_Tms, newtile);
+
+		float t = sw.GetMs(true);
+		LOG("Choose tile, lock, add to hash: %.2fms\n", t);
 	}
 
 	// Any tiles done streaming?
@@ -335,39 +368,6 @@ void TileManager::UpdateRegularGrid(CCamera* cam)
 	}
 }
 //-----------------------------------------------------------------------------
-/*inline double Distance_ToTile(const Vec3d &p, const Vec3d& mini, const Vec3d& maxi)
-{
-	double d;
-	double dist = 0;
-
-	for (int i = 0; i<3; i++)
-	{
-		if (p[i]<mini[i])
-		{
-			d = mini[i] - p[i];
-			dist += d*d;
-		}
-		else if (p[i]>maxi[i])
-		{
-			d = p[i] - maxi[i];
-			dist += d*d;
-		}
-	}
-
-	return sqrt(dist);
-}*/
-//-----------------------------------------------------------------------------
-/*void GetTileCullInfo(const Vec3& camGlPos, const Vec3i& idx, float& size, float& dist)
-{
-	const Vec2d tileMin = TileMin(idx);
-	const Vec2d tileMax = TileMax(idx);
-	size = tileMax.x - tileMin.x;
-	Caabb aabb(MercatorToGl(tileMin, 0.0f), MercatorToGl(tileMax, 1000.0f));
-	Swap(aabb.m_Mini.z, aabb.m_Max.z);
-	
-	const float dist = DistancePointAabb(camGlPos, aabb);
-}*/
-//-----------------------------------------------------------------------------
 void TileManager::UpdateQTree(CCamera* cam)
 {
 	const uint32 frame	= Engine_GetFrameNumber();
@@ -388,9 +388,6 @@ void TileManager::UpdateQTree(CCamera* cam)
 		Caabb aabb(MercatorToGl(tileMin, 0.0f), MercatorToGl(tileMax, 1000.0f));
 		Swap(aabb.m_Min.z, aabb.m_Max.z);
 		const float dist = DistancePointAabb(camGlPos, aabb);
-		//const Vec3d mini = Vec3d(tileMin.x, tileMin.y, 0);
-		//const Vec3d maxi = Vec3d(tileMax.x, tileMax.y, 1000.0f);
-		//const double dist = Distance_ToTile(camMercator3d, mini, maxi);
 
 		// To far away to be visible
 		if (dist > maxDrawDist)
@@ -417,6 +414,9 @@ void TileManager::UpdateQTree(CCamera* cam)
 //-----------------------------------------------------------------------------
 void TileManager::RenderDebug2d(CCamera* cam)
 {
+	if (!tile_ShowQuadTree)
+		return;
+
 	int sw = gRenderer->GetScreenWidth();
 	int sh = gRenderer->GetScreenHeight();
 	Vec2 screenpos(sw / 2, sh / 2);
@@ -426,11 +426,8 @@ void TileManager::RenderDebug2d(CCamera* cam)
 	int minz = 200;
 	int maxz = 0;
 
-	if (neededTiles.Num() < 100)
-	{
-		int abba = 10;
-	}
-
+	
+	int n = 0;
 	for (int i = 0; i < neededTiles.Num(); i++)
 	{
 		const Vec3i& t = neededTiles[i];
@@ -444,10 +441,14 @@ void TileManager::RenderDebug2d(CCamera* cam)
 		pmin += screenpos;
 		pmax += screenpos;
 		DrawWireRect(pmin, pmax, gRGBA_Red);
+		n++;
 	}
+
+	FlushLines_2d();
 
 	DrawWireCircle(screenpos, 3.0f, gRGBA_Black);
 	DbgMsg("zoom: %d-%d", minz, maxz);
+	DbgMsg("Drew %d quads", n);
 }
 
 

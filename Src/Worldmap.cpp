@@ -101,6 +101,8 @@ bool CViewer::Create()
 	sun->IndirectCol = Crgba(255, 240, 210);
 	
 	sm_UpdateReduction = 0;
+	sm_BiasLinear = 0.0006f;
+	sm_ShadowDistance = 1000.0f;
 	return true;
 }
 //-----------------------------------------------------------------------------
@@ -111,7 +113,7 @@ void CViewer::Destroy()
 	gScene.RemoveEntity(&m_DefaultGameCam);
 }
 //-----------------------------------------------------------------------------
-bool LoadObj(const char* fname)
+/*bool LoadObj(const char* fname)
 {
 	std::vector<tinyobj::material_t> materials;
 	//std::map<std::string, GLuint>& textures;
@@ -224,7 +226,7 @@ bool LoadObj(const char* fname)
 	}	
 
 	return true;
-}
+}*/
 //-----------------------------------------------------------------------------
 int gMaterialCategory = -1;
 //-----------------------------------------------------------------------------
@@ -246,14 +248,14 @@ bool MyApp_Init()
 	gViewer.Create();
 
 	//const Vec2d longLat(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
-	const Vec2d longLat(-74.0130, 40.7040);	// 19294, 24642 - Manhattan
+	/*const Vec2d longLat(-74.0130, 40.7040);	// 19294, 24642 - Manhattan
 	
 	const int zoom		= 16;
 	Vec2d meters		= LonLatToMeters(longLat);
 	Vec2d ll			= MetersToLongLat(meters);
 	Vec2i tile_tms		= MetersToTile(meters, zoom);
 	Vec2i tile_google	= TmsToGoogleTile(tile_tms, zoom);
-	Vec4d bounds		= TileBounds(tile_tms, zoom);
+	Vec4d bounds		= TileBounds(tile_tms, zoom);*/
 	
 	/*CStrL outFileName;
 	int result = GetTile(tileX, tileY, zoom, outFileName);
@@ -285,7 +287,7 @@ void MyApp_InputEvent(const inputEvent_t* e)
 void MyApp_Update(float dt)
 {
 	CVec3 pos = gViewer.GetDrawCamera()->GetWorldPos();
-	DbgMsg("cam: <%.1f, %.1f, %.1f>", pos.x, pos.y, pos.z);
+	//DbgMsg("cam: <%.1f, %.1f, %.1f>", pos.x, pos.y, pos.z);
 	gStateManager.Update(dt);
 }
 //-----------------------------------------------------------------------------

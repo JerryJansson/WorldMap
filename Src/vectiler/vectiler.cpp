@@ -322,7 +322,7 @@ bool vectiler(const Params2& params)
 		//	adjustTerrainEdges(heightData);
 	}
 
-	if (params.buildings || params.roads)
+	if (params.vectorData)
 	{
 		vectorTileData = DownloadVectorTile(tile, params.apiKey);
 
@@ -362,8 +362,9 @@ bool vectiler(const Params2& params)
 		for (auto layer : data->layers)
 		{
 			const ELayerType type = layer.layerType;
-			if (type == eLayerBuildings && !params.buildings) continue;	// Skip buildings
-			if (type == eLayerRoads && !params.roads) continue;			// Skip roads
+			//if (type == eLayerBuildings) continue;	// Skip buildings
+			//if (type == eLayerRoads) continue;		// Skip roads
+			//if (type == eLayerEarth) continue;			// Skip earth
 
 			for (auto feature : layer.features)
 			{

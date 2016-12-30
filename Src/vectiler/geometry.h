@@ -31,13 +31,6 @@ bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes
 bool LoadBin(const char* fname, TArray<GGeom>& geomArr);
 
 //-----------------------------------------------------------------------------
-PolygonMesh* CreateMeshFromFeature(
-	const ELayerType layerType,
-	const struct Feature& feature,
-	const struct HeightData* heightMap
-	//const float scale				// tile.invScale
-	//const float lineExtrusionWidth, // params.roadsExtrusionWidth
-	//const float lineExtrusionHeight // params.roadsHeight
-);
+PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const struct Feature& feature, const struct HeightData* heightMap);
 //-----------------------------------------------------------------------------
 float sampleElevation(v2 position, const HeightData* heightMap);
