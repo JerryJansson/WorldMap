@@ -9,6 +9,12 @@ void CreateHash()
 	
 	gKindHash.Add("unknown", eKindUnknown);
 
+	// Buildings
+	gKindHash.Add("building", eKindBuilding);
+	gKindHash.Add("building_part", eKindBuildingPart);
+	gKindHash.Add("address", eKindAddress);
+
+	// Roads
 	gKindHash.Add("highway", eKindHighway);
 	gKindHash.Add("major_road", eKindMajorRoad);
 	gKindHash.Add("minor_road", eKindMinorRoad);
@@ -26,7 +32,9 @@ void CreateHash()
 	gKindHash.Add("attraction", eKindAttraction);
 	gKindHash.Add("beach", eKindBeach);
 	gKindHash.Add("bridge", eKindBridge);
+	gKindHash.Add("fence", eKind_fence);
 	gKindHash.Add("forest", eKindForest);
+	gKindHash.Add("garden", eKindGarden);
 	gKindHash.Add("golf_course", eKindGolfcourse);
 	gKindHash.Add("grass", eKindGrass);
 	gKindHash.Add("park", eKindPark);
@@ -34,6 +42,26 @@ void CreateHash()
 	gKindHash.Add("railway", eKindRailway);
 	gKindHash.Add("recreation_ground", eKindRecreationground);
 	gKindHash.Add("residential", eKindResidential);
+	gKindHash.Add("retaining_wall", eKind_retaining_wall);
+
+	// Water
+	gKindHash.Add("basin", eWaterBasin);
+	gKindHash.Add("bay", eWaterBay);
+	gKindHash.Add("canal", eWaterCanal);
+	gKindHash.Add("ditch", eWaterDitch);
+	gKindHash.Add("dock", eWaterDock);
+	gKindHash.Add("drain", eWaterDrain);
+	gKindHash.Add("fjord", eWaterFjord);
+	gKindHash.Add("lake", eWaterLake);
+	gKindHash.Add("ocean", eWaterOcean);
+	gKindHash.Add("playa", eWaterPlaya);
+	gKindHash.Add("river", eWaterRiver);
+	gKindHash.Add("riverbank", eWaterRiverbank);
+	gKindHash.Add("sea", eWaterSea);
+	gKindHash.Add("stream", eWaterStream);
+	gKindHash.Add("strait", eWaterStrait);
+	gKindHash.Add("swimming_pool", eWaterSwimming_pool);
+	gKindHash.Add("water", eWaterWater);
 
 	for (int i = 0; i < NUM_KINDS; i++)
 	{
@@ -41,7 +69,7 @@ void CreateHash()
 	}
 }
 //-----------------------------------------------------------------------------
-bool GeoJson::extractPoint(const rapidjson::Value& _in, Point& _out, const Tile& _tile, Point* last)
+static inline bool extractPoint(const rapidjson::Value& _in, Point& _out, const Tile& _tile, Point* last=NULL)
 {
     const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
 	_out.x = (pos.x - _tile.tileOrigin.x);
@@ -90,6 +118,8 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 
 	_out.height = defaultHeight;
 
+	CStr tmpstr;
+
     for (auto itr = properties.MemberBegin(); itr != properties.MemberEnd(); ++itr)
 	{
         const auto& member = itr->name.GetString();
@@ -100,7 +130,16 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		else if (strcmp(member, "sort_rank") == 0)  _out.sort_rank	= prop.GetInt();
 		else if (strcmp(member, "name") == 0)		_out.name		= prop.GetString();
 		else if (strcmp(member, "id") == 0)			_out.id			= prop.GetInt64(); // Can be signed
-		else if (strcmp(member, "kind") == 0)		_out.kind       = gKindHash.Get(prop.GetString());
+		else if (strcmp(member, "kind") == 0)
+		{
+			tmpstr = prop.GetString();
+			_out.kind = gKindHash.Get(tmpstr);
+
+			if(layerType==eLayerLanduse && _out.kind == eKindUnknown)
+			{
+				int abba = 10;
+			}
+		}
     }
 
 	if (_out.min_height > _out.height)

@@ -247,26 +247,6 @@ bool MyApp_Init()
 
 	gViewer.Create();
 
-	//const Vec2d longLat(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
-	/*const Vec2d longLat(-74.0130, 40.7040);	// 19294, 24642 - Manhattan
-	
-	const int zoom		= 16;
-	Vec2d meters		= LonLatToMeters(longLat);
-	Vec2d ll			= MetersToLongLat(meters);
-	Vec2i tile_tms		= MetersToTile(meters, zoom);
-	Vec2i tile_google	= TmsToGoogleTile(tile_tms, zoom);
-	Vec4d bounds		= TileBounds(tile_tms, zoom);*/
-	
-	/*CStrL outFileName;
-	int result = GetTile(tileX, tileY, zoom, outFileName);
-	if (result == EXIT_FAILURE)
-		return false;
-	//LoadObj("jerry.obj");
-	//LoadObj(outFileName);
-	LoadBin(outFileName);*/
-
-	//GetTile2(tile_tms.x, tile_tms.y, zoom);
-
 	return true;
 }
 //-----------------------------------------------------------------------------

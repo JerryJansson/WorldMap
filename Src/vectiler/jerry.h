@@ -78,6 +78,11 @@ enum EFeatureKind
 {
 	eKindUnknown,
 
+	// Buildings
+	eKindBuilding,
+	eKindBuildingPart,
+	eKindAddress,
+
 	// Roads
 	eKindHighway,
 	eKindMajorRoad,
@@ -96,7 +101,9 @@ enum EFeatureKind
 	eKindAttraction,
 	eKindBeach,
 	eKindBridge,
+	eKind_fence,
 	eKindForest,
+	eKindGarden,
 	eKindGolfcourse,
 	eKindGrass,
 	eKindPark,
@@ -104,6 +111,26 @@ enum EFeatureKind
 	eKindRailway,
 	eKindRecreationground,
 	eKindResidential,
+	eKind_retaining_wall,
+
+	// Water
+	eWaterBasin,
+	eWaterBay,
+	eWaterCanal,
+	eWaterDitch,
+	eWaterDock,
+	eWaterDrain,
+	eWaterFjord,
+	eWaterLake,
+	eWaterOcean,
+	eWaterPlaya,
+	eWaterRiver,
+	eWaterRiverbank,
+	eWaterSea,
+	eWaterStream,
+	eWaterStrait,
+	eWaterSwimming_pool,
+	eWaterWater,
 
 	NUM_KINDS
 };

@@ -6,21 +6,23 @@
 #include "../../../../Source/Modules/Shared/SceneNew.h"
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 //-----------------------------------------------------------------------------
-const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
+const bool useSingleTile = true;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
 CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
 CVar tile_DiscCache("tile_DiscCache", false);
+typedef vtxPNC vtxMap;
 
 //-----------------------------------------------------------------------------
 #define ZZZOOM 16							// Regular grid uses a fixed zoom
 //const Vec2d longLatStart(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
-//const Vec2d longLatStart(-74.0130, 40.703);	// 19294, 24642 - Manhattan
-const Vec2d longLatStart(13.3974, 52.4974);	// 19294, 24642 - Berlin. Building with holes
-const Vec3i singleTile(35207, 44036, 16);	// Berlin. Building with holes
+const Vec2d longLatStart(-74.0130, 40.703);	// 19294, 24642 - Manhattan
+//const Vec2d longLatStart(13.3974, 52.4974);	// 19294, 24642 - Berlin. Building with holes
+//const Vec3i singleTile(35207, 44036, 16);	// Berlin. Building with holes
 //const Vec3i singleTile(1204, 2554, 12);	// Contains a mesh > 65536 vertices
 //const Vec3i singleTile(4820, 10224, 14);	// Contains a mesh == 65536 vertices
-//const Vec3i singleTile(19294, 40893, 16);
+const Vec3i singleTile(19294, 40893, 16);
 //const Vec3i singleTile(9647, 20446, 15);
 //const Vec3i singleTile(19288, 40894, 16);
 // http://tangrams.github.io/tangram/#52.49877546805043,13.397676944732667,17 // (complex building with holes)
@@ -29,10 +31,11 @@ const Vec3i singleTile(35207, 44036, 16);	// Berlin. Building with holes
 //-----------------------------------------------------------------------------
 const int numThreads = 1;
 std::thread threads[numThreads];
-bool stop = false;
 std::mutex tileLock;
 std::mutex poolLock;
 std::mutex doneLock;
+std::condition_variable signal_tileLock;
+bool stop = false;
 MyTile* tileToStream = NULL;
 //-----------------------------------------------------------------------------
 struct StreamResult : ListNode<StreamResult>
@@ -67,6 +70,10 @@ void StreamTile(int threadIdx)
 			tileLock.unlock();
 			continue;
 		}
+
+		// Wait until main() signals
+		//std::unique_lock<std::mutex> lk(tileLock);
+		//signal_tileLock.wait(lk, [] {return ready; });
 
 		LOG("Thread %d picked up <%d, %d> in frame %d\n", threadIdx, tileToStream->m_Tms.x, tileToStream->m_Tms.y, Engine_GetFrameNumber());
 
@@ -212,10 +219,67 @@ int TileManager::ChooseTileToLoad(CCamera* cam, const TArray<Vec3i>& tiles)
 	return minidx;
 }
 //-----------------------------------------------------------------------------
+CMesh* CreateMesh(const char* name, GGeom* geom)
+{
+	const VertexFmtID vfid = vtxMap::fmt;
+	const int vertexSize = gRenderer->GetVertexFormat(vfid)->Stride();
+
+	// Create mesh from collection of geoms
+	CMesh* mesh = new CMesh(name, 1);
+	mesh->m_VtxFmt = vfid;
+
+	// Create 1 common index buffer
+	mesh->m_IndexBuffer = gRenderer->CreateIndexBuffer(IDX_SHORT, geom->IndexCount(), BUF_STATIC | BUF_HARDWARE);
+	uint16* idx = (uint16*)mesh->m_IndexBuffer->Lock(LOCK_WRITE_ONLY, true);
+
+	GGeom* g = geom;
+
+	DrawRange& range = mesh->m_DrawRange[0];
+	range.vb = 0;
+	range.firstIdx = 0;
+	range.numIdx = g->IndexCount();
+	range.firstVtx = 0;
+	range.numVtx = g->VertexCount();
+	range.materialName = g->materialName.Str();
+
+	// Write this geom to index buffer
+	for (int k = 0; k < range.numIdx; k++)
+		idx[k] = g->indexes[k];
+
+	mesh->m_IndexBuffer->Unlock();
+		
+	// Create vertex buffer for these sub meshes
+	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, g->VertexCount(), BUF_STATIC | BUF_HARDWARE);
+	vtxMap* v = (vtxMap*)vb->Lock(LOCK_WRITE_ONLY, true);
+	const int nv = geom->VertexCount();
+	Caabb geomaabb(true);
+
+	for (int j = 0; j < nv; j++)
+	{
+		v[j].pos = geom->vertices[j].pos;
+		v[j].nrm = geom->vertices[j].nrm;
+	    v[j].col = geom->vertices[j].col;
+		geomaabb.AddPoint(v[j].pos);
+	}
+		
+	mesh->m_DrawRange[0].geometricCenter = geomaabb.GetCenter();
+	mesh->m_MeshAabb = geomaabb;
+	
+	vb->Unlock();
+
+	mesh->m_VertexBuffers.SetNum(1);
+	mesh->m_VertexBuffers[0] = vb;
+
+	//if (o->createCollision)
+	//	mesh->m_Collision = CreateCollisionModelFromGeoms(geoms, nGeoms);
+
+	return mesh;
+}
+//-----------------------------------------------------------------------------
 bool TileManager::ReceiveLoadedTile()
 {
 	CStopWatch sw;
-	CStopWatch sw2;
+
 	// No tiles waiting to be received
 	if (doneList.IsEmpty())
 		return false;
@@ -227,24 +291,23 @@ bool TileManager::ReceiveLoadedTile()
 		doneLock.unlock();
 	}
 
-	float t_lock = sw.GetMs(true);
-
 	if (!r)
 		return false;
 
 	MyTile* t = r->tile;
-	LOG("Received %d, %d in frame %d\n", t->m_Tms.x, t->m_Tms.y, Engine_GetFrameNumber());
+	LOG("Received <%d, %d, %d> in frame %d\n", t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber());
 	t->m_Status = MyTile::eLoaded;
 	t->m_Frame = Engine_GetFrameNumber();
 
-	float t_log = sw.GetMs(true);
+	float t_1 = sw.GetMs();
 
 	for (int i = 0; i < r->geoms.Num(); i++)
 	{
-		LoadMeshOptions o;
+		/*LoadMeshOptions o;
 		o.createCollision = false;
 		o.calculateTangentSpace = false;
-		CMesh* mesh = CreateMeshFromGeoms(r->geoms[i].name, &r->geoms[i], 1, &o);
+		CMesh* mesh = CreateMeshFromGeoms(r->geoms[i].name, &r->geoms[i], 1, &o);*/
+		CMesh* mesh = CreateMesh(r->geoms[i].name, &r->geoms[i]);
 		Entity* e = new Entity(r->geoms[i].name);
 		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
 		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
@@ -252,13 +315,10 @@ bool TileManager::ReceiveLoadedTile()
 		t->AddChild(e);
 	}
 
-	float t_createMeshes = sw.GetMs(true);
+	float t_createMeshes = sw.GetMs() - t_1;
 
 	t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
-
 	gScene.AddEntity(t);
-
-	float t_addToScene = sw.GetMs(true);
 
 	r->tile = NULL;
 	// Release geom memory
@@ -266,9 +326,8 @@ bool TileManager::ReceiveLoadedTile()
 	geomPool.Free(r);
 	poolLock.unlock();
 
-	float t_lock2 = sw.GetMs(true);
-	float t_total = sw2.GetMs();
-	LOG("Process of receiving tile took %.1fms. Lock1: %.1f, Log: %.1f, CreateMeshes: %.1f, Add to scene: %.1f, lock2: %.1f \n", t_total, t_lock, t_log, t_createMeshes, t_addToScene, t_lock2);
+	float t_total = sw.GetMs();
+	LOG("Process of receiving tile took %.1fms. CreateMeshes: %.1f\n", t_total, t_createMeshes);
 
 	return true;
 }

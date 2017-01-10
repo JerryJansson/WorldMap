@@ -39,7 +39,7 @@ bool GetTile(MyTile* t, TArray<GGeom>& geoms)
 	const CStrL fname = tileName + ".bin";
 
 	Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
-	LOG("GetTile tms: <%d,%d>, google: <%d, %d>\n", tms.x, tms.y, google.x, google.y);
+	LOG("GetTile tms: <%d,%d,%d>, google: <%d, %d>\n", tms.x, tms.y, tms.z, google.x, google.y);
 
 	if (tile_DiscCache)
 	{

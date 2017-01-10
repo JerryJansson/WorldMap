@@ -17,14 +17,6 @@ struct PolygonMesh
 };
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh);
-//-----------------------------------------------------------------------------
-bool saveOBJ(const char* outputOBJ,
-	bool splitMeshes,
-	std::vector<PolygonMesh*>& meshes,
-	float offsetx,
-	float offsety,
-	bool append,
-	bool normals);
 
 bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst);
 bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);

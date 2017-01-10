@@ -31,19 +31,19 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 //-----------------------------------------------------------------------------
+// NOT THREAD SAFE!
+// Probably need separate CURL* curl handles for each thread
+//-----------------------------------------------------------------------------
 bool DownloadData(MemoryStruct& out, const char* url)
 {
-	static bool curlInitialized = false;
-	static CURL* curl = nullptr;
+	static CURL* curl = NULL;
 
-	if (!curlInitialized)
+	if (!curl)
 	{
 		curl_global_init(CURL_GLOBAL_DEFAULT);
 		curl = curl_easy_init();
-		curlInitialized = true;
 
 		// set up curl to perform fetch
-		//curl_easy_setopt(curlHandle, CURLOPT_WRITEFUNCTION, writeData);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
@@ -128,12 +128,12 @@ HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float ex
 	return data;
 }
 //-----------------------------------------------------------------------------
-TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey)
+bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* data)
 {
 	CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
 	MemoryStruct out;
 	if (!DownloadData(out, url))
-		return NULL;
+		return false;
 
 	// Parse written data into a JSON object
 	CStopWatch sw;
@@ -145,12 +145,12 @@ TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey)
 		LOG("Error parsing tile\n");
 		rapidjson::ParseErrorCode code = doc.GetParseError();
 		size_t errOffset = doc.GetErrorOffset();
-		return NULL;
+		return false;
 	}
 
 	float tJson = sw.GetMs(true);
 
-	TileVectorData* data = new TileVectorData();
+	//TileVectorData* data = new TileVectorData();
 	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
 	{
 		data->layers.emplace_back(layer->name.GetString());
@@ -161,5 +161,6 @@ TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey)
 
 	LOG("Parsed json in %.1fms. Built GeoJson structures in %.1fms\n", tJson, tLayers);
 
-	return data;
+	//return data;
+	return true;
 }

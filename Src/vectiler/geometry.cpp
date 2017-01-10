@@ -315,7 +315,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 		return NULL;
 
 	auto mesh = new PolygonMesh(layerType);
-	const float sortHeight = feature.sort_rank / (500.0f);
+	const float sortHeight = feature.sort_rank / (50.0f);
 
 	if (feature.geometryType == GeometryType::polygons)
 	{
@@ -341,14 +341,6 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 		float t1 = 0;
 		float t2 = 0;
 		CStopWatch sw1;
-		if (layerType == eLayerRoads)
-		{
-			int abba = 10;
-		}
-		else
-		{
-			int abba = 10;
-		}
 		const float extrudeW = feature.road_width;// *scale;
 		//const float extrudeH = lineExtrusionHeight * scale;
 		const float extrudeH = sortHeight;
@@ -449,7 +441,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 			{
 				for (auto it = mesh->vertices.begin() + offset; it != mesh->vertices.end(); ++it)
 				{
-					it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap);// *scale;
+					it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap);
 				}
 			}
 		}
@@ -459,7 +451,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 			computeNormals(mesh);
 
 		float time = sw.GetMs();
-		if (time > 100)
+		if (time > 50)
 		{
 			LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
 			LOG("LineBuilder: %.1f. PolyBuilder: %.1f\n", t1, t2);
@@ -626,6 +618,38 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 #endif
 //-----------------------------------------------------------------------------
 #define VER 1
+/*
+ VER 1
+ 4						(nMeshes)
+ 11						(meshName len)
+	"buildings_0"		(meshName)
+	eLayerBuildings		(layer type)
+	65536				(vertex count)
+	33465				(index count)
+	v0, v1, vn ...		(vertices)
+	i0, i1, in ...		(indices)
+ 11
+	"buildings_1"
+	eLayerBuildings
+	65536
+	31002
+	v0, v1, vn ...
+	i0, i1, in ...
+ 11
+	"buildings_2"
+	eLayerBuildings
+	9765
+	4122
+	v0, v1, vn ...
+	i0, i1, in ...
+ 9 
+	"landuse_0"
+	eLayerLanduse
+	3421
+	1800
+	v0, v1, vn ...
+	i0, i1, in ...
+*/
 //-----------------------------------------------------------------------------
 bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
 {

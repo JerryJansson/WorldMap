@@ -261,14 +261,6 @@ void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<Polyg
 {
 	for (PolygonMesh* mesh : meshes)
 	{
-		// This mesh is to big. Throw it away
-		/*if (mesh->vertices.size() > 65536)
-		{
-			gLogger.Warning("Mesh > 65536. Must implement mesh splitting");
-			//SplitMesh()
-			continue;
-		}*/
-
 		std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
 		PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
 		if (!bigMesh || !AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
@@ -304,7 +296,9 @@ static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpS
 bool vectiler(const Params2& params)
 {
 	HeightData* heightMap = NULL;
-	TileVectorData* vectorTileData = NULL;
+	//TileVectorData* vectorTileData = NULL;
+	TileVectorData vectorData;
+	bool haveVectorData = false;
 	Tile tile(params.tilex, params.tiley, params.tilez);
 
 	if (params.terrain)
@@ -324,9 +318,11 @@ bool vectiler(const Params2& params)
 
 	if (params.vectorData)
 	{
-		vectorTileData = DownloadVectorTile(tile, params.apiKey);
+		//vectorTileData = DownloadVectorTile(tile, params.apiKey);
+		haveVectorData = DownloadVectorTile(tile, params.apiKey, &vectorData);
 
-		if (!vectorTileData)
+		//if (!vectorTileData)
+		if (!haveVectorData)
 			LOG("Failed to download vector tile data for tile %d %d %d\n", tile.x, tile.y, tile.z);
 	}
 
@@ -355,23 +351,25 @@ bool vectiler(const Params2& params)
 	}
 
 	/// Build vector tile meshes
-	if (vectorTileData)
+	//if (vectorTileData)
+	if (haveVectorData)
 	{
-		const TileVectorData* data = vectorTileData;
+		const TileVectorData* data = &vectorData;
 
 		for (auto layer : data->layers)
 		{
 			const ELayerType type = layer.layerType;
 			//if (type == eLayerBuildings) continue;	// Skip buildings
 			//if (type == eLayerRoads) continue;		// Skip roads
-			//if (type == eLayerEarth) continue;			// Skip earth
+			//if (type == eLayerEarth) continue;		// Skip earth
+			//if (type != eLayerLanduse && type != eLayerEarth) continue;	
 
 			for (auto feature : layer.features)
 			{
 				if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
 				if (heightMap && (type != eLayerRoads) && (feature.height == 0.0f))	continue;
 
-				auto mesh = CreateMeshFromFeature(type, feature, heightMap);
+				PolygonMesh* mesh = CreateMeshFromFeature(type, feature, heightMap);
 				if (mesh)
 					AddNewMesh(mesh, tmpSplitArr, meshes);
 			}
