@@ -1,6 +1,6 @@
 #include "Precompiled.h"
 #include "geojson.h"
-#include "jerry.h"
+//#include "jerry.h"
 Hash<CStr, EFeatureKind> gKindHash;
 //-----------------------------------------------------------------------------
 void CreateHash()
@@ -175,7 +175,6 @@ void CreateHash()
 	{
 		assert(gKindHash[i].val == i);
 	}
-
 }
 //-----------------------------------------------------------------------------
 static inline bool extractPoint(const rapidjson::Value& _in, Point& _out, const Tile& _tile, Point* last=NULL)

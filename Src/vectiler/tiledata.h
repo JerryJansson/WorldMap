@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "mapping.h"
 //-----------------------------------------------------------------------------
 //struct Properties {
  //   std::map<std::string, double> numericProps;

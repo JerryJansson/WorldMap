@@ -1,5 +1,7 @@
 #include "Precompiled.h"
 #include "download.h"
+#include "projection.h"
+#include "mapping.h"
 #include "tiledata.h"
 #include "geojson.h"
 #include "rapidjson/document.h"
@@ -130,32 +132,35 @@ HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float ex
 //-----------------------------------------------------------------------------
 bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* data)
 {
-	CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
-	MemoryStruct out;
-	if (!DownloadData(out, url))
-		return false;
-
-	// Parse written data into a JSON object
 	CStopWatch sw;
 	rapidjson::Document doc;
-	doc.Parse(out.memory);
+	float tJson = 0;
+
+	{
+		const CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
+		MemoryStruct out;
+		if (!DownloadData(out, url))
+			return false;
+
+		sw.Start();
+		doc.Parse(out.memory);	// Parse written data into a JSON object
+		tJson = sw.GetMs();
+	}
 
 	if (doc.HasParseError())
 	{
 		LOG("Error parsing tile\n");
-		rapidjson::ParseErrorCode code = doc.GetParseError();
-		size_t errOffset = doc.GetErrorOffset();
+		//rapidjson::ParseErrorCode code = doc.GetParseError();
+		//size_t errOffset = doc.GetErrorOffset();
 		return false;
 	}
 
-	float tJson = sw.GetMs(true);
-
+	sw.Start();
 	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
 	{
 		data->layers.emplace_back(layer->name.GetString());
 		GeoJson::extractLayer(layer->value, data->layers.back(), tile);
 	}
-
 	float tLayers = sw.GetMs();
 
 	LOG("Parsed json in %.1fms. Built GeoJson structures in %.1fms\n", tJson, tLayers);

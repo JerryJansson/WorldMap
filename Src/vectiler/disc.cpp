@@ -75,7 +75,7 @@ bool SaveBin(const char* fname, const std::vector<PolygonMesh*>& meshes)
 		statNumTriangles += mesh->indices.size() / 3;
 	}
 
-	LOG("Saved %s in %.1fms. Meshes: %d, Tris: %d, Vtx: %d\n", fname, sw.GetMs(), nMeshes, statNumTriangles, statNumVertices);
+	LOG("%.1fms. Saved %s. Meshes: %d, Tris: %d, Vtx: %d\n", sw.GetMs(), fname, nMeshes, statNumTriangles, statNumVertices);
 
 	return true;
 }

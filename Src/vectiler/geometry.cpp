@@ -1,12 +1,7 @@
 #include "Precompiled.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include "geometry.h"
 #include "tiledata.h"
 #include "earcut.h"
-#include "../../../Source/Modules/Shared/SceneNew.h"
 //-----------------------------------------------------------------------------
 #define EPSILON 1e-5f
 //-----------------------------------------------------------------------------
@@ -297,7 +292,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f,
 		return NULL;
 
 	auto mesh = new PolygonMesh(layerType, f);
-	const float sortHeight = f->sort_rank / (50.0f);
+	const float sortHeight = f->sort_rank / (500.0f);
 
 	if (f->geometryType == GeometryType::polygons)
 	{
