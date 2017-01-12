@@ -6,8 +6,9 @@ Hash<CStr, EFeatureKind> gKindHash;
 void CreateHash()
 {
 	gKindHash.Reserve(NUM_KINDS);
-	
-	gKindHash.Add("unknown", eKindUnknown);
+
+#define ADDHASH(KIND) gKindHash.Add(#KIND, eKind_##KIND)
+	ADDHASH(unknown);
 
 	// Buildings
 	gKindHash.Add("building", eKindBuilding);
@@ -28,21 +29,127 @@ void CreateHash()
 	gKindHash.Add("portage_way", eKindPortageway);
 
 	// Landuse
-	gKindHash.Add("aerodrome", eKindAerodrome);
-	gKindHash.Add("attraction", eKindAttraction);
-	gKindHash.Add("beach", eKindBeach);
-	gKindHash.Add("bridge", eKindBridge);
-	gKindHash.Add("fence", eKind_fence);
-	gKindHash.Add("forest", eKindForest);
-	gKindHash.Add("garden", eKindGarden);
-	gKindHash.Add("golf_course", eKindGolfcourse);
-	gKindHash.Add("grass", eKindGrass);
-	gKindHash.Add("park", eKindPark);
-	gKindHash.Add("pedestrian", eKindPedestrian);
-	gKindHash.Add("railway", eKindRailway);
-	gKindHash.Add("recreation_ground", eKindRecreationground);
-	gKindHash.Add("residential", eKindResidential);
-	gKindHash.Add("retaining_wall", eKind_retaining_wall);
+	ADDHASH(aerodrome);
+	ADDHASH(allotments);
+	ADDHASH(amusement_ride);
+	ADDHASH(animal);
+	ADDHASH(apron);
+	ADDHASH(aquarium);
+	ADDHASH(artwork);
+	ADDHASH(attraction);
+	ADDHASH(aviary);
+	ADDHASH(battlefield);
+	ADDHASH(beach);
+	ADDHASH(breakwater);
+	ADDHASH(bridge);
+	ADDHASH(camp_site);
+	ADDHASH(caravan_site);
+	ADDHASH(carousel);
+	ADDHASH(cemetery);
+	ADDHASH(cinema);
+	ADDHASH(city_wall);
+	ADDHASH(college);
+	ADDHASH(commercial);
+	ADDHASH(common);
+	ADDHASH(cutline);
+	ADDHASH(dam);
+	ADDHASH(dike);
+	ADDHASH(dog_park);
+	ADDHASH(enclosure);
+	ADDHASH(farm);
+	ADDHASH(farmland);
+	ADDHASH(farmyard);
+	ADDHASH(fence);
+	ADDHASH(footway);
+	ADDHASH(forest);
+	ADDHASH(fort);
+	ADDHASH(fuel);
+	ADDHASH(garden);
+	ADDHASH(gate);
+	ADDHASH(generator);
+	ADDHASH(glacier);
+	ADDHASH(golf_course);
+	ADDHASH(grass);
+	ADDHASH(grave_yard);
+	ADDHASH(groyne);
+	ADDHASH(hanami);
+	ADDHASH(hospital);
+	ADDHASH(industrial);
+	ADDHASH(land);
+	ADDHASH(library);
+	ADDHASH(maze);
+	ADDHASH(meadow);
+	ADDHASH(military);
+	ADDHASH(national_park);
+	ADDHASH(nature_reserve);
+	ADDHASH(natural_forest);
+	ADDHASH(natural_park);
+	ADDHASH(natural_wood);
+	ADDHASH(park);
+	ADDHASH(parking);
+	ADDHASH(pedestrian);
+	ADDHASH(petting_zoo);
+	ADDHASH(picnic_site);
+	ADDHASH(pier);
+	ADDHASH(pitch);
+	ADDHASH(place_of_worship);
+	ADDHASH(plant);
+	ADDHASH(playground);
+	ADDHASH(prison);
+	ADDHASH(protected_area);
+	ADDHASH(quarry);
+	ADDHASH(railway);
+	ADDHASH(recreation_ground);
+	ADDHASH(recreation_track);
+	ADDHASH(residential);
+	ADDHASH(resort);
+	ADDHASH(rest_area);
+	ADDHASH(retail);
+	ADDHASH(retaining_wall);
+	ADDHASH(rock);
+	ADDHASH(roller_coaster);
+	ADDHASH(runway);
+	ADDHASH(rural);
+	ADDHASH(school);
+	ADDHASH(scree);
+	ADDHASH(scrub);
+	ADDHASH(service_area);
+	ADDHASH(snow_fence);
+	ADDHASH(sports_centre);
+	ADDHASH(stadium);
+	ADDHASH(stone);
+	ADDHASH(substation);
+	ADDHASH(summer_toboggan);
+	ADDHASH(taxiway);
+	ADDHASH(theatre);
+	ADDHASH(theme_park);
+	ADDHASH(tower);
+	ADDHASH(trail_riding_station);
+	ADDHASH(university);
+	ADDHASH(urban_area);
+	ADDHASH(urban);
+	ADDHASH(village_green);
+	ADDHASH(wastewater_plant);
+	ADDHASH(water_park);
+	ADDHASH(water_slide);
+	ADDHASH(water_works);
+	ADDHASH(wetland);
+	ADDHASH(wilderness_hut);
+	ADDHASH(wildlife_park);
+	ADDHASH(winery);
+	ADDHASH(winter_sports);
+	ADDHASH(wood);
+	ADDHASH(works);
+	ADDHASH(zoo);
+
+	// Transit
+	ADDHASH(light_rail);
+	ADDHASH(platform);
+	//ADDHASH(railway);
+	ADDHASH(subway);
+	ADDHASH(train);
+	ADDHASH(tram);
+
 
 	// Water
 	gKindHash.Add("basin", eWaterBasin);
@@ -62,11 +169,13 @@ void CreateHash()
 	gKindHash.Add("strait", eWaterStrait);
 	gKindHash.Add("swimming_pool", eWaterSwimming_pool);
 	gKindHash.Add("water", eWaterWater);
+#undef ADDHASH
 
 	for (int i = 0; i < NUM_KINDS; i++)
 	{
 		assert(gKindHash[i].val == i);
 	}
+
 }
 //-----------------------------------------------------------------------------
 static inline bool extractPoint(const rapidjson::Value& _in, Point& _out, const Tile& _tile, Point* last=NULL)
@@ -135,7 +244,7 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 			tmpstr = prop.GetString();
 			_out.kind = gKindHash.Get(tmpstr);
 
-			if(layerType==eLayerLanduse && _out.kind == eKindUnknown)
+			if(/*layerType==eLayerLanduse &&*/ _out.kind == eKind_unknown)
 			{
 				int abba = 10;
 			}
@@ -165,7 +274,6 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		default: _out.road_width = 0.1f; break;
 		}
 	}
-
 
     // Copy geometry into tile data
     const rapidjson::Value& geometry = _in["geometry"];

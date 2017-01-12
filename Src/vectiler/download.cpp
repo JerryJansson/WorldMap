@@ -150,7 +150,6 @@ bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* da
 
 	float tJson = sw.GetMs(true);
 
-	//TileVectorData* data = new TileVectorData();
 	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
 	{
 		data->layers.emplace_back(layer->name.GetString());
@@ -161,6 +160,5 @@ bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* da
 
 	LOG("Parsed json in %.1fms. Built GeoJson structures in %.1fms\n", tJson, tLayers);
 
-	//return data;
 	return true;
 }

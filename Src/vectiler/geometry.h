@@ -12,17 +12,13 @@ struct PolygonMesh
 	std::vector<unsigned int> indices;
 	std::vector<PolygonVertex> vertices;
 	ELayerType layerType;
+	const struct Feature* feature;
 
-	PolygonMesh(ELayerType type) : layerType(type) {}
+	PolygonMesh(ELayerType type, const struct Feature* _feature=NULL) : layerType(type), feature(_feature) {}
 };
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh);
-
-bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst);
-bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
-bool LoadBin(const char* fname, TArray<GGeom>& geomArr);
-
 //-----------------------------------------------------------------------------
-PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const struct Feature& feature, const struct HeightData* heightMap);
+PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const struct Feature* feature, const struct HeightData* heightMap);
 //-----------------------------------------------------------------------------
 float sampleElevation(v2 position, const HeightData* heightMap);

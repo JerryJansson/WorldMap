@@ -1,9 +1,9 @@
 #include "Precompiled.h"
-//#include <unordered_map>
 #include "tiledata.h"
 #include "vectiler.h"
 #include "download.h"
 #include "geometry.h"
+#include "disc.h"
 
 //-----------------------------------------------------------------------------
 void buildPlane(std::vector<PolygonVertex>& outVertices,
@@ -217,7 +217,7 @@ static inline int SplitMesh(const PolygonMesh* src, std::vector<PolygonMesh*>& d
 	uint32 i = 0;
 	while (i < src->indices.size())
 	{
-		PolygonMesh* dst = new PolygonMesh(src->layerType);
+		PolygonMesh* dst = new PolygonMesh(src->layerType, src->feature);
 		dstArr.push_back(dst);
 
 		for (int k = 0; k < src_nv; k++)
@@ -254,30 +254,6 @@ static inline int SplitMesh(const PolygonMesh* src, std::vector<PolygonMesh*>& d
 	return dstArr.size();
 }
 //-----------------------------------------------------------------------------
-// Separate all meshes in it's respective layer
-// Merge as many small meshes together as possible (<65536 vertices)
-//-----------------------------------------------------------------------------
-void MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
-{
-	for (PolygonMesh* mesh : meshes)
-	{
-		std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
-		PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
-		if (!bigMesh || !AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
-		{
-			bigMesh = new PolygonMesh(mesh->layerType);
-			arr.push_back(bigMesh);
-			AddMeshToMesh(mesh, bigMesh);
-		}
-	}
-
-	/*for (int i = 0; i < eNumLayerTypes; i++)
-	{
-		if(meshArr[i].size())
-			LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
-	}*/
-}
-//-----------------------------------------------------------------------------
 static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpSplitArr, std::vector<PolygonMesh*>& outmeshes)
 {
 	int numSplits = SplitMesh(mesh, tmpSplitArr);
@@ -293,10 +269,67 @@ static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpS
 	}
 }
 //-----------------------------------------------------------------------------
+// Separate all meshes in it's respective layer
+// Merge as many small meshes together as possible (<65536 vertices)
+//-----------------------------------------------------------------------------
+/*int MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
+{
+	int total = 0;
+	for (PolygonMesh* mesh : meshes)
+	{
+		std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
+		PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
+		if (!bigMesh || !AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
+		{
+			bigMesh = new PolygonMesh(mesh->layerType);
+			bigMesh->bigMeshIdx = arr.size();
+			arr.push_back(bigMesh);
+			AddMeshToMesh(mesh, bigMesh);
+
+			total++;
+		}
+	}
+
+	//for (int i = 0; i < eNumLayerTypes; i++)
+	//{
+	//	if(meshArr[i].size())
+	//		LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
+	//}
+
+	return total;
+}*/
+// Merge as many small meshes together as possible (<65536 vertices)
+//-----------------------------------------------------------------------------
+/*void MergeMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*>& merged)
+{
+	ELayerType layer = (ELayerType)-1;
+	PolygonMesh* bigMesh = NULL;
+	for (PolygonMesh* mesh : meshes)
+	{
+		bool allocNew = false;
+		if (mesh->layerType != layer)
+		{
+			layer = mesh->layerType;
+			allocNew = true;
+		}
+		else if (!AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
+		{
+			allocNew = true;
+		}
+
+		if (allocNew)
+		{
+			bigMesh = new PolygonMesh(layer);
+			bigMesh->bigMeshIdx = arr.size();
+			arr.push_back(bigMesh);
+			AddMeshToMesh(mesh, bigMesh);
+		}
+	}
+}*/
+//-----------------------------------------------------------------------------
 bool vectiler(const Params2& params)
 {
 	HeightData* heightMap = NULL;
-	//TileVectorData* vectorTileData = NULL;
 	TileVectorData vectorData;
 	bool haveVectorData = false;
 	Tile tile(params.tilex, params.tiley, params.tilez);
@@ -318,10 +351,7 @@ bool vectiler(const Params2& params)
 
 	if (params.vectorData)
 	{
-		//vectorTileData = DownloadVectorTile(tile, params.apiKey);
 		haveVectorData = DownloadVectorTile(tile, params.apiKey, &vectorData);
-
-		//if (!vectorTileData)
 		if (!haveVectorData)
 			LOG("Failed to download vector tile data for tile %d %d %d\n", tile.x, tile.y, tile.z);
 	}
@@ -350,24 +380,30 @@ bool vectiler(const Params2& params)
 		}*/
 	}
 
+	//std::vector<EFeatureKind> kinds;
+
 	/// Build vector tile meshes
-	//if (vectorTileData)
 	if (haveVectorData)
 	{
 		const TileVectorData* data = &vectorData;
 
-		for (auto layer : data->layers)
+		//for (auto layer : data->layers)
+		for (size_t l=0; l<data->layers.size(); l++)
 		{
+			const Layer& layer = data->layers[l];
 			const ELayerType type = layer.layerType;
 			//if (type == eLayerBuildings) continue;	// Skip buildings
 			//if (type == eLayerRoads) continue;		// Skip roads
 			//if (type == eLayerEarth) continue;		// Skip earth
-			//if (type != eLayerLanduse && type != eLayerEarth) continue;	
+			//if (type != eLayerLanduse && type != eLayerEarth) continue;
 
-			for (auto feature : layer.features)
+			if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
+			
+			//for (auto feature : layer.features)
+			for (size_t i=0; i<layer.features.size(); i++)
 			{
-				if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
-				if (heightMap && (type != eLayerRoads) && (feature.height == 0.0f))	continue;
+				const Feature* feature = &layer.features[i];
+				if (heightMap && (type != eLayerRoads) && (feature->height == 0.0f))	continue;
 
 				PolygonMesh* mesh = CreateMeshFromFeature(type, feature, heightMap);
 				if (mesh)
@@ -379,26 +415,33 @@ bool vectiler(const Params2& params)
 	float t_BuildMeshes = sw.GetMs(true);
 
 	// Separate all meshes in it's respective layer
-	// Merge all meshes from same layer into 1 big mesh. If this mesh gets vcount>65536 the mesh is split
-	std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
-	MergeLayerMeshes(meshes, meshArr);
-	float t_MergeMeshes = sw.GetMs(true);
-	
-	LOG("Built %d layermeshes (%.1fms). Merged meshes (%.1fms)\n", meshes.size(), t_BuildMeshes, t_MergeMeshes);
+	// Merge all meshes from same layer into a few big meshes (<=65536 vertices)
+	//std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
+	//int nMerged = MergeLayerMeshes(meshes, meshArr);
+	//float t_MergeMeshes = sw.GetMs(true);
+	//LOG("Triangulated %d PolygonMeshes in %.1fms. Merged these meshes to %d meshes in %.1fms\n", meshes.size(), t_BuildMeshes, nMerged, t_MergeMeshes);
 
+	//std::vector<PolygonMesh*> merged;
+	//MergeMeshes(meshes, merged);
+	//float t_MergeMeshes = sw.GetMs(true);
+	
+	//LOG("Triangulated %d PolygonMeshes in %.1fms. Merged these meshes to %d meshes in %.1fms\n", meshes.size(), t_BuildMeshes, merged.size(), t_MergeMeshes);
+	LOG("Triangulated %d PolygonMeshes in %.1fms\n", meshes.size(), t_BuildMeshes);
+	
 	// Save output BIN file
 	CStrL fname = Str_Printf("%d_%d_%d.bin", tile.x, tile.y, tile.z);
-	SaveBin(fname, meshArr);
+	//SaveBin(fname, meshArr);
+	SaveBin(fname, meshes);
 
 	// Delete all meshes
 	for (size_t i = 0; i < meshes.size(); i++)
 		delete meshes[i];
 
-	for (size_t i = 0; i < eNumLayerTypes; i++)
+	/*for (size_t i = 0; i < eNumLayerTypes; i++)
 	{
 		for (size_t k = 0; k < meshArr[i].size(); k++)
 			delete meshArr[i][k];
-	}
+	}*/
 	
 	return true;
 }

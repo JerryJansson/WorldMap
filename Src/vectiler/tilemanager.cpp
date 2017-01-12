@@ -7,13 +7,12 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include "disc.h"
 //-----------------------------------------------------------------------------
-const bool useSingleTile = true;		// Only load 1 tile. Good for debugging
+const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
 CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
-CVar tile_DiscCache("tile_DiscCache", false);
-typedef vtxPNC vtxMap;
-
+CVar tile_DiscCache("tile_DiscCache", true);
 //-----------------------------------------------------------------------------
 #define ZZZOOM 16							// Regular grid uses a fixed zoom
 //const Vec2d longLatStart(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
@@ -37,14 +36,32 @@ std::mutex doneLock;
 std::condition_variable signal_tileLock;
 bool stop = false;
 MyTile* tileToStream = NULL;
-//-----------------------------------------------------------------------------
-struct StreamResult : ListNode<StreamResult>
-{
-	MyTile* tile;
-	TArray<GGeom> geoms;
-};
-MemPoolDynamic<StreamResult> geomPool(8);
+
 List2<StreamResult> doneList;
+//-----------------------------------------------------------------------------
+StreamResult* AllocResult(MyTile* t)
+{
+	//poolLock.lock();
+	//StreamResult* result = geomPool.Alloc();
+	//poolLock.unlock();
+	// return result;
+	StreamResult* result = new StreamResult;
+
+	result->tile = t;
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+void FreeResult(StreamResult* r)
+{
+	//poolLock.lock();
+	//geomPool.Free(r);
+	//poolLock.unlock();
+	for (int i = 0; i < r->geoms.Num(); i++)
+		delete r->geoms[i];
+
+	delete r;
+}
 //-----------------------------------------------------------------------------
 MyTile::MyTile(const Vec3i& tms)
 {
@@ -75,18 +92,14 @@ void StreamTile(int threadIdx)
 		//std::unique_lock<std::mutex> lk(tileLock);
 		//signal_tileLock.wait(lk, [] {return ready; });
 
-		LOG("Thread %d picked up <%d, %d> in frame %d\n", threadIdx, tileToStream->m_Tms.x, tileToStream->m_Tms.y, Engine_GetFrameNumber());
+		LOG("Thread %d picked up <%d, %d, %d> in frame %d\n", threadIdx, tileToStream->m_Tms.x, tileToStream->m_Tms.y, tileToStream->m_Tms.z, Engine_GetFrameNumber());
 
 		MyTile* t = tileToStream;
 		tileToStream = NULL;
 		tileLock.unlock();
 
-		poolLock.lock();
-		StreamResult* result = geomPool.Alloc();
-		poolLock.unlock();
-
-		result->tile = t;
-		GetTile(result->tile, result->geoms);
+		StreamResult* result = AllocResult(t);
+		GetTile(result);
 
 		doneLock.lock();
 		doneList.PushBack(result);
@@ -116,6 +129,8 @@ void TileManager::Stop()
 void TileManager::Initialize(CCamera* cam)
 {
 	m_Initialized = true;
+
+	InitializeColors();
 
 	Vec3i tile;
 	if (useSingleTile) // Debug
@@ -219,53 +234,54 @@ int TileManager::ChooseTileToLoad(CCamera* cam, const TArray<Vec3i>& tiles)
 	return minidx;
 }
 //-----------------------------------------------------------------------------
-CMesh* CreateMesh(const char* name, GGeom* geom)
+CMesh* CreateMeshFromStreamedGeom(const char* name, const StreamGeom* g)
 {
 	const VertexFmtID vfid = vtxMap::fmt;
 	const int vertexSize = gRenderer->GetVertexFormat(vfid)->Stride();
 
-	// Create mesh from collection of geoms
+	// Create mesh
 	CMesh* mesh = new CMesh(name, 1);
 	mesh->m_VtxFmt = vfid;
 
-	// Create 1 common index buffer
-	mesh->m_IndexBuffer = gRenderer->CreateIndexBuffer(IDX_SHORT, geom->IndexCount(), BUF_STATIC | BUF_HARDWARE);
-	uint16* idx = (uint16*)mesh->m_IndexBuffer->Lock(LOCK_WRITE_ONLY, true);
+	const int nv = g->vertices.Num();
+	const int ni = g->indices.Num();
 
-	GGeom* g = geom;
+	// Create 1 common index buffer
+	mesh->m_IndexBuffer = gRenderer->CreateIndexBuffer(IDX_SHORT, ni, BUF_STATIC | BUF_HARDWARE, g->indices.Ptr());
+	//uint16* idx = (uint16*)mesh->m_IndexBuffer->Lock(LOCK_WRITE_ONLY, true);
 
 	DrawRange& range = mesh->m_DrawRange[0];
 	range.vb = 0;
 	range.firstIdx = 0;
-	range.numIdx = g->IndexCount();
+	range.numIdx = ni;
 	range.firstVtx = 0;
-	range.numVtx = g->VertexCount();
-	range.materialName = g->materialName.Str();
+	range.numVtx = nv;
+	range.materialName = "buildings";// g->materialName.Str();
 
 	// Write this geom to index buffer
-	for (int k = 0; k < range.numIdx; k++)
-		idx[k] = g->indexes[k];
+	//for (int k = 0; k < ni; k++)
+	//	idx[k] = g->indexes[k];
 
-	mesh->m_IndexBuffer->Unlock();
+	//mesh->m_IndexBuffer->Unlock();
 		
 	// Create vertex buffer for these sub meshes
-	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, g->VertexCount(), BUF_STATIC | BUF_HARDWARE);
-	vtxMap* v = (vtxMap*)vb->Lock(LOCK_WRITE_ONLY, true);
-	const int nv = geom->VertexCount();
+	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC | BUF_HARDWARE, g->vertices.Ptr());
+	/*vtxMap* v = (vtxMap*)vb->Lock(LOCK_WRITE_ONLY, true);
+	const int nv = geom->VertexCount();*/
 	Caabb geomaabb(true);
 
 	for (int j = 0; j < nv; j++)
 	{
-		v[j].pos = geom->vertices[j].pos;
-		v[j].nrm = geom->vertices[j].nrm;
-	    v[j].col = geom->vertices[j].col;
-		geomaabb.AddPoint(v[j].pos);
+		//v[j].pos = geom->vertices[j].pos;
+		//v[j].nrm = geom->vertices[j].nrm;
+	    //v[j].col = geom->vertices[j].col;
+		geomaabb.AddPoint(g->vertices[j].pos);
 	}
 		
 	mesh->m_DrawRange[0].geometricCenter = geomaabb.GetCenter();
 	mesh->m_MeshAabb = geomaabb;
 	
-	vb->Unlock();
+	//vb->Unlock();
 
 	mesh->m_VertexBuffers.SetNum(1);
 	mesh->m_VertexBuffers[0] = vb;
@@ -295,20 +311,18 @@ bool TileManager::ReceiveLoadedTile()
 		return false;
 
 	MyTile* t = r->tile;
-	LOG("Received <%d, %d, %d> in frame %d\n", t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber());
+	//LOG("Received <%d, %d, %d> in frame %d\n", t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber());
 	t->m_Status = MyTile::eLoaded;
 	t->m_Frame = Engine_GetFrameNumber();
 
 	float t_1 = sw.GetMs();
-
-	for (int i = 0; i < r->geoms.Num(); i++)
+	
+	const int n = r->geoms.Num();
+	for (int i = 0; i <n; i++)
 	{
-		/*LoadMeshOptions o;
-		o.createCollision = false;
-		o.calculateTangentSpace = false;
-		CMesh* mesh = CreateMeshFromGeoms(r->geoms[i].name, &r->geoms[i], 1, &o);*/
-		CMesh* mesh = CreateMesh(r->geoms[i].name, &r->geoms[i]);
-		Entity* e = new Entity(r->geoms[i].name);
+		CStrL name = Str_Printf("%s_%d", layerNames[r->geoms[i]->layerType], r->geoms[i]->layerSubIdx);
+		CMesh* mesh = CreateMeshFromStreamedGeom(name, r->geoms[i]);
+		Entity* e = new Entity(name);
 		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
 		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
 		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete); // Resets dirty flag
@@ -320,14 +334,12 @@ bool TileManager::ReceiveLoadedTile()
 	t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
 	gScene.AddEntity(t);
 
-	r->tile = NULL;
+	
 	// Release geom memory
-	poolLock.lock();
-	geomPool.Free(r);
-	poolLock.unlock();
+	FreeResult(r);
 
 	float t_total = sw.GetMs();
-	LOG("Process of receiving tile took %.1fms. CreateMeshes: %.1f\n", t_total, t_createMeshes);
+	LOG("%.1fms. Received <%d, %d, %d> in frame %d. Created %d meshes in %.1fms\n", t_total, t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber(), n, t_createMeshes);
 
 	return true;
 }
@@ -385,15 +397,15 @@ void TileManager::Update(CCamera* cam)
 		{
 			tileToStream = new MyTile(missingTiles[loadIdx]);
 			newtile = tileToStream;
-			LOG("Added %d,%d for streaming in frame %d\n", tileToStream->m_Tms.x, tileToStream->m_Tms.y, frame);
+			LOG("Added <%d, %d, %d> for streaming in frame %d\n", tileToStream->m_Tms.x, tileToStream->m_Tms.y, tileToStream->m_Tms.z, frame);
 			tileLock.unlock();
 		}
 		
 		if(newtile)
 			m_Tiles.Add(newtile->m_Tms, newtile);
 
-		float t = sw.GetMs(true);
-		LOG("Choose tile, lock, add to hash: %.2fms\n", t);
+		//float t = sw.GetMs(true);
+		//LOG("Choose tile, lock, add to hash: %.2fms\n", t);
 	}
 
 	// Any tiles done streaming?

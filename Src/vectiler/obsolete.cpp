@@ -728,3 +728,10 @@ bool saveOBJ(const char* outputOBJ,
 	return false;
 }
 #endif
+
+
+//bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst);
+//bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes]);
+//bool LoadBin(const char* fname, TArray<GGeom>& geomArr);
+//bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshes);
+//bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms);// TArray<GGeom*>& geomArr);

@@ -46,15 +46,6 @@ struct Tile {
 
 	Tile(int x, int y, int z);
 };
-
-/*namespace std {
-	template<>
-	struct hash<Tile> {
-		size_t operator()(const Tile &tile) const {
-			return std::hash<int>()(tile.x) ^ std::hash<int>()(tile.y) ^ std::hash<int>()(tile.z);
-		}
-	};
-}*/
 //-----------------------------------------------------------------------------
 enum ELayerType
 {
@@ -76,7 +67,7 @@ enum ELayerType
 //-----------------------------------------------------------------------------
 enum EFeatureKind
 {
-	eKindUnknown,
+	eKind_unknown,
 
 	// Buildings
 	eKindBuilding,
@@ -97,21 +88,126 @@ enum EFeatureKind
 	eKindPortageway,
 
 	// Landuse
-	eKindAerodrome,
-	eKindAttraction,
-	eKindBeach,
-	eKindBridge,
+	eKind_aerodrome,
+	eKind_allotments,
+	eKind_amusement_ride,
+	eKind_animal,
+	eKind_apron,
+	eKind_aquarium,
+	eKind_artwork,
+	eKind_attraction,
+	eKind_aviary,
+	eKind_battlefield,
+	eKind_beach,
+	eKind_breakwater,
+	eKind_bridge,
+	eKind_camp_site,
+	eKind_caravan_site,
+	eKind_carousel,
+	eKind_cemetery,
+	eKind_cinema,
+	eKind_city_wall,
+	eKind_college,
+	eKind_commercial,
+	eKind_common,
+	eKind_cutline,
+	eKind_dam,
+	eKind_dike,
+	eKind_dog_park,
+	eKind_enclosure,
+	eKind_farm,
+	eKind_farmland,
+	eKind_farmyard,
 	eKind_fence,
-	eKindForest,
-	eKindGarden,
-	eKindGolfcourse,
-	eKindGrass,
-	eKindPark,
-	eKindPedestrian,
-	eKindRailway,
-	eKindRecreationground,
-	eKindResidential,
+	eKind_footway,
+	eKind_forest,
+	eKind_fort,
+	eKind_fuel,
+	eKind_garden,
+	eKind_gate,
+	eKind_generator,
+	eKind_glacier,
+	eKind_golf_course,
+	eKind_grass,
+	eKind_grave_yard,
+	eKind_groyne,
+	eKind_hanami,
+	eKind_hospital,
+	eKind_industrial,
+	eKind_land,
+	eKind_library,
+	eKind_maze,
+	eKind_meadow,
+	eKind_military,
+	eKind_national_park,
+	eKind_nature_reserve,
+	eKind_natural_forest,
+	eKind_natural_park,
+	eKind_natural_wood,
+	eKind_park,
+	eKind_parking,
+	eKind_pedestrian,
+	eKind_petting_zoo,
+	eKind_picnic_site,
+	eKind_pier,
+	eKind_pitch,
+	eKind_place_of_worship,
+	eKind_plant,
+	eKind_playground,
+	eKind_prison,
+	eKind_protected_area,
+	eKind_quarry,
+	eKind_railway,
+	eKind_recreation_ground,
+	eKind_recreation_track,
+	eKind_residential,
+	eKind_resort,
+	eKind_rest_area,
+	eKind_retail,
 	eKind_retaining_wall,
+	eKind_rock,
+	eKind_roller_coaster,
+	eKind_runway,
+	eKind_rural,
+	eKind_school,
+	eKind_scree,
+	eKind_scrub,
+	eKind_service_area,
+	eKind_snow_fence,
+	eKind_sports_centre,
+	eKind_stadium,
+	eKind_stone,
+	eKind_substation,
+	eKind_summer_toboggan,
+	eKind_taxiway,
+	eKind_theatre,
+	eKind_theme_park,
+	eKind_tower,
+	eKind_trail_riding_station,
+	eKind_university,
+	eKind_urban_area,
+	eKind_urban,
+	eKind_village_green,
+	eKind_wastewater_plant,
+	eKind_water_park,
+	eKind_water_slide,
+	eKind_water_works,
+	eKind_wetland,
+	eKind_wilderness_hut,
+	eKind_wildlife_park,
+	eKind_winery,
+	eKind_winter_sports,
+	eKind_wood,
+	eKind_works,
+	eKind_zoo,
+
+	// Transit
+	eKind_light_rail,
+	eKind_platform,
+	//eKind_railway,
+	eKind_subway,
+	eKind_train,
+	eKind_tram,
 
 	// Water
 	eWaterBasin,
@@ -135,6 +231,27 @@ enum EFeatureKind
 	NUM_KINDS
 };
 //-----------------------------------------------------------------------------
-extern const char* layerNames[eNumLayerTypes + 1];
+// Temporary!
 //-----------------------------------------------------------------------------
-bool GetTile(class MyTile* t, TArray<GGeom>& geoms);
+#define KIND_IS_LANDUSE(k)	(k>=eKind_aerodrome && k<=eKind_zoo)
+#define KIND_IS_TRANSIT(k)	(k>=eKind_light_rail && k<=eKind_tram)
+#define KIND_IS_WATER(k)	(k>=eWaterBasin && k<=eWaterWater)
+//-----------------------------------------------------------------------------
+extern const char* layerNames[eNumLayerTypes + 1];
+extern Crgba kindColors[NUM_KINDS];
+typedef vtxPNC vtxMap;
+//-----------------------------------------------------------------------------
+/*struct StreamResult : ListNode<StreamResult>
+{
+MyTile* tile;
+TArray<GGeom> geoms;
+};
+MemPoolDynamic<StreamResult> geomPool(8);*/
+struct StreamResult : ListNode<StreamResult>
+{
+	class MyTile* tile;
+	TArray<struct StreamGeom*> geoms;
+};
+//-----------------------------------------------------------------------------
+bool GetTile(StreamResult* result);
+void InitializeColors();

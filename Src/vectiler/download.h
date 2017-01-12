@@ -14,5 +14,4 @@ struct MemoryStruct
 };
 //-----------------------------------------------------------------------------
 struct HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float extrusionScale);
-//struct TileVectorData* DownloadVectorTile(const Tile& tile, const char* apiKey);
 bool DownloadVectorTile(const Tile& tile, const char* apiKey, struct TileVectorData* data);

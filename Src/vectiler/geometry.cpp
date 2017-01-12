@@ -35,24 +35,6 @@ void computeNormals(PolygonMesh* mesh)
 		v.normal = myNormalize(v.normal);
 	}
 }
-//-----------------------------------------------------------------------------
-bool AddMeshToMesh(const PolygonMesh* src, PolygonMesh* dst)
-{
-	const int voffset = dst->vertices.size();
-	int nv = src->vertices.size();
-
-	if (voffset + nv > 65536)
-		return false;
-
-	dst->vertices.insert(dst->vertices.end(), src->vertices.begin(), src->vertices.end());
-	
-	for (size_t i = 0; i < src->indices.size(); i++)
-	{
-		dst->indices.push_back(voffset + src->indices[i]);
-	}
-
-	return true;
-}
 /*-----------------------------------------------------------------------------
 * Sample elevation using bilinear texture sampling
 * - position: must lie within tile range [-1.0, 1.0]
@@ -297,51 +279,51 @@ void addPolygonPolylinePoint(LineString& linestring,
 // 30918
 // 
 //-----------------------------------------------------------------------------
-PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& feature, const HeightData* heightMap)
+PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
 {
 	CStopWatch sw;
 
-	if (strstr(feature.name.Str(), "Deutsches Patent") != 0)
+	if (strstr(f->name.Str(), "Deutsches Patent") != 0)
 	{
 		int abba = 10;
 	}
 
-	if (feature.lineStrings.size() > 3000)
+	if (f->lineStrings.size() > 3000)
 	{
 		int abba = 10;
 	}
 
-	if (feature.geometryType == GeometryType::unknown || feature.geometryType == GeometryType::points)
+	if (f->geometryType == GeometryType::unknown || f->geometryType == GeometryType::points)
 		return NULL;
 
-	auto mesh = new PolygonMesh(layerType);
-	const float sortHeight = feature.sort_rank / (50.0f);
+	auto mesh = new PolygonMesh(layerType, f);
+	const float sortHeight = f->sort_rank / (50.0f);
 
-	if (feature.geometryType == GeometryType::polygons)
+	if (f->geometryType == GeometryType::polygons)
 	{
-		for (const Polygon2& polygon : feature.polygons)
+		for (const Polygon2& polygon : f->polygons)
 		{
-			if (feature.min_height > feature.height)
+			if (f->min_height > f->height)
 			{
 				int abba = 10;
 			}
 
 			float centroidHeight = 0.f;
-			if (feature.min_height != feature.height)
+			if (f->min_height != f->height)
 			{
-				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap);
-				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight);
+				centroidHeight = buildPolygonExtrusion(polygon, f->min_height, f->height, mesh->vertices, mesh->indices, heightMap);
+				buildPolygon(polygon, f->height, mesh->vertices, mesh->indices, heightMap, centroidHeight);
 			}
 			else
-				buildPolygon(polygon, feature.height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);
+				buildPolygon(polygon, f->height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);
 		}
 	}
-	else if (feature.geometryType == GeometryType::lines)
+	else if (f->geometryType == GeometryType::lines)
 	{
 		float t1 = 0;
 		float t2 = 0;
 		CStopWatch sw1;
-		const float extrudeW = feature.road_width;// *scale;
+		const float extrudeW = f->road_width;// *scale;
 		//const float extrudeH = lineExtrusionHeight * scale;
 		const float extrudeH = sortHeight;
 
@@ -349,7 +331,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 		polygon.emplace_back();
 		LineString& polygonLine = polygon.back();
 
-		for (const LineString& linestring : feature.lineStrings)
+		for (const LineString& linestring : f->lineStrings)
 		{
 			polygonLine.clear();
 			const size_t n = linestring.size();
@@ -453,13 +435,11 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 		float time = sw.GetMs();
 		if (time > 50)
 		{
-			LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
+			LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", f->id, time, mesh->vertices.size(), mesh->indices.size() / 3);
 			LOG("LineBuilder: %.1f. PolyBuilder: %.1f\n", t1, t2);
 			//LOG("FeatureType: %d\n", feature.geometryType);
 		}
 	}
-
-	
 
 	if (mesh->vertices.size() == 0)
 	{
@@ -616,165 +596,3 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& fe
 	return mesh;
 }
 #endif
-//-----------------------------------------------------------------------------
-#define VER 1
-/*
- VER 1
- 4						(nMeshes)
- 11						(meshName len)
-	"buildings_0"		(meshName)
-	eLayerBuildings		(layer type)
-	65536				(vertex count)
-	33465				(index count)
-	v0, v1, vn ...		(vertices)
-	i0, i1, in ...		(indices)
- 11
-	"buildings_1"
-	eLayerBuildings
-	65536
-	31002
-	v0, v1, vn ...
-	i0, i1, in ...
- 11
-	"buildings_2"
-	eLayerBuildings
-	9765
-	4122
-	v0, v1, vn ...
-	i0, i1, in ...
- 9 
-	"landuse_0"
-	eLayerLanduse
-	3421
-	1800
-	v0, v1, vn ...
-	i0, i1, in ...
-*/
-//-----------------------------------------------------------------------------
-bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
-{
-	CStopWatch sw;
-
-	//LOG("Saving bin file: %s\n", fname);
-
-	CFile f;
-	if (!f.Open(fname, FILE_WRITE))
-		return false;
-
-	int nMeshes = 0;
-	for (int l = 0; l < eNumLayerTypes; l++)
-		nMeshes += meshArr[l].size();
-	
-	f.WriteInt(VER);
-	f.WriteInt(nMeshes);
-
-	int statNumVertices = 0;
-	int statNumTriangles = 0;
-
-	for (int l = 0; l < eNumLayerTypes; l++)
-	{
-		CStrL layername = CStrL(layerNames[l]) + "_";
-
-		for (size_t k = 0; k < meshArr[l].size(); k++)
-		{
-			const PolygonMesh* mesh = meshArr[l][k];
-			if (mesh->vertices.size() == 0)
-				continue;
-
-			CStrL meshname = layername;
-			meshname += (int)k;
-
-			f.WriteInt(meshname.Len());
-			f.Write(meshname.Str(), meshname.Len() * sizeof(char));
-			f.WriteInt(mesh->layerType);
-			f.WriteInt(mesh->vertices.size());
-			f.WriteInt(mesh->indices.size());
-			
-			for (auto v : mesh->vertices)
-			{
-				// Flip
-				float p[6];
-				p[0] = v.position.x;
-				p[1] = v.position.z;
-				p[2] = -v.position.y;
-				p[3] = v.normal.x;
-				p[4] = v.normal.z;
-				p[5] = -v.normal.y;
-				f.Write(p, sizeof(float) * 6);
-			}
-
-			f.Write(mesh->indices.data(), mesh->indices.size() * sizeof(int));
-			statNumVertices += mesh->vertices.size();
-			statNumTriangles += mesh->indices.size() / 3;
-
-			//LOG("Wrote: %s\n", meshname.Str());
-		}
-	}
-	LOG("Saved %s in %.1fms. Meshes: %d, Tris: %d, Vtx: %d\n", fname, sw.GetMs(), nMeshes, statNumTriangles, statNumVertices);
-
-	return true;
-}
-//-----------------------------------------------------------------------------
-bool LoadBin(const char* fname, TArray<GGeom>& geomArr)
-{
-	CStopWatch sw;
-
-	CFile f;
-	if (!f.Open(fname, FILE_READ))
-		return false;
-
-	int ver = f.ReadInt();
-
-	if (ver != VER)
-	{
-		gLogger.TellUser(LOG_ERROR, "Wrong version");
-		return false;
-	}
-
-	int nMeshes = f.ReadInt();
-	geomArr.SetNum(nMeshes);
-
-	for(int m=0; m<nMeshes; m++)
-	{
-		int nlen = f.ReadInt();
-		if (nlen >= 64)
-		{
-			gLogger.Warning("Name to long");
-			return false;
-		}
-
-		GGeom& geom = geomArr[m];
-
-		char name[64];
-		int type, nv, ni;
-
-		f.Read(name, nlen * sizeof(char));
-		name[nlen] = '\0';
-		f.Read(&type, sizeof(type));
-		f.Read(&nv, sizeof(nv));
-		f.Read(&ni, sizeof(ni));
-
-		geom.Prepare(nv, ni);
-		geom.SetName(name);
-		GVertex* vtx = geom.VertexPtr();
-		uint32* idxs = geom.IndexPtr();
-
-		for (int i = 0; i < nv; i++)
-		{
-			float v[6];
-			f.Read(v, sizeof(v[0]) * 6);
-			vtx[i].pos = &v[0];
-			vtx[i].nrm = &v[3];
-		}
-
-		f.Read(idxs, ni * sizeof(uint32));
-		geom.SetMaterial(layerNames[type]);
-
-		//LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
-	}
-
-	LOG("Loaded %s in %.1fms\n", fname, sw.GetMs());
-	
-	return true;
-}
-
