@@ -108,8 +108,8 @@ void CState_Game::Update(const float dt)
 {
 	CState::Update(dt);
 	
-	if (gEditorEnabled)
-		inputWasHandledbyImGui = Editor_Update(dt, allowGuiInput);
+	//if (gEditorEnabled)
+	//	inputWasHandledbyImGui = Editor_Update(dt, allowGuiInput);
 
 	if (!inputWasHandledbyImGui)
 	{

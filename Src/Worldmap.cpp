@@ -81,6 +81,7 @@ CViewer::CViewer()
 bool CViewer::Create()
 {
 	m_DefaultGameCam.PerspectiveY(50.0f, 0.5f, 10000.0f);
+	//m_DefaultGameCam.PerspectiveY_ReversedDepth(50.0f, 0.5f);
 	m_DebugCam.PerspectiveY(50.0f, 0.5f, 5000.0f);
 	m_DefaultGameCam.SetName("Game Cam");
 	m_DebugCam.SetName("Debug Cam");
@@ -238,7 +239,7 @@ bool MyApp_Init()
 	if (!gScene.Create(NULL))
 		return false;
 
-	gMaterialCategory = gResourceFactory.LoadMaterialLib("content_worldmap/materials.smt");
+	gMaterialCategory = gResourceFactory.MatLib_Load("content_worldmap/materials.smt");
 
 	CState_Game* state_game = new CState_Game("Game", "");
 	state_game->SetFadeTimes(0.3f, 0.3f);
@@ -254,7 +255,7 @@ void MyApp_Deinit()
 {
 	gStateManager.DestroyStates();
 	gScene.Destroy();
-	gResourceFactory.RemoveMaterialLib(gMaterialCategory);
+	gResourceFactory.MatLib_RemoveGroup(gMaterialCategory);
 	Editor_Deinit();
 }
 //-----------------------------------------------------------------------------
@@ -275,4 +276,10 @@ void MyApp_Render()
 {
 	gStateManager.Render();
 	gStateManager.Render2d();
+}
+void MyApp_Resize() {}
+//void MyApp_InputEvent(const inputEvent_t* e);
+bool MyApp_Exit() 
+{
+	return true;
 }

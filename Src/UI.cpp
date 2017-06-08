@@ -13,9 +13,10 @@ void Editor_Deinit()
 	ImHelper_Deinit();
 }
 //-----------------------------------------------------------------------------
-bool Editor_Update(float dt, bool allowGuiInput)
+bool Editor_Update(float dt/*, bool allowGuiInput*/)
 {
-	bool inputHandled = ImHelper_NewFrame(allowGuiInput);
+	ImHelperIO io;
+	ImHelper_NewFrame(&io);
 
 	if (ImGui::BeginMainMenuBar())
 	{
@@ -53,7 +54,8 @@ bool Editor_Update(float dt, bool allowGuiInput)
 	ImWindow_Scene();
 	ImWindow_Inspector();*/
 
-	return inputHandled;
+	//return inputHandled;
+	return false;
 }
 //-----------------------------------------------------------------------------
 void Editor_Render2d()

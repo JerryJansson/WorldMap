@@ -241,50 +241,34 @@ CMesh* CreateMeshFromStreamedGeom(const char* name, const StreamGeom* g)
 
 	// Create mesh
 	CMesh* mesh = new CMesh(name, 1);
-	mesh->m_VtxFmt = vfid;
+	//mesh->m_VtxFmt = vfid;
 
 	const int nv = g->vertices.Num();
 	const int ni = g->indices.Num();
 
 	// Create 1 common index buffer
-	mesh->m_IndexBuffer = gRenderer->CreateIndexBuffer(IDX_SHORT, ni, BUF_STATIC | BUF_HARDWARE, g->indices.Ptr());
-	//uint16* idx = (uint16*)mesh->m_IndexBuffer->Lock(LOCK_WRITE_ONLY, true);
+	CIndexBuffer* ib = gRenderer->CreateIndexBuffer(IDX_SHORT, ni, BUF_STATIC, g->indices.Ptr());
 
-	DrawRange& range = mesh->m_DrawRange[0];
-	range.vb = 0;
+	SubMesh& range = mesh->m_SubMeshes[0];
+	range.glgeomIdx = 0;
 	range.firstIdx = 0;
 	range.numIdx = ni;
 	range.firstVtx = 0;
 	range.numVtx = nv;
 	range.materialName = "buildings";// g->materialName.Str();
-
-	// Write this geom to index buffer
-	//for (int k = 0; k < ni; k++)
-	//	idx[k] = g->indexes[k];
-
-	//mesh->m_IndexBuffer->Unlock();
 		
 	// Create vertex buffer for these sub meshes
-	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC | BUF_HARDWARE, g->vertices.Ptr());
-	/*vtxMap* v = (vtxMap*)vb->Lock(LOCK_WRITE_ONLY, true);
-	const int nv = geom->VertexCount();*/
-	Caabb geomaabb(true);
-
-	for (int j = 0; j < nv; j++)
-	{
-		//v[j].pos = geom->vertices[j].pos;
-		//v[j].nrm = geom->vertices[j].nrm;
-	    //v[j].col = geom->vertices[j].col;
-		geomaabb.AddPoint(g->vertices[j].pos);
-	}
-		
-	mesh->m_DrawRange[0].geometricCenter = geomaabb.GetCenter();
-	mesh->m_MeshAabb = geomaabb;
+	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC, g->vertices.Ptr());
 	
-	//vb->Unlock();
+	mesh->m_MeshAabb = g->aabb;
+	mesh->m_SubMeshes[0].geometricCenter = g->aabb.GetCenter();
+	
+	//mesh->m_VertexBuffers.SetNum(1);
+	//mesh->m_VertexBuffers[0] = vb;
 
-	mesh->m_VertexBuffers.SetNum(1);
-	mesh->m_VertexBuffers[0] = vb;
+	// VAOs
+	mesh->m_GlGeoms.SetNum(1);
+	mesh->m_GlGeoms[0].SetBuffers(vfid, vb, ib, GlGeom::eOwnsAll);
 
 	//if (o->createCollision)
 	//	mesh->m_Collision = CreateCollisionModelFromGeoms(geoms, nGeoms);
