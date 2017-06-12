@@ -1,0 +1,402 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{84360912-CA50-47E8-8263-8C60AC3E1851}</ProjectGuid>
+    <RootNamespace>SimView</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Precompiled.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>..\..\..\..\Source\Middleware;..\..\3rdParty;..\..\3rdParty\libcurl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>CURL_STATICLIB;_USE_EDITOR_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>..\..\..\..\source\middleware\OpenAL\libs\Win32\OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Precompiled.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>..\..\..\..\Source\Middleware;..\..\3rdParty;..\..\3rdParty\libcurl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>CURL_STATICLIB;_USE_EDITOR_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>..\..\..\..\source\middleware\OpenAL\libs\Win32\OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Aabb.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\AabbTree.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Cmd.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Color.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\File.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Geometries.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\GeomTools.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Image.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Intersection.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Json.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Lexer.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Logger.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Matrix.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\miniz.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Misc.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\ScratchHeap.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\String.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Sys_Win32.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Time.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Xml2.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Font.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\Cloth.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\ClothMesh.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\CollisionModel.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\Console.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\GeomGen.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\InputHandler.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\Mesh.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\ResourceStreaming.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\VectorFont.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Material.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Precompiled.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\QuadEngine.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Resource.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\RndrOES.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\SmallEngine.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Engine\Sound.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Middleware\Glew\glew.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\ImGui\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\ImGui\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\ImGui\imgui_helper.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Middleware\lz4\lz4.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\lz4\lz4hc.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Anim\Anim.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Anim\ColladaParser.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Anim\SkinnedMesh.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\CamFly.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\Camera.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\Entity.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObject.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObjectFactory.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObject_GolfPin.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObject_Water.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Golf\BallPath2.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Golf\GolfBall.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Gui3\Gui3.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Gui3\Gui3_Frame.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Gui3\Gui3_Misc.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\Bird.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\FoliageManager2.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\LandscapeEnvironment.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\LandscapeSettings.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\Sky.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\UnderGrowth.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\RenderPipe.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\SceneNew.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\Shadow.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\State.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\SurfaceRenderer2.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\Terrain.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainDebug.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainMisc.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainTrace.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainWater.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Tree\Tree.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Tree\Tree_Spline.cpp" />
+    <ClCompile Include="..\..\..\..\Source\Modules\Tree\Tree_Tools.cpp" />
+    <ClCompile Include="..\..\Src\main.cpp" />
+    <ClCompile Include="..\..\Src\State_Game.cpp" />
+    <ClCompile Include="..\..\Src\State_Loading.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\UI.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\disc.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\download.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\geojson.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\geometry.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\jerry.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\mapping.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\projection.cpp" />
+    <ClCompile Include="..\..\Src\vectiler\tilemanager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\vectiler.cpp" />
+    <ClCompile Include="..\..\Src\Worldmap.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Aabb.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\AabbTree.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Array.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\BuildSettings.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Cmd.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Color.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Common.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\File.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Geometries.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\GeomTools.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Hash.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Image.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Intersection.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Json.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Lexer.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\LinkedList.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Logger.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Math.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Matrix.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Misc.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\RefCount.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\RingBuffer.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\ScratchHeap.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Spline.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Stack.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\stb_image.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\String.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Sys.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Sys_Win32.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Time.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Vector.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Xml2.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Font.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\fontstash.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Cloth.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\ClothMesh.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\CollisionModel.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Console.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Framework.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\GeomGen.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\InputHandler.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Mesh.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\ResourceStreaming.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\VectorFont.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Material.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Precompiled.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\QuadEngine.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Resource.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\RndrOES.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\SmallEngine.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\Sound.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\stb_rect_pack.h" />
+    <ClInclude Include="..\..\..\..\Source\Engine\stb_truetype.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\Glew\glew.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\Glew\wglew.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imconfig.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imgui.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imgui_helper.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imgui_internal.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\lz4\lz4.h" />
+    <ClInclude Include="..\..\..\..\Source\Middleware\lz4\lz4hc.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Anim\Anim.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Anim\ColladaParser.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Anim\SkinnedMesh.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\CamFly.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\Camera.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\Entity.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObject.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObjectFactory.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObject_GolfPin.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObject_Water.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Golf\BallPath2.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Golf\GolfBall.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Gui3\Gui3.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Gui3\Gui3_Frame.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Gui3\Gui3_Misc.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\Bird.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\FoliageManager.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\LandscapeEnvironment.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\LandscapeSettings.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\Sky.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\UnderGrowth.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\RenderPipe.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\SceneNew.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\Shadow.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\State.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\SurfaceRenderer2.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Terrain\Terrain.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Terrain\TerrainMisc.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Tree\Tree.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Tree\Tree_Spline.h" />
+    <ClInclude Include="..\..\..\..\Source\Modules\Tree\Tree_Tools.h" />
+    <ClInclude Include="..\..\3rdParty\earcut.hpp" />
+    <ClInclude Include="..\..\Src\State_Game.h" />
+    <ClInclude Include="..\..\Src\State_Loading.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\UI.h" />
+    <ClInclude Include="..\..\Src\vectiler\disc.h" />
+    <ClInclude Include="..\..\Src\vectiler\download.h" />
+    <ClInclude Include="..\..\Src\vectiler\earcut.h" />
+    <ClInclude Include="..\..\Src\vectiler\geojson.h" />
+    <ClInclude Include="..\..\Src\vectiler\geometry.h" />
+    <ClInclude Include="..\..\Src\vectiler\jerry.h" />
+    <ClInclude Include="..\..\Src\vectiler\mapping.h" />
+    <ClInclude Include="..\..\Src\vectiler\projection.h" />
+    <ClInclude Include="..\..\Src\vectiler\tiledata.h" />
+    <ClInclude Include="..\..\Src\vectiler\tilemanager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\vectiler.h" />
+    <ClInclude Include="..\..\Src\Worldmap.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\Source\Middleware\GlfwWin32\lib-vc2015\glfw3.lib" />
+    <Library Include="..\..\3rdParty\libcurl\lib\libcurl_a.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\Release\content\materials\engine.smt">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="..\..\..\..\Release\content\materials\terrain.smt" />
+    <None Include="..\..\..\..\Release\content\materials\tree.smt" />
+    <None Include="..\..\..\..\Release\content\shaders\common.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\depth.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\engine.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\lightmap.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\object2.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\terrain.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\tree.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\tree_leaf.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\undergrowth.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\water.glsl" />
+    <None Include="..\..\..\..\Release\content\shaders\waternew.glsl" />
+    <None Include="..\..\..\..\Release\content_simview2\simview2.smt" />
+    <None Include="..\..\..\..\Release\content_worldmap\materials.smt">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\..\..\Release\sandbox_simview2\default.log" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

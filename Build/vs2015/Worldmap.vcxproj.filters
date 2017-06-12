@@ -1,0 +1,722 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Anim">
+      <UniqueIdentifier>{8e68ffb9-274b-4ea9-b842-a0d1a05ae139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{91d7a6f6-de39-45dd-8dd5-4e3fa5c46abe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{adde2aef-ecfc-44c5-9828-0b81fb9a595b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FrameWork">
+      <UniqueIdentifier>{8a56f17b-6204-4dcd-9dba-c8a035bb5abd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameObject">
+      <UniqueIdentifier>{6d320bbb-ccde-4619-9b19-6ab41776ece8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Golf">
+      <UniqueIdentifier>{8babb937-7938-46c2-9e7d-fa676e4b9437}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gui">
+      <UniqueIdentifier>{d8c71fff-d85c-4aad-94c0-6c04509722b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Landscape">
+      <UniqueIdentifier>{45cbe62e-c6ec-4c96-8a90-bc6221fdb611}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared">
+      <UniqueIdentifier>{988f1b66-5a7a-4812-8855-08bbccd38e0a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Terrain">
+      <UniqueIdentifier>{d593ef80-5684-4b66-beb9-1193315f1139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tree">
+      <UniqueIdentifier>{c82af028-654b-4378-ab4e-d0c7f7a619f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Glew">
+      <UniqueIdentifier>{d8afa0f4-3a38-4796-bb20-5464b31bf3cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Content">
+      <UniqueIdentifier>{a63cbd3a-f7e5-4a83-9a03-149e657b8d6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{070545f0-cc11-4884-8293-04eaff24d10f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\LZ4">
+      <UniqueIdentifier>{3f92a8d5-a991-4888-a40b-bc2a48c780dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_Content\glsl">
+      <UniqueIdentifier>{f7daa5b2-ee55-48d3-9590-2cda8de213b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main">
+      <UniqueIdentifier>{2432b06e-c36b-43b4-8516-483927cfda27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main\Vectiler">
+      <UniqueIdentifier>{a70ad222-2c0b-4ecd-8628-daac02c0ac3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main\Vectiler\3rdpart">
+      <UniqueIdentifier>{fb1c06a7-358a-47fa-8c83-bb877ce5c9d1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Src\State_Game.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\State_Loading.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\main.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Anim\SkinnedMesh.cpp">
+      <Filter>Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Anim\Anim.cpp">
+      <Filter>Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Anim\ColladaParser.cpp">
+      <Filter>Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Aabb.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\AabbTree.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Cmd.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Color.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\File.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Geometries.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\GeomTools.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Image.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Intersection.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Lexer.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Logger.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Matrix.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\miniz.c">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Misc.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\ScratchHeap.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\String.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Sys_Win32.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Time.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Xml2.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Font.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Material.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Precompiled.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\QuadEngine.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Resource.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\RndrOES.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\SmallEngine.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Sound.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\Bird.cpp">
+      <Filter>Landscape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\FoliageManager2.cpp">
+      <Filter>Landscape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\LandscapeEnvironment.cpp">
+      <Filter>Landscape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\LandscapeSettings.cpp">
+      <Filter>Landscape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\Sky.cpp">
+      <Filter>Landscape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Gui3\Gui3.cpp">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Gui3\Gui3_Frame.cpp">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Gui3\Gui3_Misc.cpp">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainDebug.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainMisc.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainTrace.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\TerrainWater.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Terrain\Terrain.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Tree\Tree.cpp">
+      <Filter>Tree</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Tree\Tree_Spline.cpp">
+      <Filter>Tree</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Tree\Tree_Tools.cpp">
+      <Filter>Tree</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\VectorFont.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\Cloth.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\ClothMesh.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\CollisionModel.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\Console.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\GeomGen.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\InputHandler.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\Mesh.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Framework\ResourceStreaming.cpp">
+      <Filter>FrameWork</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\Camera.cpp">
+      <Filter>GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\Entity.cpp">
+      <Filter>GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObject.cpp">
+      <Filter>GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObject_GolfPin.cpp">
+      <Filter>GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObject_Water.cpp">
+      <Filter>GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\GameObject\GameObjectFactory.cpp">
+      <Filter>GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\SceneNew.cpp">
+      <Filter>Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\State.cpp">
+      <Filter>Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\SurfaceRenderer2.cpp">
+      <Filter>Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\Glew\glew.c">
+      <Filter>Engine\Glew</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Golf\BallPath2.cpp">
+      <Filter>Golf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Golf\GolfBall.cpp">
+      <Filter>Golf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\CamFly.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\ImGui\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\ImGui\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\ImGui\imgui_helper.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Landscape\UnderGrowth.cpp">
+      <Filter>Landscape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\lz4\lz4.c">
+      <Filter>Engine\LZ4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Middleware\lz4\lz4hc.c">
+      <Filter>Engine\LZ4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\Shadow.cpp">
+      <Filter>Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Modules\Shared\RenderPipe.cpp">
+      <Filter>Shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\UI.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\Worldmap.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\vectiler.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\projection.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\geojson.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\jerry.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\download.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\geometry.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\tilemanager.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\disc.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\mapping.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Source\Engine\Common\Json.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Src\State_Game.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\State_Loading.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Anim\SkinnedMesh.h">
+      <Filter>Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Anim\Anim.h">
+      <Filter>Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Anim\ColladaParser.h">
+      <Filter>Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Xml2.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Aabb.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\AabbTree.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Array.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\BuildSettings.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Cmd.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Color.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\File.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Geometries.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\GeomTools.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Hash.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Image.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Intersection.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Lexer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\LinkedList.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Logger.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Math.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Matrix.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Misc.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\RefCount.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\RingBuffer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\ScratchHeap.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Spline.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Stack.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\stb_image.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\String.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Sys.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Sys_Win32.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Time.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Vector.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\stb_truetype.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Font.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\fontstash.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Material.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Precompiled.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\QuadEngine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Resource.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\RndrOES.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\SmallEngine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Sound.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\stb_rect_pack.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\Sky.h">
+      <Filter>Landscape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\Bird.h">
+      <Filter>Landscape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\FoliageManager.h">
+      <Filter>Landscape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\LandscapeEnvironment.h">
+      <Filter>Landscape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\LandscapeSettings.h">
+      <Filter>Landscape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Gui3\Gui3.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Gui3\Gui3_Frame.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Gui3\Gui3_Misc.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Terrain\Terrain.h">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Terrain\TerrainMisc.h">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Tree\Tree.h">
+      <Filter>Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Tree\Tree_Spline.h">
+      <Filter>Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Tree\Tree_Tools.h">
+      <Filter>Tree</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\VectorFont.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Cloth.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\ClothMesh.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\CollisionModel.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Console.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Framework.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\GeomGen.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\InputHandler.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\Mesh.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Framework\ResourceStreaming.h">
+      <Filter>FrameWork</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\Camera.h">
+      <Filter>GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\Entity.h">
+      <Filter>GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObject.h">
+      <Filter>GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObject_GolfPin.h">
+      <Filter>GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObject_Water.h">
+      <Filter>GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\GameObject\GameObjectFactory.h">
+      <Filter>GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\SceneNew.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\State.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\SurfaceRenderer2.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\Glew\glew.h">
+      <Filter>Engine\Glew</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\Glew\wglew.h">
+      <Filter>Engine\Glew</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Golf\BallPath2.h">
+      <Filter>Golf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Golf\GolfBall.h">
+      <Filter>Golf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\CamFly.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imconfig.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\ImGui\imgui_helper.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Landscape\UnderGrowth.h">
+      <Filter>Landscape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\lz4\lz4hc.h">
+      <Filter>Engine\LZ4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Middleware\lz4\lz4.h">
+      <Filter>Engine\LZ4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\Shadow.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Modules\Shared\RenderPipe.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\UI.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\Worldmap.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\vectiler.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\tiledata.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\projection.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\jerry.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\earcut.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\geojson.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\download.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rdParty\earcut.hpp">
+      <Filter>Main\Vectiler\3rdpart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\geometry.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\tilemanager.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\disc.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\mapping.h">
+      <Filter>Main\Vectiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Source\Engine\Common\Json.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\Source\Middleware\GlfwWin32\lib-vc2015\glfw3.lib" />
+    <Library Include="..\..\3rdParty\libcurl\lib\libcurl_a.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\Release\content\shaders\common.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\depth.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\engine.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\lightmap.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\object2.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\terrain.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\tree.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\tree_leaf.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\water.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\waternew.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\materials\engine.smt">
+      <Filter>_Content</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\materials\terrain.smt">
+      <Filter>_Content</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\materials\tree.smt">
+      <Filter>_Content</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content_simview2\simview2.smt">
+      <Filter>_Content</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content\shaders\undergrowth.glsl">
+      <Filter>_Content\glsl</Filter>
+    </None>
+    <None Include="..\..\..\..\Release\content_worldmap\materials.smt">
+      <Filter>_Content</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\..\..\Release\sandbox_simview2\default.log">
+      <Filter>_Content</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
