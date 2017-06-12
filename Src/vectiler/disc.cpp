@@ -103,8 +103,9 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 	{
 		ELayerType layerType = (ELayerType)f.ReadInt();
 		EFeatureKind kind = (EFeatureKind)f.ReadInt();
-		int sort = f.ReadInt();
-		int nlen = f.ReadInt();
+		const int sort = f.ReadInt();
+		const float fSort = sort;
+		const int nlen = f.ReadInt();
 		if (nlen >= 128)
 		{
 			assert(0);
@@ -155,9 +156,10 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 			float v[6];
 			f.Read(v, sizeof(v[0]) * 6);
 			vtxMap& p = vtx[i];
-			p.pos = &v[0];
+			p.pos = Vec4(v[0], v[1], v[2], fSort);
 			p.nrm = &v[3];
 			p.col = col;
+			bigGeom->aabb.AddPoint(v);
 		}
 
 		f.Read(idxs, ni * sizeof(uint16));

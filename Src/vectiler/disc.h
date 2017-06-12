@@ -4,10 +4,12 @@
 //-----------------------------------------------------------------------------
 struct StreamGeom
 {
+	Caabb aabb;
 	ELayerType layerType;
 	int layerSubIdx;
 	TArray<vtxMap> vertices;
 	TArray<uint16> indices;
+	StreamGeom() { aabb.Invalidate(); }
 };
 //-----------------------------------------------------------------------------
 bool SaveBin(const char* fname, const std::vector<struct PolygonMesh*>& meshes);
