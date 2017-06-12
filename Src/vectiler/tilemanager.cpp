@@ -238,16 +238,16 @@ CMesh* CreateMeshFromStreamedGeom(const char* name, const StreamGeom* g)
 {
 	const VertexFmtID vfid = vtxMap::fmt;
 	const int vertexSize = gRenderer->GetVertexFormat(vfid)->Stride();
-
-	// Create mesh
-	CMesh* mesh = new CMesh(name, 1);
-	//mesh->m_VtxFmt = vfid;
-
 	const int nv = g->vertices.Num();
 	const int ni = g->indices.Num();
-
+	
+	// Create mesh
+	CMesh* mesh = new CMesh(name, 1);
+	
 	// Create 1 common index buffer
 	CIndexBuffer* ib = gRenderer->CreateIndexBuffer(IDX_SHORT, ni, BUF_STATIC, g->indices.Ptr());
+	// Create vertex buffer for these sub meshes
+	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC, g->vertices.Ptr());
 
 	SubMesh& range = mesh->m_SubMeshes[0];
 	range.glgeomIdx = 0;
@@ -256,17 +256,9 @@ CMesh* CreateMeshFromStreamedGeom(const char* name, const StreamGeom* g)
 	range.firstVtx = 0;
 	range.numVtx = nv;
 	range.materialName = "buildings";// g->materialName.Str();
+	range.geometricCenter = g->aabb.GetCenter();
 		
-	// Create vertex buffer for these sub meshes
-	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC, g->vertices.Ptr());
-	
 	mesh->m_MeshAabb = g->aabb;
-	mesh->m_SubMeshes[0].geometricCenter = g->aabb.GetCenter();
-	
-	//mesh->m_VertexBuffers.SetNum(1);
-	//mesh->m_VertexBuffers[0] = vb;
-
-	// VAOs
 	mesh->m_GlGeoms.SetNum(1);
 	mesh->m_GlGeoms[0].SetBuffers(vfid, vb, ib, GlGeom::eOwnsAll);
 

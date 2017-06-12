@@ -91,7 +91,7 @@ bool CViewer::Create()
 	gScene.AddEntity(&m_DefaultGameCam);
 	gScene.AddEntity(&m_DebugCam);
 	
-	CreateTestObjects();
+	//CreateTestObjects();
 
 	SSunSettings* sun = gLandscapeSettings.Sun();
 	sun->DiffuseModifier = 1.6f;
@@ -109,7 +109,7 @@ bool CViewer::Create()
 //-----------------------------------------------------------------------------
 void CViewer::Destroy()
 {
-	DestroyTestObjects();
+	//DestroyTestObjects();
 	gScene.RemoveEntity(&m_DebugCam);
 	gScene.RemoveEntity(&m_DefaultGameCam);
 }

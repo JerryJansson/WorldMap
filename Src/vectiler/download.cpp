@@ -132,21 +132,16 @@ HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float ex
 //-----------------------------------------------------------------------------
 bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* data)
 {
+	const CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
+	MemoryStruct out;
+	if (!DownloadData(out, url))
+		return false;
+
 	CStopWatch sw;
+	
+	// Parse json data
 	rapidjson::Document doc;
-	float tJson = 0;
-
-	{
-		const CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
-		MemoryStruct out;
-		if (!DownloadData(out, url))
-			return false;
-
-		sw.Start();
-		doc.Parse(out.memory);	// Parse written data into a JSON object
-		tJson = sw.GetMs();
-	}
-
+	doc.Parse(out.memory);	// Parse written data into a JSON object
 	if (doc.HasParseError())
 	{
 		LOG("Error parsing tile\n");
@@ -154,8 +149,8 @@ bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* da
 		//size_t errOffset = doc.GetErrorOffset();
 		return false;
 	}
+	float tJson = sw.GetMs(true);
 
-	sw.Start();
 	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
 	{
 		data->layers.emplace_back(layer->name.GetString());
