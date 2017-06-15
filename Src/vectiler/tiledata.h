@@ -49,17 +49,11 @@ struct Layer
 	ELayerType layerType;
 	std::vector<Feature> features;
 
-    //Layer(const std::string& _name) : name(_name) {}
-    //std::string name;
 	Layer(const char* _name)
 	{
 		layerType = (ELayerType)IndexFromStringTable(_name, layerNames);
 		int abba = 10;
 	}
-};
-//-----------------------------------------------------------------------------
-struct TileVectorData {
-    std::vector<Layer> layers;
 };
 //-----------------------------------------------------------------------------
 struct HeightData {

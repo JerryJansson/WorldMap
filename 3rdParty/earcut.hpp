@@ -132,7 +132,7 @@ void Earcut<Coord, N>::operator()(const Polygon &points) {
         } while (node != outerNode);
 
         // minX, minY and size are later used to transform coords into integers for z-order calculation
-        size = std::max(maxX - minX, maxY - minY);
+        size = Max(maxX - minX, maxY - minY);
     }
 
     if (points.size() > 1) outerNode = eliminateHoles(points, outerNode);

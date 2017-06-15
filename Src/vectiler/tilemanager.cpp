@@ -9,10 +9,10 @@
 #include <condition_variable>
 #include "disc.h"
 //-----------------------------------------------------------------------------
-const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
+const bool useSingleTile = true;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
 CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
-CVar tile_DiscCache("tile_DiscCache", true);
+CVar tile_DiscCache("tile_DiscCache", false);
 //-----------------------------------------------------------------------------
 #define ZZZOOM 16							// Regular grid uses a fixed zoom
 //const Vec2d longLatStart(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
@@ -310,12 +310,10 @@ bool TileManager::ReceiveLoadedTile()
 	t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
 	gScene.AddEntity(t);
 
-	
 	// Release geom memory
 	FreeResult(r);
 
-	float t_total = sw.GetMs();
-	LOG("%.1fms. Received <%d, %d, %d> in frame %d. Created %d meshes in %.1fms\n", t_total, t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber(), n, t_createMeshes);
+	LOG("%.1fms. Received <%d, %d, %d> in frame %d. Created %d meshes in %.1fms\n", sw.GetMs(), t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber(), n, t_createMeshes);
 
 	return true;
 }
@@ -358,9 +356,7 @@ void TileManager::Update(CCamera* cam)
 		else	 missingTiles.Add(t);
 	}
 
-	DbgMsg("Needed tiles: %d", neededTiles.Num());
-	DbgMsg("Missing tiles: %d", missingTiles.Num());
-	DbgMsg("Tiles cached in memory: %d", m_Tiles.Num());
+	DbgMsg("Tiles <Needed: %d, Missing: %d, Cached: %d>", neededTiles.Num(), missingTiles.Num(), m_Tiles.Num());
 
 	// Add tile to queue to stream
 	if (missingTiles.Num()>0 && !tileToStream)

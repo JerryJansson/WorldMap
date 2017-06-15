@@ -6,8 +6,7 @@
 #include "disc.h"
 
 //-----------------------------------------------------------------------------
-void buildPlane(std::vector<PolygonVertex>& outVertices,
-	std::vector<unsigned int>& outIndices,
+void buildPlane(std::vector<PolygonVertex>& outVertices, std::vector<unsigned int>& outIndices,
 	float width,       // Total plane width (x-axis)
 	float height,      // Total plane height (y-axis)
 	unsigned int nw,   // Split on width
@@ -15,7 +14,7 @@ void buildPlane(std::vector<PolygonVertex>& outVertices,
 	bool flip = false)
 {
 	// TODO: add offsets
-	std::vector<glm::vec4> vertices;
+	std::vector<v4> vertices;
 	std::vector<int> indices;
 
 	int indexOffset = 0;
@@ -89,8 +88,8 @@ void buildPedestalPlanes(const Tile& tile,
 			if (i == Border::top) { v0 = v3(x + offset, 1.0, 0.0);	v1 = v3(x, 1.0, 0.0); }
 			if (i == Border::bottom) { v0 = v3(x + offset, -1.0, 0.0);	v1 = v3(x, -1.0, 0.0); }
 
-			normalVector = glm::cross(upVector, v0 - v1);
-			normalVector = glm::normalize(normalVector);
+			normalVector = myCross(upVector, v0 - v1);
+			normalVector = myNormalize(normalVector);
 
 			float h0 = sampleElevation(v2(v0.x, v0.y), elevation);
 			float h1 = sampleElevation(v2(v1.x, v1.y), elevation);
@@ -330,8 +329,6 @@ static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpS
 bool vectiler(const Params2& params)
 {
 	HeightData* heightMap = NULL;
-	TileVectorData vectorData;
-	bool haveVectorData = false;
 	Tile tile(params.tilex, params.tiley, params.tilez);
 
 	if (params.terrain)
@@ -343,16 +340,16 @@ bool vectiler(const Params2& params)
 			LOG("Failed to download heightmap texture data for tile %d %d %d\n", tile.x, tile.y, tile.z);
 			return false;
 		}
-
 		/// Adjust terrain edges
 		//if (exportParams.terrain)
 		//	adjustTerrainEdges(heightData);
 	}
 
+	// Vector tile
+	std::vector<Layer> vectorLayers;
 	if (params.vectorData)
 	{
-		haveVectorData = DownloadVectorTile(tile, params.apiKey, &vectorData);
-		if (!haveVectorData)
+		if(!DownloadVectorTile(tile, params.apiKey, vectorLayers))
 			LOG("Failed to download vector tile data for tile %d %d %d\n", tile.x, tile.y, tile.z);
 	}
 
@@ -367,48 +364,40 @@ bool vectiler(const Params2& params)
 		PolygonMesh* mesh = CreateTerrainMesh(tile, heightMap, params.terrainSubdivision);
 		computeNormals(mesh);	// Compute faces normals
 		AddNewMesh(mesh, tmpSplitArr, meshes);
-
 		/// Build pedestal
 		/*if (params.pedestal)
 		{
 			PolygonMesh* groundWall[2];
-				CreatePedestalMeshes(tile, heightMap, groundWall, exportParams.terrainSubdivision, exportParams.pedestalHeight);
-				groundWall[0]->offset = offset;
-				groundWall[1]->offset = offset;
-				meshes.push_back(groundWall[0]);
-				meshes.push_back(groundWall[1]);
+			CreatePedestalMeshes(tile, heightMap, groundWall, exportParams.terrainSubdivision, exportParams.pedestalHeight);
+			groundWall[0]->offset = offset;
+			groundWall[1]->offset = offset;
+			meshes.push_back(groundWall[0]);
+			meshes.push_back(groundWall[1]);
 		}*/
 	}
 
 	//std::vector<EFeatureKind> kinds;
 
 	/// Build vector tile meshes
-	if (haveVectorData)
+	for (size_t l = 0; l < vectorLayers.size(); l++)
 	{
-		const TileVectorData* data = &vectorData;
+		const Layer& layer = vectorLayers[l];
+		const ELayerType type = layer.layerType;
+		//if (type == eLayerBuildings) continue;	// Skip buildings
+		//if (type == eLayerRoads) continue;		// Skip roads
+		//if (type == eLayerEarth) continue;		// Skip earth
+		//if (type != eLayerLanduse && type != eLayerEarth) continue;
 
-		//for (auto layer : data->layers)
-		for (size_t l=0; l<data->layers.size(); l++)
+		if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
+
+		for (size_t i = 0; i < layer.features.size(); i++)
 		{
-			const Layer& layer = data->layers[l];
-			const ELayerType type = layer.layerType;
-			//if (type == eLayerBuildings) continue;	// Skip buildings
-			//if (type == eLayerRoads) continue;		// Skip roads
-			//if (type == eLayerEarth) continue;		// Skip earth
-			//if (type != eLayerLanduse && type != eLayerEarth) continue;
+			const Feature* feature = &layer.features[i];
+			if (heightMap && (type != eLayerRoads) && (feature->height == 0.0f))	continue;
 
-			if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
-			
-			//for (auto feature : layer.features)
-			for (size_t i=0; i<layer.features.size(); i++)
-			{
-				const Feature* feature = &layer.features[i];
-				if (heightMap && (type != eLayerRoads) && (feature->height == 0.0f))	continue;
-
-				PolygonMesh* mesh = CreateMeshFromFeature(type, feature, heightMap);
-				if (mesh)
-					AddNewMesh(mesh, tmpSplitArr, meshes);
-			}
+			PolygonMesh* mesh = CreateMeshFromFeature(type, feature, heightMap);
+			if (mesh)
+				AddNewMesh(mesh, tmpSplitArr, meshes);
 		}
 	}
 

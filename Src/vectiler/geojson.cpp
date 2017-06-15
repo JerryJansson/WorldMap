@@ -1,6 +1,5 @@
 #include "Precompiled.h"
 #include "geojson.h"
-//#include "jerry.h"
 Hash<CStr, EFeatureKind> gKindHash;
 //-----------------------------------------------------------------------------
 void CreateHash()
@@ -183,9 +182,9 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& _out, const 
 	_out.x = (pos.x - _tile.tileOrigin.x);
 	_out.y = (pos.y - _tile.tileOrigin.y);
 	_out.z = 0;
-    if (last && glm::length(_out - *last) < 1e-5f) {
+    if (last && myLength(_out - *last) < 1e-5f)
         return false;
-    }
+    
     return true;
 }
 //-----------------------------------------------------------------------------
@@ -213,7 +212,7 @@ void GeoJson::extractPoly(const rapidjson::Value& _in, Polygon2& _out, const Til
     }
 }
 //-----------------------------------------------------------------------------
-void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value& _in, Feature& _out, const Tile& _tile, const float defaultHeight)
+void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value& _in, Feature& f, const Tile& _tile, const float defaultHeight)
 {
 	static bool hashCreated = false;
 	if (!hashCreated)
@@ -224,53 +223,51 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 
     const rapidjson::Value& properties = _in["properties"];
 
-	_out.height = defaultHeight;
-
-	CStr tmpstr;
+	f.height = defaultHeight;
 
     for (auto itr = properties.MemberBegin(); itr != properties.MemberEnd(); ++itr)
 	{
         const auto& member = itr->name.GetString();
         const rapidjson::Value& prop = properties[member];
 		
-		if (strcmp(member, "height") == 0)			_out.height		= prop.GetDouble();
-        else if (strcmp(member, "min_height") == 0) _out.min_height = prop.GetDouble();
-		else if (strcmp(member, "sort_rank") == 0)  _out.sort_rank	= prop.GetInt();
-		else if (strcmp(member, "name") == 0)		_out.name		= prop.GetString();
-		else if (strcmp(member, "id") == 0)			_out.id			= prop.GetInt64(); // Can be signed
+		if (strcmp(member, "height") == 0)			f.height		= prop.GetDouble();
+        else if (strcmp(member, "min_height") == 0) f.min_height	= prop.GetDouble();
+		else if (strcmp(member, "sort_rank") == 0)  f.sort_rank		= prop.GetInt();
+		else if (strcmp(member, "name") == 0)		f.name			= prop.GetString();
+		else if (strcmp(member, "id") == 0)			f.id			= prop.GetInt64(); // Can be signed
 		else if (strcmp(member, "kind") == 0)
 		{
-			tmpstr = prop.GetString();
-			_out.kind = gKindHash.Get(tmpstr);
+			const CStr tmpstr = prop.GetString();
+			f.kind = gKindHash.Get(tmpstr);
 
-			if(/*layerType==eLayerLanduse &&*/ _out.kind == eKind_unknown)
+			if(/*layerType==eLayerLanduse &&*/ f.kind == eKind_unknown)
 			{
 				int abba = 10;
 			}
 		}
     }
 
-	if (_out.min_height > _out.height)
+	if (f.min_height > f.height)
 	{
 		int abba = 10;
 	}
 
 	if (layerType == eLayerRoads)
 	{
-		switch (_out.kind)
+		switch (f.kind)
 		{
-		case eKindHighway: _out.road_width = 8; break;
-		case eKindMajorRoad: _out.road_width = 5; break;
-		case eKindMinorRoad: _out.road_width = 3; break;
-		case eKindRail: _out.road_width = 1; break;
-		case eKindPath: _out.road_width = 0.5f; break;
-		case eKindFerry: _out.road_width = 1; break;
-		case eKindPiste: _out.road_width = 5; break;
-		case eKindAerialway: _out.road_width = 6; break;
-		case eKindAeroway: _out.road_width = 8; break;
-		case eKindRacetrack: _out.road_width = 3; break;
-		case eKindPortageway: _out.road_width = 1; break;
-		default: _out.road_width = 0.1f; break;
+		case eKindHighway:		f.road_width = 8; break;
+		case eKindMajorRoad:	f.road_width = 5; break;
+		case eKindMinorRoad:	f.road_width = 3; break;
+		case eKindRail:			f.road_width = 1; break;
+		case eKindPath:			f.road_width = 0.5f; break;
+		case eKindFerry:		f.road_width = 1; break;
+		case eKindPiste:		f.road_width = 5; break;
+		case eKindAerialway:	f.road_width = 6; break;
+		case eKindAeroway:		f.road_width = 8; break;
+		case eKindRacetrack:	f.road_width = 3; break;
+		case eKindPortageway:	f.road_width = 1; break;
+		default:				f.road_width = 0.1f; break;
 		}
 	}
 
@@ -281,45 +278,45 @@ void GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 
     if (geometryType == "Point")
 	{
-        _out.geometryType = GeometryType::points;
-        _out.points.emplace_back();
-        if (!extractPoint(coords, _out.points.back(), _tile)) { _out.points.pop_back(); }
+        f.geometryType = GeometryType::points;
+        f.points.emplace_back();
+        if (!extractPoint(coords, f.points.back(), _tile)) { f.points.pop_back(); }
     }
 	else if (geometryType == "MultiPoint")
 	{
-        _out.geometryType= GeometryType::points;
+        f.geometryType= GeometryType::points;
         for (auto pointCoords = coords.Begin(); pointCoords != coords.End(); ++pointCoords) {
-            if (!extractPoint(coords, _out.points.back(), _tile)) { _out.points.pop_back(); }
+            if (!extractPoint(coords, f.points.back(), _tile)) { f.points.pop_back(); }
         }
     } 
 	else if (geometryType == "LineString")
 	{
-        _out.geometryType = GeometryType::lines;
-        _out.lineStrings.emplace_back();
-        extractLineString(coords, _out.lineStrings.back(), _tile);
+        f.geometryType = GeometryType::lines;
+        f.lineStrings.emplace_back();
+        extractLineString(coords, f.lineStrings.back(), _tile);
     } 
 	else if (geometryType == "MultiLineString")
 	{
-        _out.geometryType = GeometryType::lines;
+        f.geometryType = GeometryType::lines;
         for (auto lineCoords = coords.Begin(); lineCoords != coords.End(); ++lineCoords)
 		{
-            _out.lineStrings.emplace_back();
-            extractLineString(*lineCoords, _out.lineStrings.back(), _tile);
+            f.lineStrings.emplace_back();
+            extractLineString(*lineCoords, f.lineStrings.back(), _tile);
         }
     } 
 	else if (geometryType == "Polygon")
 	{
-        _out.geometryType = GeometryType::polygons;
-        _out.polygons.emplace_back();
-        extractPoly(coords, _out.polygons.back(), _tile);
+        f.geometryType = GeometryType::polygons;
+        f.polygons.emplace_back();
+        extractPoly(coords, f.polygons.back(), _tile);
     }
 	else if (geometryType == "MultiPolygon")
 	{
-        _out.geometryType = GeometryType::polygons;
+        f.geometryType = GeometryType::polygons;
         for (auto polyCoords = coords.Begin(); polyCoords != coords.End(); ++polyCoords)
 		{
-            _out.polygons.emplace_back();
-            extractPoly(*polyCoords, _out.polygons.back(), _tile);
+            f.polygons.emplace_back();
+            extractPoly(*polyCoords, f.polygons.back(), _tile);
         }
     }
 }

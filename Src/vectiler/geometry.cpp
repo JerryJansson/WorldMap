@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 #define EPSILON 1e-5f
 //-----------------------------------------------------------------------------
-v3 perp(const v3& v) { return glm::normalize(v3(-v.y, v.x, 0.0)); }
+v3 perp(const v3& v) { return myNormalize(v3(-v.y, v.x, 0.0)); }
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh)
 {
@@ -59,10 +59,10 @@ float sampleElevation(v2 position, const HeightData* heightMap)
 	int jj1 = jj0 + 1;
 
 	// Clamp on borders
-	ii0 = std::min(ii0, heightMap->width - 1);
-	jj0 = std::min(jj0, heightMap->height - 1);
-	ii1 = std::min(ii1, heightMap->width - 1);
-	jj1 = std::min(jj1, heightMap->height - 1);
+	ii0 = Min(ii0, heightMap->width - 1);
+	jj0 = Min(jj0, heightMap->height - 1);
+	ii1 = Min(ii1, heightMap->width - 1);
+	jj1 = Min(jj1, heightMap->height - 1);
 
 	// Sample four corners of the current texel
 	float s0 = heightMap->elevation[ii0][jj0];
@@ -114,7 +114,7 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 	{
 		// The polygon centroid height
 		cz = sampleElevation(centroid(polygon), elevation);
-		minz = std::numeric_limits<float>::max();
+		minz = F32_MOST_POS;// std::numeric_limits<float>::max();
 
 		for (auto& linestring : polygon)
 		{
@@ -122,7 +122,7 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 			{
 				v3 p(linestring[i]);
 				float pz = sampleElevation(v2(p.x, p.y), elevation);
-				minz = std::min(minz, pz);
+				minz = Min(minz, pz);
 			}
 		}
 	}
@@ -142,8 +142,8 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 
 			if (a == b) { continue; }
 
-			v3 normalVector = glm::cross(upVector, b - a);
-			normalVector = glm::normalize(normalVector);
+			v3 normalVector = myCross(upVector, b - a);
+			normalVector = myNormalize(normalVector);
 
 			a.z = height + cz;
 			outVertices.push_back({ a, normalVector });
@@ -207,8 +207,8 @@ void buildPolygon(const Polygon2& polygon, const float height,
 //-----------------------------------------------------------------------------
 v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
 {
-	v3 miter = glm::normalize(n0 + n1);
-	float miterl2 = glm::dot(miter, miter);
+	v3 miter = myNormalize(n0 + n1);
+	float miterl2 = myDot(miter, miter);
 
 	if (miterl2 < std::numeric_limits<float>::epsilon()) {
 		miter = v3(n1.y - n0.y, n0.x - n1.x, 0.0);
@@ -234,7 +234,7 @@ void addPolygonPolylinePoint(LineString& linestring,
 {
 	const v3 n0 = perp(curr - last);
 	const v3 n1 = perp(next - curr);
-	bool right = glm::cross(n1, n0).z > 0.0;
+	bool right = myCross(n1, n0).z > 0.0;
 
 	if ((i == 1 && forward) || (i == lineDataSize - 2 && !forward))
 	{
@@ -244,8 +244,8 @@ void addPolygonPolylinePoint(LineString& linestring,
 
 	if (right)
 	{
-		v3 d0 = glm::normalize(last - curr);
-		v3 d1 = glm::normalize(next - curr);
+		v3 d0 = myNormalize(last - curr);
+		v3 d1 = myNormalize(next - curr);
 		v3 miter = computeMiterVector(d0, d1, n0, n1);
 		linestring.push_back(curr - miter * extrude);
 	}
@@ -255,24 +255,6 @@ void addPolygonPolylinePoint(LineString& linestring,
 		linestring.push_back(curr - n1 * extrude);
 	}
 }
-//-----------------------------------------------------------------------------
-// 1150
-// 115
-// 31508
-//
-// 1134
-// 107
-// 31981
-//
-// 1163
-// 108
-// 31362
-//
-// Less CCW stuff
-// 1122
-// 105
-// 30918
-// 
 //-----------------------------------------------------------------------------
 PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
 {
@@ -292,7 +274,7 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f,
 		return NULL;
 
 	auto mesh = new PolygonMesh(layerType, f);
-	const float sortHeight = f->sort_rank / (500.0f);
+	const float sortHeight = 0;// f->sort_rank / (500.0f);
 
 	if (f->geometryType == GeometryType::polygons)
 	{
@@ -444,150 +426,3 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f,
 
 	return mesh;
 }
-//-----------------------------------------------------------------------------
-#if 0
-PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature& feature, const HeightData* heightMap)
-{
-	CStopWatch sw;
-
-	if (feature.lines.size() > 3000)
-	{
-		int abba = 10;
-	}
-
-	if (feature.geometryType == GeometryType::unknown || feature.geometryType == GeometryType::points)
-		return NULL;
-
-	auto mesh = new PolygonMesh(layerType);
-	const float sortHeight = feature.sort_rank / (500.0f);
-
-	//if (exportParams.buildings)
-	if (feature.geometryType == GeometryType::polygons)
-	{
-		for (const Polygon2& polygon : feature.polygons)
-		{
-			if (feature.min_height > feature.height)
-			{
-				int abba = 10;
-			}
-
-			float centroidHeight = 0.f;
-			if (feature.min_height != feature.height)
-			{
-				centroidHeight = buildPolygonExtrusion(polygon, feature.min_height, feature.height, mesh->vertices, mesh->indices, heightMap);
-				buildPolygon(polygon, feature.height, mesh->vertices, mesh->indices, heightMap, centroidHeight);
-			}
-			else
-				buildPolygon(polygon, feature.height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight);
-		}
-	}
-	else if (feature.geometryType == GeometryType::lines)
-	{
-		if (layerType == eLayerRoads)
-		{
-			int abba = 10;
-		}
-		else
-		{
-			int abba = 10;
-		}
-		const float extrudeW = feature.road_width;// *scale;
-		//const float extrudeH = lineExtrusionHeight * scale;
-		const float extrudeH = sortHeight;
-
-		for (const Line& line : feature.lines)
-		{
-			Polygon2 polygon;
-			polygon.emplace_back();
-			Line& polygonLine = polygon.back();
-
-			if (line.size() == 2)
-			{
-				v3 curr = line[0];
-				v3 next = line[1];
-				v3 n0 = perp(next - curr);
-
-				polygonLine.push_back(curr - n0 * extrudeW);
-				polygonLine.push_back(curr + n0 * extrudeW);
-				polygonLine.push_back(next + n0 * extrudeW);
-				polygonLine.push_back(next - n0 * extrudeW);
-			}
-			else
-			{
-				v3 last = line[0];
-				for (size_t i = 1; i < line.size() - 1; ++i)
-				{
-					v3 curr = line[i];
-					v3 next = line[i + 1];
-					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, line.size(), i, true);
-					last = curr;
-				}
-
-				last = line[line.size() - 1];
-				for (int i = line.size() - 2; i > 0; --i)
-				{
-					v3 curr = line[i];
-					v3 next = line[i - 1];
-					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, line.size(), i, false);
-					last = curr;
-				}
-			}
-
-			if (polygonLine.size() < 4) { continue; }
-
-			int count = 0;
-			for (size_t i = 0; i < polygonLine.size(); i++)
-			{
-				int j = (i + 1) % polygonLine.size();
-				int k = (i + 2) % polygonLine.size();
-				double z = (polygonLine[j].x - polygonLine[i].x)
-					* (polygonLine[k].y - polygonLine[j].y)
-					- (polygonLine[j].y - polygonLine[i].y)
-					* (polygonLine[k].x - polygonLine[j].x);
-				if (z < 0) { count--; }
-				else if (z > 0) { count++; }
-			}
-
-			if (count > 0) { // CCW
-				std::reverse(polygonLine.begin(), polygonLine.end());
-			}
-
-			// Close the polygon
-			polygonLine.push_back(polygonLine[0]);
-
-			size_t offset = mesh->vertices.size();
-
-			if (extrudeH > 0)
-				buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr);// , scale);
-
-			buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f);// , scale);
-
-			if (heightMap)
-			{
-				for (auto it = mesh->vertices.begin() + offset; it != mesh->vertices.end(); ++it)
-				{
-					it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap);// *scale;
-				}
-			}
-		}
-
-		//if (params.terrain)
-		if(heightMap)
-			computeNormals(mesh);
-	}
-
-	float time = sw.GetMs();
-	if (time > 100)
-	{
-		LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", feature.id, time, mesh->vertices.size(), mesh->indices.size() / 3);
-	}
-	
-	if (mesh->vertices.size() == 0)
-	{
-		delete mesh;
-		mesh = NULL;
-	}
-
-	return mesh;
-}
-#endif

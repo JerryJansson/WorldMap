@@ -1,5 +1,5 @@
 #include "Precompiled.h"
-#include "download.h"
+//#include "download.h"
 #include "projection.h"
 #include "mapping.h"
 #include "tiledata.h"
@@ -8,6 +8,18 @@
 #include <curl/curl.h>
 //#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+//-----------------------------------------------------------------------------
+struct MemoryStruct
+{
+	char *memory;
+	int size;
+	int cap;
+
+	MemoryStruct();
+	~MemoryStruct();
+	void clear();
+	void add(const char* data, int count);
+};
 //-----------------------------------------------------------------------------
 MemoryStruct::MemoryStruct() { memory = NULL; size = 0; cap = 0; }
 MemoryStruct::~MemoryStruct() { free(memory); }
@@ -130,7 +142,7 @@ HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float ex
 	return data;
 }
 //-----------------------------------------------------------------------------
-bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* data)
+bool DownloadVectorTile(const Tile& tile, const char* apiKey, std::vector<Layer>& layers)
 {
 	const CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
 	MemoryStruct out;
@@ -153,8 +165,8 @@ bool DownloadVectorTile(const Tile& tile, const char* apiKey, TileVectorData* da
 
 	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
 	{
-		data->layers.emplace_back(layer->name.GetString());
-		GeoJson::extractLayer(layer->value, data->layers.back(), tile);
+		layers.emplace_back(layer->name.GetString());
+		GeoJson::extractLayer(layer->value, layers.back(), tile);
 	}
 	float tLayers = sw.GetMs();
 

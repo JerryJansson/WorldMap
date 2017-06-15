@@ -4,6 +4,7 @@
 #include "disc.h"
 //-----------------------------------------------------------------------------
 #define VER 2
+#define MAX_SORT_RANK 500 // https://mapzen.com/documentation/vector-tiles/layers/
 //-----------------------------------------------------------------------------
 bool SaveBin(const char* fname, const std::vector<PolygonMesh*>& meshes)
 {
@@ -104,7 +105,7 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 		ELayerType layerType = (ELayerType)f.ReadInt();
 		EFeatureKind kind = (EFeatureKind)f.ReadInt();
 		const int sort = f.ReadInt();
-		const float fSort = sort;
+		const float fSort = (float)sort/MAX_SORT_RANK;
 		const int nlen = f.ReadInt();
 		if (nlen >= 128)
 		{
@@ -170,12 +171,6 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 	}
 
 	LOG("%.0fms. Loaded %s. Merged %d -> %d\n", sw.GetMs(), fname, nMeshes, geoms.Num());
-
-	/*259:-
-	0733341861 - jenni lövkvist
-	ellan00
-	tradera	kaxs overall*/
-
 
 	return true;
 }
