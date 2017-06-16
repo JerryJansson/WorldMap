@@ -28,7 +28,7 @@ struct Feature
     std::vector<LineString> lineStrings;
     std::vector<Polygon2> polygons;
 
-    //Properties props;
+	// Properties
 	float			height = 0;
 	float			min_height = 0;
 	int64			id = 0;
@@ -39,21 +39,23 @@ struct Feature
 	// 290 - 299 : Under roads.Above borders, water, landuse, and earth.Your classic “underlay”.
 	// 490 - 499 : Over all line and polygon features.Under map labels(icons and text), under UI elements(like routeline and search result pins).Your classic raster map overlay.
 	int sort_rank = 0;
+	bool boundary = false;
 
 	// Roads
-	float road_width = 0.1f;
+	//float road_width = 0.1f;
+	Feature() {}
 };
 //-----------------------------------------------------------------------------
 struct Layer
 {
 	ELayerType layerType;
-	std::vector<Feature> features;
-
-	Layer(const char* _name)
+	TArray<Feature> features;
+	Layer() {}
+	/*Layer(const char* _name)
 	{
 		layerType = (ELayerType)IndexFromStringTable(_name, layerNames);
 		int abba = 10;
-	}
+	}*/
 };
 //-----------------------------------------------------------------------------
 struct HeightData {

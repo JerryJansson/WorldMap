@@ -2,6 +2,8 @@
 #include "mapping.h"
 #include "projection.h"
 //-----------------------------------------------------------------------------
+Crgba kindColors[NUM_KINDS];
+//-----------------------------------------------------------------------------
 const char* layerNames[eNumLayerTypes + 1] =
 {
 	"unknown",
@@ -18,38 +20,51 @@ const char* layerNames[eNumLayerTypes + 1] =
 
 	NULL		// For IndexFromStringTable
 };
-//-----------------------------------------------------------------------------
-Crgba kindColors[NUM_KINDS];
+
+
 //-----------------------------------------------------------------------------
 void InitializeColors()
 {
 	for (int i = 0; i < NUM_KINDS; i++)
 	{
-		kindColors[i] = gRGBA_Red;
+		Crgba& c = kindColors[i];
+		c = gRGBA_Red;
 
 		// Buildings
-		if (i >= eKindBuilding && i <= eKindAddress)
+		if (i >= eKind_building && i <= eKind_address)
 		{
-			kindColors[i] = Crgba(180, 180, 180, 255);
+			c = Crgba(217, 208, 201, 255);
+		}
+		// Transit
+		else if (i >= eKind_light_rail && i <= eKind_tram)
+		{
+			c.Random();
 		}
 		// Roads
-		else if (i >= eKindHighway && i <= eKindPortageway)
+		else if (i >= eKind_highway && i <= eKind_rail)//eKindPortageway)
 		{
-			kindColors[i].Random();// = Crgba(80, 80, 60, 255);
+			if (i == eKind_highway)			c = Crgba(241, 188, 198);
+			else if (i == eKind_major_road) c = Crgba(252, 214, 164);
+			else if (i == eKind_minor_road) c = Crgba(255, 255, 255);
+			else if (i == eKind_path)		c = Crgba(154, 154, 154);
+			else
+			{
+				int abba = 10;
+			}
+			//else c.Random();// = Crgba(80, 80, 60, 255);
 		}
 		// Landuse
-		else if (KIND_IS_LANDUSE(i))
+		else if (i >= eKind_aerodrome && i <= eKind_zoo)
 		{
-			kindColors[i].Random();// = Crgba(128, 200, 32, 255);
+			switch (i)
+			{
+			case eKind_park: c = Crgba(200, 250, 204); break;
+			}
 		}
 		// Water
-		else if (i >= eWaterBasin && i <= eWaterWater)
+		else if (i >= eKind_basin && i <= eKind_water)
 		{
-			kindColors[i] = Crgba(32, 128, 190, 255);
-		}
-		else
-		{
-			kindColors[i].Random();
+			c = Crgba(32, 128, 190, 255);
 		}
 	}
 }

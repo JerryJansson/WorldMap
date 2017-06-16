@@ -256,11 +256,11 @@ void addPolygonPolylinePoint(LineString& linestring,
 	}
 }
 //-----------------------------------------------------------------------------
-PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
+PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
 {
 	CStopWatch sw;
 
-	if (strstr(f->name.Str(), "Deutsches Patent") != 0)
+	/*if (strstr(f->name.Str(), "Deutsches Patent") != 0)
 	{
 		int abba = 10;
 	}
@@ -268,12 +268,17 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f,
 	if (f->lineStrings.size() > 3000)
 	{
 		int abba = 10;
-	}
+	}*/
 
 	if (f->geometryType == GeometryType::unknown || f->geometryType == GeometryType::points)
 		return NULL;
 
-	auto mesh = new PolygonMesh(layerType, f);
+	if (layerType == eLayerTransit && f->kind == eKind_subway)
+	{
+		int abba = 10;
+	}
+
+	PolygonMesh* mesh = new PolygonMesh(layerType, f);
 	const float sortHeight = 0;// f->sort_rank / (500.0f);
 
 	if (f->geometryType == GeometryType::polygons)
@@ -297,10 +302,44 @@ PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const Feature* f,
 	}
 	else if (f->geometryType == GeometryType::lines)
 	{
+		float w = 0.1f;
+
+		// Road width
+		if (layerType == eLayerRoads)
+		{
+			switch (f->kind)
+			{
+			case eKind_aerialway:	w = 6;		break;
+			case eKind_aeroway:		w = 8;		break;
+			case eKind_ferry:		w = 1;		break;
+			case eKind_highway:		w = 6;		break;
+			case eKind_major_road:	w = 5;		break;
+			case eKind_minor_road:	w = 4;		break;
+			case eKind_path:		w = 0.5f;	break;
+			case eKind_piste:		w = 5;		break;
+			case eKind_racetrack:	w = 3;		break;
+			case eKind_rail:		w = 0.1f;	break;
+			default:				w = 0.1f;	break;
+			}
+		}
+		else if (layerType == eLayerTransit)
+		{
+			switch (f->kind)
+			{
+			case eKind_subway:		w = 0.5f;	break;
+			default:				w = 0.1f;	break;
+			}
+		}
+
+		if (w == 0.1f)
+		{
+			int abba = 10;
+		}
+
 		float t1 = 0;
 		float t2 = 0;
 		CStopWatch sw1;
-		const float extrudeW = f->road_width;// *scale;
+		const float extrudeW = w;// f->road_width;// *scale;
 		//const float extrudeH = lineExtrusionHeight * scale;
 		const float extrudeH = sortHeight;
 

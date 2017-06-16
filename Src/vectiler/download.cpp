@@ -142,7 +142,7 @@ HeightData* DownloadHeightmapTile(const Tile& tile, const char* apiKey, float ex
 	return data;
 }
 //-----------------------------------------------------------------------------
-bool DownloadVectorTile(const Tile& tile, const char* apiKey, std::vector<Layer>& layers)
+bool DownloadVectorTile(const Tile& tile, const char* apiKey, TArray<Layer>& layers)
 {
 	const CStrL url = VectorTileURL(tile.x, tile.y, tile.z, apiKey);
 	MemoryStruct out;
@@ -157,16 +157,17 @@ bool DownloadVectorTile(const Tile& tile, const char* apiKey, std::vector<Layer>
 	if (doc.HasParseError())
 	{
 		LOG("Error parsing tile\n");
-		//rapidjson::ParseErrorCode code = doc.GetParseError();
-		//size_t errOffset = doc.GetErrorOffset();
 		return false;
 	}
 	float tJson = sw.GetMs(true);
-
-	for (auto layer = doc.MemberBegin(); layer != doc.MemberEnd(); ++layer)
+	
+	// Extract Layer/Feature structures fom json data
+	layers.EnsureCapacity(doc.MemberCount());
+	for (auto jsonlayer = doc.MemberBegin(); jsonlayer != doc.MemberEnd(); ++jsonlayer)
 	{
-		layers.emplace_back(layer->name.GetString());
-		GeoJson::extractLayer(layer->value, layers.back(), tile);
+		Layer& layer = layers.AddEmpty();
+		layer.layerType = (ELayerType)IndexFromStringTable(jsonlayer->name.GetString(), layerNames);
+		GeoJson::extractLayer(jsonlayer->value, layer, tile);
 	}
 	float tLayers = sw.GetMs();
 

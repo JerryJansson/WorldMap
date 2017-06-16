@@ -346,7 +346,7 @@ bool vectiler(const Params2& params)
 	}
 
 	// Vector tile
-	std::vector<Layer> vectorLayers;
+	TArray<Layer> vectorLayers;
 	if (params.vectorData)
 	{
 		if(!DownloadVectorTile(tile, params.apiKey, vectorLayers))
@@ -379,7 +379,7 @@ bool vectiler(const Params2& params)
 	//std::vector<EFeatureKind> kinds;
 
 	/// Build vector tile meshes
-	for (size_t l = 0; l < vectorLayers.size(); l++)
+	for (int l = 0; l < vectorLayers.Num(); l++)
 	{
 		const Layer& layer = vectorLayers[l];
 		const ELayerType type = layer.layerType;
@@ -390,12 +390,12 @@ bool vectiler(const Params2& params)
 
 		if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
 
-		for (size_t i = 0; i < layer.features.size(); i++)
+		for (int i = 0; i < layer.features.Num(); i++)
 		{
 			const Feature* feature = &layer.features[i];
 			if (heightMap && (type != eLayerRoads) && (feature->height == 0.0f))	continue;
 
-			PolygonMesh* mesh = CreateMeshFromFeature(type, feature, heightMap);
+			PolygonMesh* mesh = CreatePolygonMeshFromFeature(type, feature, heightMap);
 			if (mesh)
 				AddNewMesh(mesh, tmpSplitArr, meshes);
 		}

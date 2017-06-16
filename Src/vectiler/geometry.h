@@ -20,6 +20,6 @@ struct PolygonMesh
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh);
 //-----------------------------------------------------------------------------
-PolygonMesh* CreateMeshFromFeature(const ELayerType layerType, const struct Feature* feature, const struct HeightData* heightMap);
+PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const struct Feature* feature, const struct HeightData* heightMap);
 //-----------------------------------------------------------------------------
 float sampleElevation(v2 position, const HeightData* heightMap);

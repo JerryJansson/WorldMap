@@ -246,7 +246,6 @@ CMesh* CreateMeshFromStreamedGeom(const char* name, const StreamGeom* g)
 	
 	// Create 1 common index buffer
 	CIndexBuffer* ib = gRenderer->CreateIndexBuffer(IDX_SHORT, ni, BUF_STATIC, g->indices.Ptr());
-	// Create vertex buffer for these sub meshes
 	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC, g->vertices.Ptr());
 
 	SubMesh& range = mesh->m_SubMeshes[0];
