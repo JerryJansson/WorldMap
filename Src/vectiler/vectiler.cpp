@@ -383,10 +383,6 @@ bool vectiler(const Params2& params)
 	{
 		const Layer& layer = vectorLayers[l];
 		const ELayerType type = layer.layerType;
-		//if (type == eLayerBuildings) continue;	// Skip buildings
-		//if (type == eLayerRoads) continue;		// Skip roads
-		//if (type == eLayerEarth) continue;		// Skip earth
-		//if (type != eLayerLanduse && type != eLayerEarth) continue;
 
 		if (heightMap && type != eLayerBuildings && type != eLayerRoads)	continue;
 

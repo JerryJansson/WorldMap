@@ -15,6 +15,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (!Engine_Init(NULL, "World Map", "1.0", w, h, "", "sandbox_worldmap/"))
 		return 0;
 
+	/*int a = 0;
+	std::vector<int> v;
+	int c = v.capacity();
+	LOG("s: %d, c: %d\n", v.size(), v.capacity());
+	for (int i = 0; i < 1000; i++)
+	{
+		v.push_back(i);
+		if (v.capacity() != c)
+		{
+			a++;
+			c = v.capacity();
+		}
+		LOG("s: %d, c: %d\n", v.size(), v.capacity());
+	}
+	LOG("Allocs: %d\n", a);*/
+
 	gConsole.ExecuteFile("content_simview2/engine.cfg");
 
 	while (Engine_DoFrame()) {}

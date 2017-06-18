@@ -11,6 +11,8 @@ void CreateHash()
 
 	// Buildings
 	ADDHASH(building);			ADDHASH(building_part);		ADDHASH(address);
+	// Earth
+	ADDHASH(earth);
 	// Roads
 	ADDHASH(aerialway);			ADDHASH(aeroway);			ADDHASH(ferry);
 	ADDHASH(highway);			ADDHASH(major_road);		ADDHASH(minor_road);
@@ -88,36 +90,9 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
 	p.x = (pos.x - _tile.tileOrigin.x);
 	p.y = (pos.y - _tile.tileOrigin.y);
 	p.z = 0;
-	return myLength(p - *last) >= 1e-5f ? true : false;
+	//return myLength(p - *last) >= 1e-5f ? true : false;
+	return sqLength(p - *last) >= 1e-10f ? true : false;
 }
-//-----------------------------------------------------------------------------
-/*static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Tile& _tile, Point* last=NULL)
-{
-    const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
-	p.x = (pos.x - _tile.tileOrigin.x);
-	p.y = (pos.y - _tile.tileOrigin.y);
-	p.z = 0;
-    if (last && myLength(p - *last) < 1e-5f)
-        return false;
-    
-    return true;
-}*/
-//-----------------------------------------------------------------------------
-/*void GeoJson::extractLineString(const rapidjson::Value& _in, LineString& _out, const Tile& _tile)
-{
-	int c = _in.Size();
-    for (auto itr = _in.Begin(); itr != _in.End(); ++itr)
-	{
-        _out.emplace_back();
-        if (_out.size() > 1)
-		{
-            if (!extractPoint(*itr, _out.back(), _tile, &_out[_out.size() - 2]))
-                _out.pop_back();
-        } 
-		else
-            extractPoint(*itr, _out.back(), _tile);
-    }
-}*/
 //-----------------------------------------------------------------------------
 void GeoJson::extractLineString(const rapidjson::Value& arr, LineString& l, const Tile& _tile)
 {
@@ -171,6 +146,11 @@ bool SkipFeature(const ELayerType layerType, const Feature& f)
 		if (f.boundary)
 			skip = true;
 	}
+	else if (layerType == eLayerRoads)
+	{
+		if (f.kind == eKind_ferry) skip = true;			// Ferry lines
+		else if (f.kind == eKind_rail) skip = true;		// Train rails
+	}
 
 	// Skip other geometry than lines & polygons
 	if ((f.geometryType == GeometryType::unknown || f.geometryType == GeometryType::points))
@@ -211,6 +191,10 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		{
 			const CStr tmpstr = prop.GetString();
 			f.kind = gKindHash.Get(tmpstr);
+			/*if (f.kind == eKind_unknown)
+			{
+				int abba = 01;
+			}*/
 		}
 		else if (strcmp(member, "boundary") == 0)	f.boundary		= prop.GetBool();
     }
@@ -244,9 +228,6 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
     }
 	else if (geomType == "MultiPoint")
 	{
-        //for (auto pointCoords = coords.Begin(); pointCoords != coords.End(); ++pointCoords) {
-        //    if (!extractPoint(coords, f.points.back(), _tile)) { f.points.pop_back(); }
-        //}
 		gLogger.TellUser(LOG_NOTIFY, "MultiPoint. Not sure if this might be buggy implementation?");
 		for (auto pointCoords = coords.Begin(); pointCoords != coords.End(); ++pointCoords)
 			extractP(coords, f.points.back(), _tile);
@@ -301,7 +282,16 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 // Parsed json in 2.0ms. Built GeoJson structures in 1.3ms
 // Parsed json in 7.2ms. Built GeoJson structures in 5.9ms
 // Parsed json in 6.9ms. Built GeoJson structures in 4.7ms
-// Laptop
+// ExtractP
+// Parsed json in 73.4ms.Built GeoJson structures in 43.5ms
+// Parsed json in 65.8ms.Built GeoJson structures in 42.5ms
+// Parsed json in 70.4ms.Built GeoJson structures in 47.1ms
+// Parsed json in 1.9ms.Built GeoJson structures in 1.2ms
+// Parsed json in 2.1ms.Built GeoJson structures in 1.1ms
+// Parsed json in 7.3ms.Built GeoJson structures in 3.2ms
+
+
+// Laptop (Reserve features)
 // Parsed json in 156.4ms.Built GeoJson structures in 76.6ms
 // Parsed json in 138.4ms.Built GeoJson structures in 66.8ms
 // Parsed json in 116.3ms.Built GeoJson structures in 70.7ms

@@ -318,7 +318,7 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 			case eKind_path:		w = 0.5f;	break;
 			case eKind_piste:		w = 5;		break;
 			case eKind_racetrack:	w = 3;		break;
-			case eKind_rail:		w = 0.1f;	break;
+			case eKind_rail:		w = 0.4f;	break;
 			default:				w = 0.1f;	break;
 			}
 		}
@@ -328,6 +328,15 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 			{
 			case eKind_subway:		w = 0.5f;	break;
 			default:				w = 0.1f;	break;
+			}
+		}
+		else if (layerType == eLayerLanduse)
+		{
+			switch (f->kind)
+			{
+			case eKind_retaining_wall:		w = 0.5f;	break;	// ???
+			case eKind_fence:				w = 0.15f;	break;
+			default:						w = 0.1f;	break;
 			}
 		}
 
@@ -340,7 +349,6 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 		float t2 = 0;
 		CStopWatch sw1;
 		const float extrudeW = w;
-		//const float extrudeH = lineExtrusionHeight * scale;
 		const float extrudeH = sortHeight;
 
 		Polygon2 polygon;

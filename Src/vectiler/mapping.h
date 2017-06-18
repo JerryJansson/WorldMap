@@ -30,6 +30,8 @@ enum EFeatureKind
 
 	// Buildings
 	eKind_building,			eKind_building_part,		eKind_address,
+	//Earth
+	eKind_earth,
 	// Roads
 	eKind_aerialway,		eKind_aeroway,			eKind_ferry,				eKind_highway,
 	eKind_major_road,		eKind_minor_road,		eKind_path,					eKind_piste,
@@ -77,11 +79,7 @@ enum EFeatureKind
 	NUM_KINDS
 };
 //-----------------------------------------------------------------------------
-// Temporary!
-//-----------------------------------------------------------------------------
-//#define KIND_IS_LANDUSE(k)	(k>=eKind_aerodrome && k<=eKind_zoo)
-//#define KIND_IS_TRANSIT(k)	(k>=eKind_light_rail && k<=eKind_tram)
-//#define KIND_IS_WATER(k)	(k>=eKind_basin && k<=eKind_water)
+#define UNIQUE_MAP_FEATURE(Layer, Kind) (Layer<<16|Kind);
 //-----------------------------------------------------------------------------
 struct Tile {
 	int x;
