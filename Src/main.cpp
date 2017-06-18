@@ -1,5 +1,9 @@
 #include "Precompiled.h"
 #include "../../../Source/Modules/Terrain/TerrainMisc.h"
+
+#ifndef JJ_WORLDMAP
+	error
+#endif
 //-----------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {

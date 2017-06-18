@@ -75,7 +75,23 @@ void CreateHash()
 	}
 }
 //-----------------------------------------------------------------------------
-static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Tile& _tile, Point* last=NULL)
+static inline void extractP(const rapidjson::Value& _in, Point& p, const Tile& _tile)
+{
+	const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
+	p.x = (pos.x - _tile.tileOrigin.x);
+	p.y = (pos.y - _tile.tileOrigin.y);
+	p.z = 0;
+}//-----------------------------------------------------------------------------
+static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Tile& _tile, Point* last)
+{
+	const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
+	p.x = (pos.x - _tile.tileOrigin.x);
+	p.y = (pos.y - _tile.tileOrigin.y);
+	p.z = 0;
+	return myLength(p - *last) >= 1e-5f ? true : false;
+}
+//-----------------------------------------------------------------------------
+/*static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Tile& _tile, Point* last=NULL)
 {
     const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
 	p.x = (pos.x - _tile.tileOrigin.x);
@@ -85,10 +101,11 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
         return false;
     
     return true;
-}
+}*/
 //-----------------------------------------------------------------------------
-void GeoJson::extractLineString(const rapidjson::Value& _in, LineString& _out, const Tile& _tile)
+/*void GeoJson::extractLineString(const rapidjson::Value& _in, LineString& _out, const Tile& _tile)
 {
+	int c = _in.Size();
     for (auto itr = _in.Begin(); itr != _in.End(); ++itr)
 	{
         _out.emplace_back();
@@ -100,15 +117,48 @@ void GeoJson::extractLineString(const rapidjson::Value& _in, LineString& _out, c
 		else
             extractPoint(*itr, _out.back(), _tile);
     }
+}*/
+//-----------------------------------------------------------------------------
+void GeoJson::extractLineString(const rapidjson::Value& arr, LineString& l, const Tile& _tile)
+{
+	const int count = arr.Size();
+
+	if (count == 0)
+		return;
+
+	l.reserve(arr.Size());
+	l.emplace_back();
+	extractP(arr[0], l.back(), _tile);
+
+	for (int i=1; i<count; i++)
+	{
+		l.emplace_back();
+		if (!extractPoint(arr[i], l.back(), _tile, &l[l.size() - 2]))
+			l.pop_back();
+	}
 }
 //-----------------------------------------------------------------------------
-void GeoJson::extractPoly(const rapidjson::Value& _in, Polygon2& _out, const Tile& _tile)
+/*void GeoJson::extractPoly(const rapidjson::Value& _in, Polygon2& _out, const Tile& _tile)
 {
     for (auto itr = _in.Begin(); itr != _in.End(); ++itr)
 	{
         _out.emplace_back();
         extractLineString(*itr, _out.back(), _tile);
     }
+}*/
+//-----------------------------------------------------------------------------
+// A poly is 1 or more linestrings
+// First linestring can be poly, second linestring can be a hole
+//-----------------------------------------------------------------------------
+void GeoJson::extractPoly(const rapidjson::Value& arr, Polygon2& poly, const Tile& _tile)
+{
+	const int count = arr.Size();
+	poly.reserve(count);
+	for(int i=0; i<count; i++)
+	{
+		poly.emplace_back();
+		extractLineString(arr[i], poly.back(), _tile);
+	}
 }
 //-----------------------------------------------------------------------------
 bool SkipFeature(const ELayerType layerType, const Feature& f)
@@ -190,13 +240,16 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
     if (geomType == "Point")
 	{
         f.points.emplace_back();
-        if (!extractPoint(coords, f.points.back(), _tile)) { f.points.pop_back(); }
+        extractP(coords, f.points.back(), _tile);
     }
 	else if (geomType == "MultiPoint")
 	{
-        for (auto pointCoords = coords.Begin(); pointCoords != coords.End(); ++pointCoords) {
-            if (!extractPoint(coords, f.points.back(), _tile)) { f.points.pop_back(); }
-        }
+        //for (auto pointCoords = coords.Begin(); pointCoords != coords.End(); ++pointCoords) {
+        //    if (!extractPoint(coords, f.points.back(), _tile)) { f.points.pop_back(); }
+        //}
+		gLogger.TellUser(LOG_NOTIFY, "MultiPoint. Not sure if this might be buggy implementation?");
+		for (auto pointCoords = coords.Begin(); pointCoords != coords.End(); ++pointCoords)
+			extractP(coords, f.points.back(), _tile);
     } 
 	else if (geomType == "LineString")
 	{
@@ -227,26 +280,35 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 
 	return true;
 }
+// Unoptimized
 // Parsed json in 81.7ms. Built GeoJson structures in 74.0ms
 // Parsed json in 80.0ms.Built GeoJson structures in 76.2ms
 // Parsed json in 79.2ms.Built GeoJson structures in 75.2ms
 // Parsed json in 2.1ms.Built GeoJson structures in 2.0ms
 // Parsed json in 7.0ms.Built GeoJson structures in 6.2ms
 // Parsed json in 2.0ms.Built GeoJson structures in 3.2ms
-//
+// Reserve layers
 // Parsed json in 77.0ms. Built GeoJson structures in 72.5ms
 // Parsed json in 78.8ms.Built GeoJson structures in 75.6ms
 // Parsed json in 64.5ms.Built GeoJson structures in 75.4ms
 // Parsed json in 7.3ms.Built GeoJson structures in 8.0ms
 // Parsed json in 2.8ms. Built GeoJson structures in 2.1ms
 // Parsed json in 2.0ms. Built GeoJson structures in 1.8ms
-//
+// Reserve features
 // Parsed json in 82.7ms. Built GeoJson structures in 53.4ms
 // Parsed json in 74.3ms.Built GeoJson structures in 51.0ms
 // Parsed json in 67.8ms.Built GeoJson structures in 48.7ms
 // Parsed json in 2.0ms. Built GeoJson structures in 1.3ms
 // Parsed json in 7.2ms. Built GeoJson structures in 5.9ms
 // Parsed json in 6.9ms. Built GeoJson structures in 4.7ms
+// Laptop
+// Parsed json in 156.4ms.Built GeoJson structures in 76.6ms
+// Parsed json in 138.4ms.Built GeoJson structures in 66.8ms
+// Parsed json in 116.3ms.Built GeoJson structures in 70.7ms
+// ExtractP
+// Parsed json in 88.6ms. Built GeoJson structures in 64.1ms
+// Parsed json in 104.3ms.Built GeoJson structures in 56.5ms
+// Parsed json in 81.8ms.Built GeoJson structures in 55.6ms
 //-----------------------------------------------------------------------------
 void GeoJson::extractLayer(const rapidjson::Value& _in, Layer& layer, const Tile& _tile)
 {

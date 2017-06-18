@@ -339,7 +339,7 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 		float t1 = 0;
 		float t2 = 0;
 		CStopWatch sw1;
-		const float extrudeW = w;// f->road_width;// *scale;
+		const float extrudeW = w;
 		//const float extrudeH = lineExtrusionHeight * scale;
 		const float extrudeH = sortHeight;
 
