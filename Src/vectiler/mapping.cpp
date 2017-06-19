@@ -80,7 +80,7 @@ void CreateKindHash()
 	ADDHASH(winter_sports);		ADDHASH(wood);				ADDHASH(works);
 	ADDHASH(zoo);
 	// Transit
-	ADDHASH(light_rail);		ADDHASH(platform);			//ADDHASH(railway);
+	ADDHASH(light_rail);		ADDHASH(monorail);			ADDHASH(platform);			//ADDHASH(railway);
 	ADDHASH(subway);			ADDHASH(train);				ADDHASH(tram);
 	// Water
 	ADDHASH(basin);				ADDHASH(bay);				ADDHASH(canal);
@@ -128,8 +128,9 @@ void CreateKindHash()
 
 	l = eLayerTransit;
 	ADDHASH3(light_rail,	Crgba(255, 0, 0),		0.5f,	true);
-	ADDHASH3(subway,		Crgba(255, 0, 0),		0.5f,	true);
-	ADDHASH3(train,			Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH3(monorail,		Crgba(255, 0, 0),		1.0f,	true);
+	ADDHASH3(subway,		Crgba(255, 0, 0),		2.0f,	true);
+	ADDHASH3(train,			Crgba(255, 0, 0),		2.5f,	true);
 	
 	l = eLayerBoundaries;
 	ADDHASH3(locality,		Crgba(255, 0, 0),		0.5f,	true);

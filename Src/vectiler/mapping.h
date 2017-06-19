@@ -69,7 +69,7 @@ enum EFeatureKind
 	eKind_winter_sports,	eKind_wood,				eKind_works,				eKind_zoo,
 	
 	// Transit
-	eKind_light_rail,		eKind_platform,
+	eKind_light_rail,		eKind_monorail,			eKind_platform,
 	// eKind_railway - already deined in landuse
 	eKind_subway,			eKind_train,			eKind_tram,
 	

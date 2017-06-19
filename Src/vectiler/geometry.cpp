@@ -428,6 +428,7 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 	}
 	else
 	{
+		delete mesh;
 		return NULL;
 	}
 
