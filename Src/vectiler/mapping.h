@@ -65,18 +65,22 @@ enum EFeatureKind
 	eKind_wastewater_plant,	eKind_water_park,		eKind_water_slide,			eKind_water_works,
 	eKind_wetland,			eKind_wilderness_hut,	eKind_wildlife_park,		eKind_winery,
 	eKind_winter_sports,	eKind_wood,				eKind_works,				eKind_zoo,
+	
 	// Transit
-	eKind_light_rail,		eKind_platform,			
+	eKind_light_rail,		eKind_platform,
 	// eKind_railway - already deined in landuse
 	eKind_subway,			eKind_train,			eKind_tram,
+	
 	// Water
 	eKind_basin,			eKind_bay,				eKind_canal,				eKind_ditch,
 	eKind_dock,				eKind_drain,			eKind_fjord,				eKind_lake,
 	eKind_ocean,			eKind_playa,			eKind_river,				eKind_riverbank,
 	eKind_sea,				eKind_stream,			eKind_strait,				eKind_swimming_pool,
 	eKind_water,
+	
 	// Pois
 	eKind_station,
+	
 	//Boundaries
 	eKind_aboriginal_lands,	eKind_country,			eKind_county,				eKind_disputed,
 	eKind_indefinite,		eKind_indeterminate,	eKind_lease_limit,			eKind_line_of_control,
@@ -86,7 +90,15 @@ enum EFeatureKind
 	NUM_KINDS
 };
 //-----------------------------------------------------------------------------
-//#define UNIQUE_MAP_FEATURE(Layer, Kind) (Layer<<16|Kind);
+struct MapGeom
+{
+	Crgba	color;
+	float	width;	// Lines
+	bool	skip;
+
+	MapGeom() {}
+	MapGeom(const Crgba& c, const float w = 1.0f, const bool s = false) : color(c), width(w), skip(s) {}
+};
 //-----------------------------------------------------------------------------
 struct Tile {
 	int x;
@@ -102,8 +114,10 @@ struct Tile {
 };
 //-----------------------------------------------------------------------------
 extern const char* layerNames[eNumLayerTypes + 1];
-extern Crgba gKindColors[NUM_KINDS];
+//extern Crgba gKindColors[NUM_KINDS];
 extern Hash<CStr, EFeatureKind> gKindHash;
+extern Hash<int, MapGeom> gGeomHash;
 //-----------------------------------------------------------------------------
-void InitializeColors();
+//void InitializeColors();
 void CreateKindHash();
+//#define GET_COLOR(layer, kind) {}

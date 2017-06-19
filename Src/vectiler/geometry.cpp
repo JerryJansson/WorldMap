@@ -256,6 +256,13 @@ void addPolygonPolylinePoint(LineString& linestring,
 	}
 }
 //-----------------------------------------------------------------------------
+float GetWidth(const ELayerType l, const EFeatureKind k)
+{
+	static MapGeom default(Crgba(255, 0, 0), 0.1f, false);
+	MapGeom* g = gGeomHash.GetValuePtr((l << 16 | k));
+	return g ? g->width : default.width;
+}
+//-----------------------------------------------------------------------------
 PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
 {
 	CStopWatch sw;
@@ -297,52 +304,7 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 	}
 	else if (f->geometryType == GeometryType::lines)
 	{
-		float w = 0.1f;
-
-		// Road width
-		if (layerType == eLayerRoads)
-		{
-			switch (f->kind)
-			{
-			case eKind_aerialway:	w = 6;		break;
-			case eKind_aeroway:		w = 8;		break;
-			case eKind_ferry:		w = 1;		break;
-			case eKind_highway:		w = 6;		break;
-			case eKind_major_road:	w = 5;		break;
-			case eKind_minor_road:	w = 4;		break;
-			case eKind_path:		w = 0.5f;	break;
-			case eKind_piste:		w = 5;		break;
-			case eKind_racetrack:	w = 3;		break;
-			case eKind_rail:		w = 0.4f;	break;
-			default:				w = 0.1f;	break;
-			}
-		}
-		else if (layerType == eLayerTransit)
-		{
-			switch (f->kind)
-			{
-			case eKind_subway:		w = 0.5f;	break;
-			default:				w = 0.1f;	break;
-			}
-		}
-		else if (layerType == eLayerLanduse)
-		{
-			switch (f->kind)
-			{
-			case eKind_retaining_wall:		w = 0.5f;	break;	// ???
-			case eKind_fence:				w = 0.15f;	break;
-			default:						w = 0.1f;	break;
-			}
-		}
-		else if (layerType == eLayerBoundaries)
-		{
-			switch (f->kind)
-			{
-			case eKind_locality:		w = 10.5f;	break;	// ???
-			default:					w = 0.1f;	break;
-			}
-		}
-
+		float w = GetWidth(layerType, f->kind);
 		if (w == 0.1f)
 		{
 			int abba = 10;

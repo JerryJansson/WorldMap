@@ -2,8 +2,8 @@
 #include "mapping.h"
 #include "projection.h"
 //-----------------------------------------------------------------------------
-Crgba gKindColors[NUM_KINDS];
 Hash<CStr, EFeatureKind> gKindHash;
+Hash<int, MapGeom> gGeomHash;
 //-----------------------------------------------------------------------------
 const char* layerNames[eNumLayerTypes + 1] =
 {
@@ -102,8 +102,74 @@ void CreateKindHash()
 	{
 		assert(gKindHash[i].val == i);
 	}
+
+
+
+	gGeomHash.Reserve(NUM_KINDS);
+	ELayerType l;
+	// gGeomHash.Add(l|eKind_basin, MapGeom(Crgba(181, 208, 208)));
+//#define ADDHASH(KIND, R, G, B) gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(Crgba(R,G,B)))
+	// gGeomHash.Add(l|eKind_basin, MapGeom(C));
+#define ADDHASH(KIND, C)		gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(C, 0.1f, false))
+#define ADDHASH2(KIND, C, W)	gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(C, W, false))
+#define ADDHASH3(KIND, C, W, S) gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(C, W, S))
+	
+	l = eLayerWater;
+	ADDHASH(basin,			Crgba(181, 208, 208));
+	ADDHASH(ocean,			Crgba(181, 208, 208));
+	ADDHASH2(river,			Crgba(181, 208, 208),	2.0f);
+	ADDHASH(riverbank,		Crgba(181, 208, 208));
+	ADDHASH2(stream,		Crgba(181, 208, 208),	1.0f);
+	ADDHASH(water,			Crgba(181, 208, 208));
+
+	l = eLayerBuildings;
+	ADDHASH(building,		Crgba(217, 208, 201));
+	ADDHASH(building_part,	Crgba(0, 208, 201));
+
+	l = eLayerTransit;
+	ADDHASH3(light_rail,	Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH3(subway,		Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH3(train,			Crgba(255, 0, 0),		0.5f,	true);
+	
+	l = eLayerBoundaries;
+	ADDHASH3(locality,		Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH3(county,		Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH3(region,		Crgba(255, 0, 0),		0.5f,	true);
+	
+	l = eLayerRoads;
+	ADDHASH2(aerialway,		Crgba(241, 100, 198),	6);
+	ADDHASH2(aeroway,		Crgba(241, 100, 198),	8);
+	ADDHASH3(ferry,			Crgba(241, 100, 198),	1,		true);
+	ADDHASH2(highway,		Crgba(241, 188, 198),	6);
+	ADDHASH2(major_road,	Crgba(252, 214, 164),	5);
+	ADDHASH2(minor_road,	Crgba(255, 255, 255),	4);
+	ADDHASH2(path,			Crgba(154, 154, 154),	0.5f);
+	ADDHASH2(piste,			Crgba(241, 100, 198),	5);
+	ADDHASH2(racetrack,		Crgba(241, 100, 198),	3);
+	ADDHASH3(rail,			Crgba(241, 100, 198),	0.4f,	true);
+	
+	l = eLayerEarth;
+	ADDHASH(earth,			Crgba(200, 200, 200, 255));
+
+	l = eLayerLanduse;
+	ADDHASH(cemetery,		Crgba(128, 128, 128));
+	ADDHASH2(gate,			Crgba(255, 0, 0), 10.15f);
+	ADDHASH(grass,			Crgba(200, 235, 176));
+	ADDHASH(garden,			Crgba(215, 235, 176));
+	ADDHASH(park,			Crgba(200, 250, 204));
+	ADDHASH(parking,		Crgba(180, 160, 204));
+	ADDHASH(pedestrian,		Crgba(221, 221, 232));
+	ADDHASH3(protected_area,Crgba(255, 0, 0),		0.5,	true);
+	ADDHASH2(retaining_wall,Crgba(180, 180, 180),	0.5f);	// ???
+	ADDHASH2(fence,			Crgba(138, 163, 140),	0.15f);
+
+#undef ADDHASH3
+#undef ADDHASH2
+#undef ADDHASH
 }
+
 //-----------------------------------------------------------------------------
+/*Crgba gKindColors[NUM_KINDS];
 void InitializeColors()
 {
 	for (int i = 0; i < NUM_KINDS; i++)
@@ -158,7 +224,7 @@ void InitializeColors()
 			else if (i == eKind_water)		c = Crgba(181, 208, 208);
 		}
 	}
-}
+}*/
 //-----------------------------------------------------------------------------
 Tile::Tile(int x, int y, int z) : x(x), y(y), z(z)
 {

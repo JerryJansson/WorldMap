@@ -9,10 +9,10 @@
 #include <condition_variable>
 #include "disc.h"
 //-----------------------------------------------------------------------------
-const bool useSingleTile = true;		// Only load 1 tile. Good for debugging
+const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
 CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
-CVar tile_DiscCache("tile_DiscCache", false);
+CVar tile_DiscCache("tile_DiscCache", true);
 //-----------------------------------------------------------------------------
 #define ZZZOOM 16							// Regular grid uses a fixed zoom
 //const Vec2d longLatStart(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
@@ -131,7 +131,7 @@ void TileManager::Initialize(CCamera* cam)
 	m_Initialized = true;
 
 	CreateKindHash();
-	InitializeColors();
+	//InitializeColors();
 
 	Vec3i tile;
 	if (useSingleTile) // Debug

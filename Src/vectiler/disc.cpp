@@ -81,6 +81,13 @@ bool SaveBin(const char* fname, const std::vector<PolygonMesh*>& meshes)
 	return true;
 }
 //-----------------------------------------------------------------------------
+Crgba GetColor(const ELayerType l, const EFeatureKind k)
+{
+	static MapGeom default(Crgba(255, 0, 0), 0.1f, false);
+	MapGeom* g = gGeomHash.GetValuePtr((l << 16 | k));
+	return g ? g->color : default.color;
+}
+//-----------------------------------------------------------------------------
 bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 {
 	CStopWatch sw;
@@ -150,7 +157,8 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 		vtxMap* vtx = &bigGeom->vertices[voffset];
 		uint16* idxs = &bigGeom->indices[ioffset];
 
-		const Crgba col = gKindColors[kind];
+		//const Crgba col = gKindColors[kind];
+		const Crgba col = GetColor(layerType, kind);
 		if (col == gRGBA_Red)
 		{
 			int abba = 10;

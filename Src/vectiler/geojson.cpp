@@ -18,14 +18,11 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
 	return sqLength(p - *last) >= 1e-10f ? true : false;
 }
 //-----------------------------------------------------------------------------
-void GeoJson::extractLineString(const rapidjson::Value& arr, LineString& l, const Tile& _tile)
+static inline int extractLineString(const rapidjson::Value& arr, LineString& l, const Tile& _tile)
 {
 	const int count = arr.Size();
-
-	if (count == 0)
-		return;
-
-	l.reserve(arr.Size());
+	assert(count >= 2);
+	l.reserve(count);
 	l.emplace_back();
 	extractP(arr[0], l.back(), _tile);
 
@@ -35,54 +32,45 @@ void GeoJson::extractLineString(const rapidjson::Value& arr, LineString& l, cons
 		if (!extractPoint(arr[i], l.back(), _tile, &l[l.size() - 2]))
 			l.pop_back();
 	}
+
+	return l.size();
 }
 //-----------------------------------------------------------------------------
 // A poly is 1 or more linestrings
 // First linestring can be poly, second linestring can be a hole
 //-----------------------------------------------------------------------------
-void GeoJson::extractPoly(const rapidjson::Value& arr, Polygon2& poly, const Tile& _tile)
+bool extractPoly(const rapidjson::Value& arr, Polygon2& poly, const Tile& _tile)
 {
 	const int count = arr.Size();
 	poly.reserve(count);
 	for(int i=0; i<count; i++)
 	{
 		poly.emplace_back();
-		extractLineString(arr[i], poly.back(), _tile);
+		if (extractLineString(arr[i], poly.back(), _tile) < 3)	// Need at least 3 points in linestring to form a polygon
+		{
+			poly.pop_back();
+			gLogger.Warning("GeoJson invalid polygon");
+		}
 	}
+
+	return poly.size() == count;
 }
 //-----------------------------------------------------------------------------
 bool SkipFeature(const ELayerType layerType, const Feature& f)
 {
-	bool skip = false;
-
 	// Skip water boundaries
-	if (layerType == eLayerWater)
-	{
-		if (f.boundary)
-			skip = true;
-	}
-	else if (layerType == eLayerRoads)
-	{
-		if (f.kind == eKind_ferry) skip = true;			// Ferry lines
-		else if (f.kind == eKind_rail) skip = true;		// Train rails
-	}
-	else if (layerType == eLayerTransit)
-	{
-		if (f.kind == eKind_subway) skip = true;
-	}
-	else if (layerType == eLayerBoundaries)
-	{
-		if (f.kind == eKind_locality) skip = true;
-	}
+	if (layerType == eLayerWater && f.boundary)
+		return true;
 
+	const MapGeom* g = gGeomHash.GetValuePtr((layerType << 16 | f.kind));
+	if (g && g->skip)
+		return true;
+		
 	// Skip other geometry than lines & polygons
 	if ((f.geometryType == GeometryType::unknown || f.geometryType == GeometryType::points))
-		skip = true;
+		return true;
 
-	//if(skip)
-	//	LOG("Skipped feature (%I64d)\n", f.id);
-	
-	return skip;
+	return false;
 }
 //-----------------------------------------------------------------------------
 bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value& _in, Feature& f, const Tile& _tile, const float defaultHeight)
@@ -107,10 +95,10 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		{
 			const CStr tmpstr = prop.GetString();
 			f.kind = gKindHash.Get(tmpstr);
-			/*if (f.kind == eKind_unknown)
+			if (f.kind == eKind_unknown)
 			{
 				LOG("Ukn: %s - %s\n", layerNames[layerType], tmpstr.Str());
-			}*/
+			}
 		}
 		else if (strcmp(member, "boundary") == 0)	f.boundary		= prop.GetBool();
     }
@@ -134,7 +122,10 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		
 	// Skip certain features we are not interested in
 	if (SkipFeature(layerType, f))
+	{
+		//LOG("Skipped feature (%I64d)\n", f.id);
 		return false;
+	}
 
 	// Copy geometry into tile data
     if (geomType == "Point")
@@ -151,15 +142,30 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 	else if (geomType == "LineString")
 	{
         f.lineStrings.emplace_back();
-        extractLineString(coords, f.lineStrings.back(), _tile);
+		if (extractLineString(coords, f.lineStrings.back(), _tile) < 2)
+		{
+			gLogger.Warning("GeoJson invalid geometry");
+			return false;
+		}
     } 
 	else if (geomType == "MultiLineString")
 	{
         for (auto lineCoords = coords.Begin(); lineCoords != coords.End(); ++lineCoords)
 		{
             f.lineStrings.emplace_back();
-            extractLineString(*lineCoords, f.lineStrings.back(), _tile);
+			if (extractLineString(*lineCoords, f.lineStrings.back(), _tile) < 2)
+			{
+				f.lineStrings.pop_back();
+				gLogger.Warning("GeoJson invalid geometry");
+			}
         }
+
+		if (f.lineStrings.size() == 0)
+		{
+			gLogger.Warning("GeoJson invalid geometry");
+			return false;
+		}
+
     } 
 	else if (geomType == "Polygon")
 	{
