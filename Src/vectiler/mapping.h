@@ -75,11 +75,18 @@ enum EFeatureKind
 	eKind_ocean,			eKind_playa,			eKind_river,				eKind_riverbank,
 	eKind_sea,				eKind_stream,			eKind_strait,				eKind_swimming_pool,
 	eKind_water,
+	// Pois
+	eKind_station,
+	//Boundaries
+	eKind_aboriginal_lands,	eKind_country,			eKind_county,				eKind_disputed,
+	eKind_indefinite,		eKind_indeterminate,	eKind_lease_limit,			eKind_line_of_control,
+	eKind_locality,			eKind_macroregion,		eKind_map_unit,				eKind_overlay_limit,
+	eKind_region,
 
 	NUM_KINDS
 };
 //-----------------------------------------------------------------------------
-#define UNIQUE_MAP_FEATURE(Layer, Kind) (Layer<<16|Kind);
+//#define UNIQUE_MAP_FEATURE(Layer, Kind) (Layer<<16|Kind);
 //-----------------------------------------------------------------------------
 struct Tile {
 	int x;
@@ -95,6 +102,8 @@ struct Tile {
 };
 //-----------------------------------------------------------------------------
 extern const char* layerNames[eNumLayerTypes + 1];
-extern Crgba kindColors[NUM_KINDS];
+extern Crgba gKindColors[NUM_KINDS];
+extern Hash<CStr, EFeatureKind> gKindHash;
 //-----------------------------------------------------------------------------
 void InitializeColors();
+void CreateKindHash();

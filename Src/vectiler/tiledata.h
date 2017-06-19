@@ -1,16 +1,11 @@
 #pragma once
 #include "jerry.h"
 #include <vector>
-#include <string>
-#include <map>
 #include "mapping.h"
 //-----------------------------------------------------------------------------
-//struct Properties {
- //   std::map<std::string, double> numericProps;
-//};
-//-----------------------------------------------------------------------------
-enum GeometryType {
-    unknown,
+enum GeometryType
+{
+	unknown,
     points,
     lines,
     polygons
@@ -41,14 +36,12 @@ struct Feature
 	int sort_rank = 0;
 	bool boundary = false;
 
-	// Roads
-	//float road_width = 0.1f;
 	Feature() {}
 };
 //-----------------------------------------------------------------------------
 struct Layer
 {
-	ELayerType layerType;
+	ELayerType		layerType;
 	TArray<Feature> features;
 	Layer() {}
 	/*Layer(const char* _name)
@@ -58,7 +51,8 @@ struct Layer
 	}*/
 };
 //-----------------------------------------------------------------------------
-struct HeightData {
+struct HeightData
+{
 	std::vector<std::vector<float>> elevation;
 	int width;
 	int height;

@@ -150,7 +150,7 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 		vtxMap* vtx = &bigGeom->vertices[voffset];
 		uint16* idxs = &bigGeom->indices[ioffset];
 
-		const Crgba col = kindColors[kind];
+		const Crgba col = gKindColors[kind];
 		if (col == gRGBA_Red)
 		{
 			int abba = 10;

@@ -130,6 +130,7 @@ void TileManager::Initialize(CCamera* cam)
 {
 	m_Initialized = true;
 
+	CreateKindHash();
 	InitializeColors();
 
 	Vec3i tile;

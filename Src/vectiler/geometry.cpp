@@ -273,11 +273,6 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 	if (f->geometryType == GeometryType::unknown || f->geometryType == GeometryType::points)
 		return NULL;
 
-	if (layerType == eLayerTransit && f->kind == eKind_subway)
-	{
-		int abba = 10;
-	}
-
 	PolygonMesh* mesh = new PolygonMesh(layerType, f);
 	const float sortHeight = 0;// f->sort_rank / (500.0f);
 
@@ -337,6 +332,14 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 			case eKind_retaining_wall:		w = 0.5f;	break;	// ???
 			case eKind_fence:				w = 0.15f;	break;
 			default:						w = 0.1f;	break;
+			}
+		}
+		else if (layerType == eLayerBoundaries)
+		{
+			switch (f->kind)
+			{
+			case eKind_locality:		w = 10.5f;	break;	// ???
+			default:					w = 0.1f;	break;
 			}
 		}
 
