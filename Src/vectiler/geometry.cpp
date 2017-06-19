@@ -277,9 +277,6 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 		int abba = 10;
 	}*/
 
-	if (f->geometryType == GeometryType::unknown || f->geometryType == GeometryType::points)
-		return NULL;
-
 	PolygonMesh* mesh = new PolygonMesh(layerType, f);
 	const float sortHeight = 0;// f->sort_rank / (500.0f);
 
@@ -428,6 +425,10 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 			LOG("LineBuilder: %.1f. PolyBuilder: %.1f\n", t1, t2);
 			//LOG("FeatureType: %d\n", feature.geometryType);
 		}
+	}
+	else
+	{
+		return NULL;
 	}
 
 	if (mesh->vertices.size() == 0)

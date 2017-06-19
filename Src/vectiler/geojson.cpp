@@ -58,16 +58,32 @@ bool extractPoly(const rapidjson::Value& arr, Polygon2& poly, const Tile& _tile)
 //-----------------------------------------------------------------------------
 bool SkipFeature(const ELayerType layerType, const Feature& f)
 {
+	// Skip other geometry than lines & polygons
+	if ((f.geometryType == GeometryType::unknown || f.geometryType == GeometryType::points))
+		return true;
+
+	// Skip certain features drawn as lines
+	if (f.geometryType == GeometryType::lines)
+	{
+		if (layerType == eLayerTransit)
+		{
+			if (f.kind == eKind_platform || f.kind == eKind_tram)
+				return true;
+		}
+		else if (layerType == eLayerLanduse)
+		{
+			if (f.kind == eKind_city_wall)
+				return true;
+		}
+	}
+
 	// Skip water boundaries
 	if (layerType == eLayerWater && f.boundary)
 		return true;
 
+	// Settings says skip this feature
 	const MapGeom* g = gGeomHash.GetValuePtr((layerType << 16 | f.kind));
 	if (g && g->skip)
-		return true;
-		
-	// Skip other geometry than lines & polygons
-	if ((f.geometryType == GeometryType::unknown || f.geometryType == GeometryType::points))
 		return true;
 
 	return false;

@@ -31,7 +31,9 @@ enum EFeatureKind
 	// Buildings
 	eKind_building,			eKind_building_part,		eKind_address,
 	//Earth
-	eKind_earth,
+	eKind_archipelago,		eKind_arete,				eKind_cliff,
+	eKind_continent,		eKind_earth,				eKind_island,
+	eKind_islet,			eKind_ridge,				eKind_valley,
 	// Roads
 	eKind_aerialway,		eKind_aeroway,			eKind_ferry,				eKind_highway,
 	eKind_major_road,		eKind_minor_road,		eKind_path,					eKind_piste,

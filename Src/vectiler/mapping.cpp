@@ -32,13 +32,15 @@ void CreateKindHash()
 	// Buildings
 	ADDHASH(building);			ADDHASH(building_part);		ADDHASH(address);
 	// Earth
-	ADDHASH(earth);
+	ADDHASH(archipelago);		ADDHASH(arete);				ADDHASH(cliff);
+	ADDHASH(continent);			ADDHASH(earth);				ADDHASH(island);
+	ADDHASH(islet);				ADDHASH(ridge);				ADDHASH(valley);
 	// Roads
 	ADDHASH(aerialway);			ADDHASH(aeroway);			ADDHASH(ferry);
 	ADDHASH(highway);			ADDHASH(major_road);		ADDHASH(minor_road);
 	ADDHASH(path);				ADDHASH(piste);				ADDHASH(racetrack);
 	ADDHASH(rail);				//ADDHASH(portage_way);
-								// Landuse
+	// Landuse
 	ADDHASH(aerodrome);			ADDHASH(allotments);		ADDHASH(amusement_ride);
 	ADDHASH(animal);			ADDHASH(apron);				ADDHASH(aquarium);
 	ADDHASH(artwork);			ADDHASH(attraction);		ADDHASH(aviary);
@@ -104,18 +106,16 @@ void CreateKindHash()
 	}
 
 
-
 	gGeomHash.Reserve(NUM_KINDS);
 	ELayerType l;
-	// gGeomHash.Add(l|eKind_basin, MapGeom(Crgba(181, 208, 208)));
-//#define ADDHASH(KIND, R, G, B) gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(Crgba(R,G,B)))
-	// gGeomHash.Add(l|eKind_basin, MapGeom(C));
+	
 #define ADDHASH(KIND, C)		gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(C, 0.1f, false))
 #define ADDHASH2(KIND, C, W)	gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(C, W, false))
 #define ADDHASH3(KIND, C, W, S) gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(C, W, S))
 	
 	l = eLayerWater;
 	ADDHASH(basin,			Crgba(181, 208, 208));
+	ADDHASH2(canal,			Crgba(181, 208, 208),	1.5f);
 	ADDHASH(ocean,			Crgba(181, 208, 208));
 	ADDHASH2(river,			Crgba(181, 208, 208),	2.0f);
 	ADDHASH(riverbank,		Crgba(181, 208, 208));
@@ -149,8 +149,9 @@ void CreateKindHash()
 	ADDHASH3(rail,			Crgba(241, 100, 198),	0.4f,	true);
 	
 	l = eLayerEarth;
-	ADDHASH(earth,			Crgba(200, 200, 200, 255));
-
+	ADDHASH3(cliff,			Crgba(255, 0, 0),		0.1f,	true);
+	ADDHASH(earth,			Crgba(200, 200, 200));
+	
 	l = eLayerLanduse;
 	ADDHASH(cemetery,		Crgba(128, 128, 128));
 	ADDHASH2(gate,			Crgba(255, 0, 0), 10.15f);
@@ -167,64 +168,6 @@ void CreateKindHash()
 #undef ADDHASH2
 #undef ADDHASH
 }
-
-//-----------------------------------------------------------------------------
-/*Crgba gKindColors[NUM_KINDS];
-void InitializeColors()
-{
-	for (int i = 0; i < NUM_KINDS; i++)
-	{
-		Crgba& c = gKindColors[i];
-		c = gRGBA_Red;
-
-		// Buildings
-		if (i >= eKind_building && i <= eKind_address)
-		{
-			if (i == eKind_building) c = Crgba(217, 208, 201, 255);
-			else if (i == eKind_building_part) c = Crgba(0, 208, 201, 255);
-		}
-		// Earth
-		else if (i == eKind_earth)
-		{
-			c = Crgba(200, 200, 200, 255);
-		}
-		// Transit
-		else if (i >= eKind_light_rail && i <= eKind_tram)
-		{
-			//c.Random();
-		}
-		// Roads
-		else if (i >= eKind_highway && i <= eKind_rail)//eKindPortageway)
-		{
-			if (i == eKind_highway)			c = Crgba(241, 188, 198);
-			else if (i == eKind_major_road) c = Crgba(252, 214, 164);
-			else if (i == eKind_minor_road) c = Crgba(255, 255, 255);
-			else if (i == eKind_path)		c = Crgba(154, 154, 154);
-			//else if (i == eKind_rail)		c = Crgba(0, 0, 154);
-		}
-		// Landuse
-		else if (i >= eKind_aerodrome && i <= eKind_zoo)
-		{
-			switch (i)
-			{
-			case eKind_park: c = Crgba(200, 250, 204); break;
-			case eKind_grass: c = Crgba(200, 235, 176); break;
-			case eKind_garden: c = Crgba(215, 235, 176); break;
-			case eKind_pedestrian: c = Crgba(221, 221, 232); break;
-			case eKind_retaining_wall: c = Crgba(180, 180, 180); break;	// ???
-			case eKind_fence: c = Crgba(138, 163, 140); break;
-			}
-		}
-		// Water
-		else if (i >= eKind_basin && i <= eKind_water)
-		{
-			if (i == eKind_basin)			c = Crgba(181, 208, 208);
-			else if(i== eKind_ocean)		c = Crgba(181, 208, 208);
-			else if (i == eKind_riverbank)	c = Crgba(181, 208, 208);
-			else if (i == eKind_water)		c = Crgba(181, 208, 208);
-		}
-	}
-}*/
 //-----------------------------------------------------------------------------
 Tile::Tile(int x, int y, int z) : x(x), y(y), z(z)
 {
