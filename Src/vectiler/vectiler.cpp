@@ -88,8 +88,8 @@ void buildPedestalPlanes(const Tile& tile,
 			if (i == Border::top) { v0 = v3(x + offset, 1.0, 0.0);	v1 = v3(x, 1.0, 0.0); }
 			if (i == Border::bottom) { v0 = v3(x + offset, -1.0, 0.0);	v1 = v3(x, -1.0, 0.0); }
 
-			normalVector = myCross(upVector, v0 - v1);
-			normalVector = myNormalize(normalVector);
+			normalVector = cross(upVector, v0 - v1);
+			normalVector = Normalize(normalVector);
 
 			float h0 = sampleElevation(v2(v0.x, v0.y), elevation);
 			float h1 = sampleElevation(v2(v1.x, v1.y), elevation);

@@ -116,11 +116,15 @@ void CreateKindHash()
 	l = eLayerWater;
 	ADDHASH(basin,			Crgba(181, 208, 208));
 	ADDHASH2(canal,			Crgba(181, 208, 208),	1.5f);
+	ADDHASH(lake,			Crgba(191, 198, 208));
 	ADDHASH(ocean,			Crgba(181, 208, 208));
 	ADDHASH2(river,			Crgba(181, 208, 208),	2.0f);
 	ADDHASH(riverbank,		Crgba(181, 208, 208));
+	ADDHASH3(strait,		Crgba(181, 208, 208),	1.0f,	true);	// Intended for label placement only
 	ADDHASH2(stream,		Crgba(181, 208, 208),	1.0f);
+	ADDHASH(swimming_pool,	Crgba(171, 228, 198));
 	ADDHASH(water,			Crgba(181, 208, 208));
+	
 
 	l = eLayerBuildings;
 	ADDHASH(building,		Crgba(217, 208, 201));
@@ -129,13 +133,26 @@ void CreateKindHash()
 	l = eLayerTransit;
 	ADDHASH3(light_rail,	Crgba(255, 0, 0),		0.5f,	true);
 	ADDHASH3(monorail,		Crgba(255, 0, 0),		1.0f,	true);
+	ADDHASH(station,		Crgba(160, 130, 100));
 	ADDHASH3(subway,		Crgba(255, 0, 0),		2.0f,	true);
 	ADDHASH3(train,			Crgba(255, 0, 0),		2.5f,	true);
 	
+	
+	
 	l = eLayerBoundaries;
-	ADDHASH3(locality,		Crgba(255, 0, 0),		0.5f,	true);
-	ADDHASH3(county,		Crgba(255, 0, 0),		0.5f,	true);
-	ADDHASH3(region,		Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH3(aboriginal_lands,	Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH2(country,			Crgba(40, 40, 40),		10.5f);
+	ADDHASH3(county,			Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH3(disputed,			Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH2(indefinite,		Crgba(255, 0, 0),		10.5f);
+	ADDHASH3(indeterminate,		Crgba(255, 0, 0),		10.5f,	true);
+	ADDHASH3(lease_limit,		Crgba(255, 0, 0),		10.5f,	true);
+	ADDHASH2(line_of_control,	Crgba(210, 210, 100),	10.5f);
+	ADDHASH3(locality,			Crgba(255, 0, 0),		0.5f,	true);
+	ADDHASH2(macroregion,		Crgba(255, 0, 0),		10.5f);
+	ADDHASH2(map_unit,			Crgba(255, 0, 0),		10.5f);
+	ADDHASH2(overlay_limit,		Crgba(255, 0, 0),		10.5f);
+	ADDHASH3(region,			Crgba(255, 0, 0),		0.5f,	true);
 	
 	l = eLayerRoads;
 	ADDHASH2(aerialway,		Crgba(241, 100, 198),	6);
@@ -154,13 +171,20 @@ void CreateKindHash()
 	ADDHASH(earth,			Crgba(200, 200, 200));
 	
 	l = eLayerLanduse;
+	ADDHASH(attraction,		Crgba(210, 210, 64));
+	ADDHASH(bridge,			Crgba(180, 190, 200));
 	ADDHASH(cemetery,		Crgba(128, 128, 128));
 	ADDHASH2(gate,			Crgba(255, 0, 0), 10.15f);
 	ADDHASH(grass,			Crgba(200, 235, 176));
 	ADDHASH(garden,			Crgba(215, 235, 176));
+	ADDHASH(hospital,		Crgba(220, 128, 128));
+	ADDHASH(natural_wood,	Crgba(180, 220, 32));
 	ADDHASH(park,			Crgba(200, 250, 204));
 	ADDHASH(parking,		Crgba(180, 160, 204));
 	ADDHASH(pedestrian,		Crgba(221, 221, 232));
+	ADDHASH(pitch,			Crgba(200, 200, 100));
+	ADDHASH(playground,		Crgba(221, 221, 128));
+	ADDHASH(place_of_worship,Crgba(32, 64, 128));
 	ADDHASH3(protected_area,Crgba(255, 0, 0),		0.5,	true);
 	ADDHASH2(retaining_wall,Crgba(180, 180, 180),	0.5f);	// ???
 	ADDHASH2(fence,			Crgba(138, 163, 140),	0.15f);

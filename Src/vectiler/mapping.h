@@ -116,10 +116,7 @@ struct Tile {
 };
 //-----------------------------------------------------------------------------
 extern const char* layerNames[eNumLayerTypes + 1];
-//extern Crgba gKindColors[NUM_KINDS];
 extern Hash<CStr, EFeatureKind> gKindHash;
 extern Hash<int, MapGeom> gGeomHash;
 //-----------------------------------------------------------------------------
-//void InitializeColors();
 void CreateKindHash();
-//#define GET_COLOR(layer, kind) {}

@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 #define EPSILON 1e-5f
 //-----------------------------------------------------------------------------
-v3 perp(const v3& v) { return myNormalize(v3(-v.y, v.x, 0.0)); }
+v3 perp(const v3& v) { return Normalize(v3(-v.y, v.x, 0.0)); }
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh)
 {
@@ -19,7 +19,7 @@ void computeNormals(PolygonMesh* mesh)
 		const v3& p2 = mesh->vertices[i2].position;
 		const v3& p3 = mesh->vertices[i3].position;
 
-		v3 d = myNormalize(myCross(p2 - p1, p3 - p1));
+		v3 d = Normalize(cross(p2 - p1, p3 - p1));
 
 		mesh->vertices[i1].normal += d;
 		mesh->vertices[i2].normal += d;
@@ -27,7 +27,7 @@ void computeNormals(PolygonMesh* mesh)
 	}
 
 	for (auto& v : mesh->vertices) {
-		v.normal = myNormalize(v.normal);
+		v.normal = Normalize(v.normal);
 	}
 }
 /*-----------------------------------------------------------------------------
@@ -142,8 +142,8 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 
 			if (a == b) { continue; }
 
-			v3 normalVector = myCross(upVector, b - a);
-			normalVector = myNormalize(normalVector);
+			v3 normalVector = cross(upVector, b - a);
+			normalVector = Normalize(normalVector);
 
 			a.z = height + cz;
 			outVertices.push_back({ a, normalVector });
@@ -207,8 +207,8 @@ void buildPolygon(const Polygon2& polygon, const float height,
 //-----------------------------------------------------------------------------
 v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
 {
-	v3 miter = myNormalize(n0 + n1);
-	float miterl2 = myDot(miter, miter);
+	v3 miter = Normalize(n0 + n1);
+	float miterl2 = dot(miter, miter);
 
 	if (miterl2 < std::numeric_limits<float>::epsilon()) {
 		miter = v3(n1.y - n0.y, n0.x - n1.x, 0.0);
@@ -234,7 +234,7 @@ void addPolygonPolylinePoint(LineString& linestring,
 {
 	const v3 n0 = perp(curr - last);
 	const v3 n1 = perp(next - curr);
-	bool right = myCross(n1, n0).z > 0.0;
+	bool right = cross(n1, n0).z > 0.0;
 
 	if ((i == 1 && forward) || (i == lineDataSize - 2 && !forward))
 	{
@@ -244,8 +244,8 @@ void addPolygonPolylinePoint(LineString& linestring,
 
 	if (right)
 	{
-		v3 d0 = myNormalize(last - curr);
-		v3 d1 = myNormalize(next - curr);
+		v3 d0 = Normalize(last - curr);
+		v3 d1 = Normalize(next - curr);
 		v3 miter = computeMiterVector(d0, d1, n0, n1);
 		linestring.push_back(curr - miter * extrude);
 	}
@@ -278,7 +278,7 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 	}*/
 
 	PolygonMesh* mesh = new PolygonMesh(layerType, f);
-	const float sortHeight = 0;// f->sort_rank / (500.0f);
+	const float sortHeight = 0;// f->sort_rank / MAX_SORT_RANK;
 
 	if (f->geometryType == GeometryType::polygons)
 	{

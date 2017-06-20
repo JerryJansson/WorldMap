@@ -157,7 +157,6 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 		vtxMap* vtx = &bigGeom->vertices[voffset];
 		uint16* idxs = &bigGeom->indices[ioffset];
 
-		//const Crgba col = gKindColors[kind];
 		const Crgba col = GetColor(layerType, kind);
 		if (col == gRGBA_Red)
 		{
