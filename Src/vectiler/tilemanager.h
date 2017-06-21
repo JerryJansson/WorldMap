@@ -22,6 +22,7 @@ public:
 	Vec2d m_WorldOrigo;
 	Vec3i m_LastTile;
 
+public:
 	Vec2d GlToMercator2d(const Vec3& gl)
 	{
 		return Vec2d(m_WorldOrigo.x + gl.x, m_WorldOrigo.y - gl.z);	// going -z in gl is going "up" the globe (+y)

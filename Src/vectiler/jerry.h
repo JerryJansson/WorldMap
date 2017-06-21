@@ -16,6 +16,8 @@ enum Border {
 	top,
 };
 typedef vtxP4NC vtxMap;
+
+#if JJ_WORLDMAP == 1
 //-----------------------------------------------------------------------------
 struct StreamResult : ListNode<StreamResult>
 {
@@ -24,3 +26,8 @@ struct StreamResult : ListNode<StreamResult>
 };
 //-----------------------------------------------------------------------------
 bool GetTile(StreamResult* result);
+#endif
+
+#if JJ_WORLDMAP == 2
+
+#endif

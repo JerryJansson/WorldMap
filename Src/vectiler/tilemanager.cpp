@@ -1,4 +1,7 @@
 #include "Precompiled.h"
+
+#if JJ_WORLDMAP == 1
+
 #include "tilemanager.h"
 #include "projection.h"
 #include "jerry.h"
@@ -22,6 +25,7 @@ const Vec2d longLatStart(-74.0130, 40.703);	// 19294, 24642 - Manhattan
 //const Vec3i singleTile(1204, 2554, 12);	// Contains a mesh > 65536 vertices
 //const Vec3i singleTile(4820, 10224, 14);	// Contains a mesh == 65536 vertices
 const Vec3i singleTile(19294, 40893, 16);
+//const Vec3i singleTile(0,0,0);
 //const Vec3i singleTile(9647, 20446, 15);
 //const Vec3i singleTile(19288, 40894, 16);
 // http://tangrams.github.io/tangram/#52.49877546805043,13.397676944732667,17 // (complex building with holes)
@@ -131,7 +135,6 @@ void TileManager::Initialize(CCamera* cam)
 	m_Initialized = true;
 
 	CreateKindHash();
-	//InitializeColors();
 
 	Vec3i tile;
 	if (useSingleTile) // Debug
@@ -317,6 +320,7 @@ bool TileManager::ReceiveLoadedTile()
 
 	return true;
 }
+#if 1
 //-----------------------------------------------------------------------------
 static TArray<Vec3i> neededTiles(256);
 //-----------------------------------------------------------------------------
@@ -437,7 +441,7 @@ void TileManager::UpdateQTree(CCamera* cam)
 			continue;
 
 		// Too far away to split further (or max zoom is reached)
-		if (dist > size || t.z >= maxZoom)
+		if (dist > size/2.0f || t.z >= maxZoom)
 		{
 			neededTiles.Add(t);
 		}
@@ -454,6 +458,268 @@ void TileManager::UpdateQTree(CCamera* cam)
 		}
 	}
 }
+#else
+//-----------------------------------------------------------------------------
+static inline TileNode* AllocNode(const Vec3i& tms, TileNode* parent)
+{
+	TileNode* n = nodePool.Alloc();
+	n->m_Tms = tms;
+	n->m_Parent = parent;
+	n->m_Data = NULL;
+	n->m_Child[0] = NULL;
+	n->m_Child[1] = NULL;
+	n->m_Child[2] = NULL;
+	n->m_Child[3] = NULL;
+}
+//-----------------------------------------------------------------------------
+// Alloc data
+//-----------------------------------------------------------------------------
+void AllocTileData(TileNode* node)
+{
+	// See if data already exists in cache
+	TileData* data = dataHash.Get(node->m_Tms);
+
+	// Not cached, alloc
+	if (!data)
+	{
+		// TODO: LRU scheme
+		data = dataPool.Alloc();
+
+		// See if this data is in cache. Remove it in that case
+		if (dataHash.Get(node->m_Tms))
+			dataHash.Remove(node->m_Tms);
+
+		data->m_Tms = node->m_Tms;
+		dataHash.Add(data->m_Tms, data);
+	}
+
+	data->m_FrameBump = E_GetFrameNumber();
+	data->m_Node = node;
+	node->m_Data = data;
+}
+//-----------------------------------------------------------------------------
+// When we release the tile data, we only break the coupling between the
+// node & the data. Since the data can be loading we keep it alive
+// until it's done loading and then put it back in the pool
+//-----------------------------------------------------------------------------
+void ReleaseTileData(TileNode* node)
+{
+	// Return data to pool
+	//dataPool.Free(node->m_Data);
+
+	// Release coupling between node & data
+	node->m_Data->m_Node = NULL;
+	node->m_Data = NULL;
+}
+//-----------------------------------------------------------------------------
+// Return node (and children) to memory pool
+// Note. Children may or may not be loaded. They might even currently be loading.
+// This does not matter since we just release the coupling between the
+// node and the data. If a tile is currently loading and finishes without having
+// a coupling to a node, nothing happens. The data is just kept in the cache
+// for a while.
+//-----------------------------------------------------------------------------
+static inline void ReleaseNode(TileNode** nodeptr)
+{
+	TileNode* node = *nodeptr;
+	if (node->m_Data)
+		ReleaseTileData(node);
+	
+	if (node->m_Child[0])
+	{
+		ReleaseNode(&node->m_Child[0]);
+		ReleaseNode(&node->m_Child[1]);
+		ReleaseNode(&node->m_Child[2]);
+		ReleaseNode(&node->m_Child[3]);
+	}
+
+	*nodeptr = NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Check if childrens loaded data covers up my entire space
+//-----------------------------------------------------------------------------
+bool CoveredByChildren(const TileNode* node)
+{
+	for (int i = 0; i < 4; i++)
+	{
+		if (!node->m_Child[i]->IsLoaded() && !CoveredByChildren(node->m_Child[i]))
+			return false;
+	}
+
+	return true;
+}
+//-----------------------------------------------------------------------------
+// Check if parent or grandparents covers my space
+//-----------------------------------------------------------------------------
+/*bool CoveredByParents(const TileNode* node)
+{
+	const TileNode* p = node->m_Parent;
+	return p && (p->m_Status == eLoaded || CoveredByParents(p));
+}
+//-----------------------------------------------------------------------------
+// Check if any children is currently loading
+//-----------------------------------------------------------------------------
+bool ChildrenIsLoading(const TileNode* node)
+{
+	for(int i=0; i)
+	const TileNode* p = node->m_Parent;
+	return p && (p->m_Status == eLoaded || CoveredByParents(p));
+}*/
+
+
+//-----------------------------------------------------------------------------
+TArray<TileNode*> neededTiles;
+//-----------------------------------------------------------------------------
+void TileManager::UpdateQTree(CCamera* cam)
+{
+	const uint32 frame = Engine_GetFrameNumber();
+	const Vec3 camGlPos = cam->GetWorldPos();
+	const Vec3d camMercator3d = GlToMercator3d(camGlPos);
+	const float maxDrawDist = 12 * 1000; // 12km
+	const int maxZoom = 17;
+	int n = 0;
+
+	if (!m_RootNode)
+		m_RootNode = AllocNode(Vec3i(0, 0, 0), NULL);
+	
+	TStack<TileNode*, 48> stack(m_RootNode);
+	while (stack.Count())
+	{
+		n++;
+		TileNode* node = stack.Pop();
+		const Vec3i& tms = node->m_Tms;
+		const Vec2d tileMin = TileMin(tms);
+		const Vec2d tileMax = TileMax(tms);
+		const float size = (tileMax.x - tileMin.x);
+		Caabb aabb(MercatorToGl(tileMin, 0.0f), MercatorToGl(tileMax, 1000.0f));
+		Swap(aabb.m_Min.z, aabb.m_Max.z);
+		
+		node->m_Dist = DistancePointAabb(camGlPos, aabb);
+
+		// To far away to be visible
+		//if (dist > maxDrawDist)
+		//	continue;
+
+		// Too far away to split (or max zoom is reached)
+		// This is a leaf (should be loaded and rendered)
+		// If we have children, they are now too high detail, release them as soon as parent is loaded and can replace them visually
+		if (node->m_Dist > size / 2.0f || tms.z >= maxZoom)
+		{
+			neededTiles.Add(node);	// Add to list of possible streamers
+
+			TileData* data = node->m_Data;
+			if (data)
+			{
+				data->m_FrameBump = frame;	// Mark data as freshly used
+
+				// As soon as this node is loaded, we can release the children, if any
+				if (node->m_Child[0] && node->IsLoaded())
+				{
+					ReleaseNode(&node->m_Child[0]);
+					ReleaseNode(&node->m_Child[1]);
+					ReleaseNode(&node->m_Child[2]);
+					ReleaseNode(&node->m_Child[3]);
+				}
+			}
+			// We have no data, but need it. Try to aquire it
+			else
+			{
+				AllocTileData(node);
+			}
+		}
+		// Close enough to split
+		else
+		{
+			if (node->m_Child[0])
+			{
+				const int zoom = tms.z + 1;
+				const int x = tms.x << 1;
+				const int y = tms.y << 1;
+				node->m_Child[0] = AllocNode(Vec3i(x, y, zoom), node);
+				node->m_Child[1] = AllocNode(Vec3i(x + 1, y, zoom), node);
+				node->m_Child[2] = AllocNode(Vec3i(x + 1, y + 1, zoom), node);
+				node->m_Child[3] = AllocNode(Vec3i(x, y + 1, zoom), node);
+			}
+
+			stack.Push(node->m_Child[0]);
+			stack.Push(node->m_Child[1]);
+			stack.Push(node->m_Child[2]);
+			stack.Push(node->m_Child[3]);
+
+			// No longer need this data if children covers my entire visual area
+			if (node->m_Data)
+			{
+				if (CoveredByChildren(node))
+					ReleaseTileData(node);
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+void TileManager::Update(CCamera* cam)
+{
+	if (!m_Initialized)
+		Initialize(cam);
+
+	ShiftOrigo(cam);
+
+	const Vec3 cpos = cam->GetWorldPos();
+	const Vec2d meters = GlToMercator2d(cpos);
+	const Vec2d ll = MetersToLongLat(meters);
+	DbgMsg("cam: gl-<%.1f, %.1f, %.1f>, long/lat <%.5f, %.5f>", cpos.x, cpos.y, cpos.z, ll.x, ll.y);
+
+	// Determine needed tiles
+	neededTiles.Clear();
+	if (useSingleTile)
+	{
+		neededTiles.Add(singleTile);
+	}
+	else
+	{
+		UpdateQTree(cam);
+	}
+
+	// Determine missing tiles
+	static TArray<TileNode*> missingTiles(256);
+	missingTiles.Clear();
+	for (int i = 0; i < neededTiles.Num(); i++)
+	{
+		TileNode* node = neededTiles[i];
+		if(node->m_Data && node->m_Data->m_Status == TileData::eNotLoaded)
+			missingTiles.Add(node);
+	}
+
+	DbgMsg("Tiles <Needed: %d, Missing: %d, Cached: %d>", neededTiles.Num(), missingTiles.Num(), m_Tiles.Num());
+
+	// Add tile to queue to stream
+	if (missingTiles.Num()>0 && !tileToStream)
+	{
+		CStopWatch sw;
+		int loadIdx = ChooseTileToLoad(cam, missingTiles);
+
+		MyTile* newtile = NULL;
+		if (tileLock.try_lock())	// No need to verify !tileToStream inside lock. Main thread is the only thread that can set tileToStream!=NULL
+		{
+			tileToStream = new MyTile(missingTiles[loadIdx]);
+			newtile = tileToStream;
+			LOG("Added <%d, %d, %d> for streaming in frame %d\n", tileToStream->m_Tms.x, tileToStream->m_Tms.y, tileToStream->m_Tms.z, frame);
+			tileLock.unlock();
+		}
+
+		if (newtile)
+			m_Tiles.Add(newtile->m_Tms, newtile);
+
+		//float t = sw.GetMs(true);
+		//LOG("Choose tile, lock, add to hash: %.2fms\n", t);
+	}
+
+	// Any tiles done streaming?
+	ReceiveLoadedTile();
+}
+
+#endif
 //-----------------------------------------------------------------------------
 void TileManager::RenderDebug2d(CCamera* cam)
 {
@@ -496,3 +762,5 @@ void TileManager::RenderDebug2d(CCamera* cam)
 
 
 TileManager gTileManager;
+
+#endif
