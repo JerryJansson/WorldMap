@@ -8,16 +8,10 @@ typedef Vec3	v3;
 typedef Vec4	v4;
 typedef Vec4d	v4d;
 
-//-----------------------------------------------------------------------------
-enum Border {
-	right,
-	left,
-	bottom,
-	top,
-};
+
 typedef vtxP4NC vtxMap;
 
-#if JJ_WORLDMAP == 1
+/*#if JJ_WORLDMAP == 1
 //-----------------------------------------------------------------------------
 struct StreamResult : ListNode<StreamResult>
 {
@@ -29,5 +23,5 @@ bool GetTile(StreamResult* result);
 #endif
 
 #if JJ_WORLDMAP == 2
-
-#endif
+	bool GetTile(TileData* t);
+#endif*/

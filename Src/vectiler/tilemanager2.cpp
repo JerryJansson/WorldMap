@@ -11,6 +11,8 @@
 #include <mutex>
 #include <condition_variable>
 #include "disc.h"
+#include "tiledata.h"
+#include "vectiler.h"
 //-----------------------------------------------------------------------------
 const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
@@ -26,6 +28,7 @@ const Vec2d longLatStart(-74.0130, 40.703);	// 19294, 24642 - Manhattan
 //const Vec3i singleTile(4820, 10224, 14);	// Contains a mesh == 65536 vertices
 const Vec3i singleTile(19294, 40893, 16);
 //const Vec3i singleTile(0,0,0);
+//const Vec3i singleTile(2,1,2);
 //const Vec3i singleTile(9647, 20446, 15);
 //const Vec3i singleTile(19288, 40894, 16);
 // http://tangrams.github.io/tangram/#52.49877546805043,13.397676944732667,17 // (complex building with holes)
@@ -39,49 +42,18 @@ std::mutex poolLock;
 std::mutex doneLock;
 std::condition_variable signal_tileLock;
 bool stop = false;
-//MyTile* tileToStream = NULL;
 TileData* tileToStream = NULL;
-
-List2<StreamResult> doneList;
+//-----------------------------------------------------------------------------
+#define NDATA 64
+//static MemPoolDynamic<TileData> dataPool(NDATA);	// Enities
+static TArray<TileData*> freeData;// (NDATA);
+//static TileData* freeData = NULL;				// LRU Free list
+static Hash<Vec3i, TileData*> dataHash;
 //-----------------------------------------------------------------------------
 static MemPoolDynamic<TileNode> nodePool(64);	// Nodes in quadtree
-static MemPoolDynamic<TileData> dataPool(64);	// Loaded data
-static Hash<Vec3i, TileData*>	dataHash;
-//-----------------------------------------------------------------------------
-StreamResult* AllocResult(MyTile* t)
-{
-	//poolLock.lock();
-	//StreamResult* result = geomPool.Alloc();
-	//poolLock.unlock();
-	// return result;
-	StreamResult* result = new StreamResult;
-
-	result->tile = t;
-	return result;
-}
-
-//-----------------------------------------------------------------------------
-void FreeResult(StreamResult* r)
-{
-	//poolLock.lock();
-	//geomPool.Free(r);
-	//poolLock.unlock();
-	for (int i = 0; i < r->geoms.Num(); i++)
-		delete r->geoms[i];
-
-	delete r;
-}
-//-----------------------------------------------------------------------------
-MyTile::MyTile(const Vec3i& tms)
-{
-	m_Frame  = 0;
-	m_Tms	 = tms;
-	m_Origo  = TileMin(m_Tms);
-	m_Status = eNotLoaded;
-	
-	const CStrL tileName = Str_Printf("%d_%d_%d", tms.x, tms.y, tms.z);
-	SetName(tileName);
-}
+//static MemPoolDynamic<TileData> dataPool(64);	// Loaded data
+//static TStackArray<TileData>	dataCache(64);	// Loaded data
+TArray<TileData*> doneList;
 //-----------------------------------------------------------------------------
 void StreamTile(int threadIdx)
 {
@@ -111,7 +83,7 @@ void StreamTile(int threadIdx)
 		GetTile(t);
 
 		doneLock.lock();
-		doneList.PushBack(result);
+		doneList.Add(t);
 		doneLock.unlock();
 	}
 }
@@ -138,10 +110,6 @@ void TileManager::Stop()
 void TileManager::Initialize(CCamera* cam)
 {
 	m_Initialized = true;
-
-	// New
-	
-
 	CreateKindHash();
 
 	Vec3i tile;
@@ -189,10 +157,10 @@ Vec3i TileManager::ShiftOrigo(CCamera* cam)
 		cam->SetPos(pos);
 
 		// Relocate tiles relative new origo
-		for (int i = 0; i < m_Tiles.Num(); i++)
+		for (int i = 0; i < dataHash.Num(); i++)
 		{
-			MyTile* tile = m_Tiles[i].val;
-			tile->SetPos(MercatorToGl(tile->m_Origo, 5.0f));
+			TileData* data = dataHash[i].val;
+			data->SetPos(MercatorToGl(data->m_Origo, 5.0f));
 		}
 
 		m_LastTile = camtile;
@@ -215,99 +183,111 @@ int ChooseTileToLoad(CCamera* cam, const TArray<TileNode*>& tiles)
 	{
 		const TileNode* node = tiles[i];
 		bool visible = BoxIntersectsFrustum(f, node->m_NodeAabb);
-
-		if( (visible && !haveVisible) || (minidx == -1) || (node->m_Dist < mindist) )
+		if (visible)
 		{
-			haveVisible |= visible;
-			minidx = i;
-			mindist = node->m_Dist;
+			if (!haveVisible || minidx == -1 || node->m_Dist < mindist)
+			{
+				haveVisible = true;
+				minidx = i;
+				mindist = node->m_Dist;
+			}
+		}
+		else if(!haveVisible)
+		{
+			if (minidx == -1 || node->m_Dist < mindist)
+			{
+				minidx = i;
+				mindist = node->m_Dist;
+			}
 		}
 	}
 
 	return minidx;
 }
 //-----------------------------------------------------------------------------
-CMesh* CreateMeshFromStreamedGeom(const char* name, const StreamGeom* g)
+// Alloc data
+//-----------------------------------------------------------------------------
+TileData* AllocTileData(TileNode* node)
 {
-	const VertexFmtID vfid = vtxMap::fmt;
-	const int vertexSize = gRenderer->GetVertexFormat(vfid)->Stride();
-	const int nv = g->vertices.Num();
-	const int ni = g->indices.Num();
-	
-	// Create mesh
-	CMesh* mesh = new CMesh(name, 1);
-	
-	// Create 1 common index buffer
-	CIndexBuffer* ib = gRenderer->CreateIndexBuffer(IDX_SHORT, ni, BUF_STATIC, g->indices.Ptr());
-	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC, g->vertices.Ptr());
+	// See if data already exists in cache
+	TileData* data = dataHash.Get(node->m_Tms);
 
-	SubMesh& range = mesh->m_SubMeshes[0];
-	range.glgeomIdx = 0;
-	range.firstIdx = 0;
-	range.numIdx = ni;
-	range.firstVtx = 0;
-	range.numVtx = nv;
-	range.materialName = "buildings";// g->materialName.Str();
-	range.geometricCenter = g->aabb.GetCenter();
+	// Cached
+	if (data)
+	{
+		data->SetEnabled(true);
+	}
+	// Not cached
+	else
+	{
+		// No more free data. Must allocate some more
+		/*if (freeData.Num() == 0)
+		{ 
+			data = dataPool.Alloc();	// Triggers pool growth
+			int n = dataPool.GetFreeCount();
+			freeData.EnsureCapacity(n);
+			for (int i = 0; i < n; i++)
+				freeData.Add(dataPool.Alloc());
+			data = new TileData();
+		}*/
 		
-	mesh->m_MeshAabb = g->aabb;
-	mesh->m_GlGeoms.SetNum(1);
-	mesh->m_GlGeoms[0].SetBuffers(vfid, vb, ib, GlGeom::eOwnsAll);
+		// We always want to keep a certain amount of old cached data
+		static const int minimumOldDataCache = 16;
 
-	//if (o->createCollision)
-	//	mesh->m_Collision = CreateCollisionModelFromGeoms(geoms, nGeoms);
+		int lru = -1;
+		if (freeData.Num() > minimumOldDataCache)
+		{
+			uint32 minBump;
+			for (int i = 0; i < freeData.Num(); i++)
+			{
+				TileData* d = freeData[i];
+				// Don't touch tiles that are loading
+				if (d->Status() == TileData::eLoading)
+					continue;
 
-	return mesh;
+				if (lru == -1 || d->m_FrameBump < minBump)
+				{
+					lru = i;
+					minBump = d->m_FrameBump;
+				}
+			}
+		}
+		
+		// Delete previously cached tile
+		if (lru >= 0)
+		{
+			data = freeData[lru];
+			freeData.Remove(lru);
+
+			// Are we stealing cached data from another tile?
+			assert(dataHash.Get(data->m_Tms));
+			dataHash.Remove(data->m_Tms);	// Remove from cache
+			delete(data);					// Remove from scene (only in scene if status==eLoaded)
+		}
+		
+		data = new TileData();
+		data->Init(node->m_Tms);
+		dataHash.Add(data->m_Tms, data);	// Add to cache
+	}
+
+	data->m_FrameBump = Engine_GetFrameNumber();
+	data->m_Node = node;
+	node->m_Data = data;
+
+	return data;
 }
 //-----------------------------------------------------------------------------
-bool TileManager::ReceiveLoadedTile()
+// When we release the tile data, we only break the coupling between the
+// node & the data. Since the data can be loading we keep it alive
+// until it's done loading and then put it back in the pool
+//-----------------------------------------------------------------------------
+void ReleaseTileData(TileNode* node)
 {
-	CStopWatch sw;
-
-	// No tiles waiting to be received
-	if (doneList.IsEmpty())
-		return false;
-
-	StreamResult* r = NULL;
-	if (doneLock.try_lock())
-	{
-		r = doneList.PopFront();
-		doneLock.unlock();
-	}
-
-	if (!r)
-		return false;
-
-	MyTile* t = r->tile;
-	//LOG("Received <%d, %d, %d> in frame %d\n", t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber());
-	t->m_Status = MyTile::eLoaded;
-	t->m_Frame = Engine_GetFrameNumber();
-
-	float t_1 = sw.GetMs();
-	
-	const int n = r->geoms.Num();
-	for (int i = 0; i <n; i++)
-	{
-		CStrL name = Str_Printf("%s_%d", layerNames[r->geoms[i]->layerType], r->geoms[i]->layerSubIdx);
-		CMesh* mesh = CreateMeshFromStreamedGeom(name, r->geoms[i]);
-		Entity* e = new Entity(name);
-		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
-		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
-		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete); // Resets dirty flag
-		t->AddChild(e);
-	}
-
-	float t_createMeshes = sw.GetMs() - t_1;
-
-	t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
-	gScene.AddEntity(t);
-
-	// Release geom memory
-	FreeResult(r);
-
-	LOG("%.1fms. Received <%d, %d, %d> in frame %d. Created %d meshes in %.1fms\n", sw.GetMs(), t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber(), n, t_createMeshes);
-
-	return true;
+	TileData* data = node->m_Data;
+	data->SetEnabled(false);		// Disable it so it won't update & render in scene
+	freeData.Add(data);				// Add to free list
+	data->m_Node = NULL;			// Release coupling between node & data
+	node->m_Data = NULL;
 }
 //-----------------------------------------------------------------------------
 static inline TileNode* AllocNode(const Vec3i& tms, TileNode* parent)
@@ -320,46 +300,7 @@ static inline TileNode* AllocNode(const Vec3i& tms, TileNode* parent)
 	n->m_Child[1] = NULL;
 	n->m_Child[2] = NULL;
 	n->m_Child[3] = NULL;
-}
-//-----------------------------------------------------------------------------
-// Alloc data
-//-----------------------------------------------------------------------------
-void AllocTileData(TileNode* node)
-{
-	// See if data already exists in cache
-	TileData* data = dataHash.Get(node->m_Tms);
-
-	// Not cached, alloc
-	if (!data)
-	{
-		// TODO: LRU scheme
-		data = dataPool.Alloc();
-
-		// See if this data is in cache. Remove it in that case
-		if (dataHash.Get(node->m_Tms))
-			dataHash.Remove(node->m_Tms);
-
-		data->m_Tms = node->m_Tms;
-		dataHash.Add(data->m_Tms, data);
-	}
-
-	data->m_FrameBump = Engine_GetFrameNumber();
-	data->m_Node = node;
-	node->m_Data = data;
-}
-//-----------------------------------------------------------------------------
-// When we release the tile data, we only break the coupling between the
-// node & the data. Since the data can be loading we keep it alive
-// until it's done loading and then put it back in the pool
-//-----------------------------------------------------------------------------
-void ReleaseTileData(TileNode* node)
-{
-	// Return data to pool
-	//dataPool.Free(node->m_Data);
-
-	// Release coupling between node & data
-	node->m_Data->m_Node = NULL;
-	node->m_Data = NULL;
+	return n;
 }
 //-----------------------------------------------------------------------------
 // Return node (and children) to memory pool
@@ -391,6 +332,9 @@ static inline void ReleaseNode(TileNode** nodeptr)
 //-----------------------------------------------------------------------------
 bool CoveredByChildren(const TileNode* node)
 {
+	if (!node->m_Child[0])
+		return false;
+
 	for (int i = 0; i < 4; i++)
 	{
 		if (!node->m_Child[i]->IsLoaded() && !CoveredByChildren(node->m_Child[i]))
@@ -399,25 +343,6 @@ bool CoveredByChildren(const TileNode* node)
 
 	return true;
 }
-//-----------------------------------------------------------------------------
-// Check if parent or grandparents covers my space
-//-----------------------------------------------------------------------------
-/*bool CoveredByParents(const TileNode* node)
-{
-	const TileNode* p = node->m_Parent;
-	return p && (p->m_Status == eLoaded || CoveredByParents(p));
-}
-//-----------------------------------------------------------------------------
-// Check if any children is currently loading
-//-----------------------------------------------------------------------------
-bool ChildrenIsLoading(const TileNode* node)
-{
-	for(int i=0; i)
-	const TileNode* p = node->m_Parent;
-	return p && (p->m_Status == eLoaded || CoveredByParents(p));
-}*/
-
-
 //-----------------------------------------------------------------------------
 TArray<TileNode*> neededTiles;
 //-----------------------------------------------------------------------------
@@ -460,29 +385,26 @@ void TileManager::UpdateQTree(CCamera* cam)
 			neededTiles.Add(node);	// Add to list of possible streamers
 
 			TileData* data = node->m_Data;
-			if (data)
-			{
-				data->m_FrameBump = frame;	// Mark data as freshly used
+			
+			// We have no data, but need it
+			if (!data)
+				data = AllocTileData(node);
 
-				// As soon as this node is loaded, we can release the children, if any
-				if (node->m_Child[0] && node->IsLoaded())
-				{
-					ReleaseNode(&node->m_Child[0]);
-					ReleaseNode(&node->m_Child[1]);
-					ReleaseNode(&node->m_Child[2]);
-					ReleaseNode(&node->m_Child[3]);
-				}
-			}
-			// We have no data, but need it. Try to aquire it
-			else
+			data->m_FrameBump = frame;	// Mark data as freshly used
+
+			// As soon as this node is loaded, we can release the children, if any
+			if (node->m_Child[0] && data->IsLoaded())
 			{
-				AllocTileData(node);
+				ReleaseNode(&node->m_Child[0]);
+				ReleaseNode(&node->m_Child[1]);
+				ReleaseNode(&node->m_Child[2]);
+				ReleaseNode(&node->m_Child[3]);
 			}
 		}
 		// Close enough to split
 		else
 		{
-			if (node->m_Child[0])
+			if (!node->m_Child[0])
 			{
 				const int zoom = tms.z + 1;
 				const int x = tms.x << 1;
@@ -541,25 +463,24 @@ void TileManager::Update(CCamera* cam)
 	for (int i = 0; i < neededTiles.Num(); i++)
 	{
 		TileNode* node = neededTiles[i];
-		if(node->m_Data && node->m_Data->m_Status == TileData::eNotLoaded)
+		if(node->m_Data && node->m_Data->Status() == TileData::eNotLoaded)
 			missingTiles.Add(node);
 	}
 
-	DbgMsg("Tiles <Needed: %d, Missing: %d, Cached: %d>", neededTiles.Num(), missingTiles.Num(), m_Tiles.Num());
+	DbgMsg("Tiles <Needed: %d, Missing: %d, Cached: %d>", neededTiles.Num(), missingTiles.Num(), dataHash.Num());
 
 	// Add tile to queue to stream
 	if (missingTiles.Num()>0 && !tileToStream)
 	{
-		//CStopWatch sw;
 		const int loadIdx = ChooseTileToLoad(cam, missingTiles);
 
-		//MyTile* newtile = NULL;
 		if (tileLock.try_lock())	// No need to verify !tileToStream inside lock. Main thread is the only thread that can set tileToStream!=NULL
 		{
-			tileToStream = missingTiles[loadIdx]->m_Data;// new MyTile(missingTiles[loadIdx]);
-			//newtile = tileToStream;
-			LOG("Added <%d, %d, %d> for streaming in frame %d\n", tileToStream->m_Tms.x, tileToStream->m_Tms.y, tileToStream->m_Tms.z, frame);
+			TileData* t = missingTiles[loadIdx]->m_Data;
+			t->SetStatus(TileData::eLoading);
+			tileToStream = t;
 			tileLock.unlock();
+			LOG("Added <%d, %d, %d> for streaming in frame %d\n", t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber());
 		}
 
 		//if (newtile)
@@ -572,7 +493,91 @@ void TileManager::Update(CCamera* cam)
 	// Any tiles done streaming?
 	ReceiveLoadedTile();
 }
+//-----------------------------------------------------------------------------
+CMesh* CreateMeshFromStreamedGeom(const char* name, const StreamGeom* g)
+{
+	const VertexFmtID vfid = vtxMap::fmt;
+	const int vertexSize = gRenderer->GetVertexFormat(vfid)->Stride();
+	const int nv = g->vertices.Num();
+	const int ni = g->indices.Num();
 
+	// Create mesh
+	CMesh* mesh = new CMesh(name, 1);
+
+	// Create 1 common index buffer
+	CIndexBuffer* ib = gRenderer->CreateIndexBuffer(IDX_SHORT, ni, BUF_STATIC, g->indices.Ptr());
+	CVertexBuffer* vb = gRenderer->CreateVertexBuffer(vertexSize, nv, BUF_STATIC, g->vertices.Ptr());
+
+	SubMesh& range = mesh->m_SubMeshes[0];
+	range.glgeomIdx = 0;
+	range.firstIdx = 0;
+	range.numIdx = ni;
+	range.firstVtx = 0;
+	range.numVtx = nv;
+	range.materialName = "buildings";// g->materialName.Str();
+	range.geometricCenter = g->aabb.GetCenter();
+
+	mesh->m_MeshAabb = g->aabb;
+	mesh->m_GlGeoms.SetNum(1);
+	mesh->m_GlGeoms[0].SetBuffers(vfid, vb, ib, GlGeom::eOwnsAll);
+
+	//if (o->createCollision)
+	//	mesh->m_Collision = CreateCollisionModelFromGeoms(geoms, nGeoms);
+
+	return mesh;
+}
+//-----------------------------------------------------------------------------
+bool TileManager::ReceiveLoadedTile()
+{
+	CStopWatch sw;
+
+	// No tiles waiting to be received
+	if (doneList.Num() == 0)
+		return false;
+
+	TileData* t = NULL;
+	if (doneLock.try_lock())
+	{
+		if (doneList.Num())
+		{
+			t = doneList[0];
+			doneList.RemoveOrdered(0);
+		}
+		doneLock.unlock();
+	}
+
+	if (!t)
+		return false;
+
+	float t_1 = sw.GetMs();
+
+	const int n = t->geoms.Num();
+	for (int i = 0; i < n; i++)
+	{
+		CStrL name = Str_Printf("%s_%d", layerNames[t->geoms[i]->layerType], t->geoms[i]->layerSubIdx);
+		CMesh* mesh = CreateMeshFromStreamedGeom(name, t->geoms[i]);
+		Entity* e = new Entity(name);
+		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
+		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
+		meshcomp->SetMesh(mesh, MeshComponent::eMeshDelete); // Resets dirty flag
+		t->AddChild(e);
+	}
+
+	float t_createMeshes = sw.GetMs() - t_1;
+
+	t->SetPos(MercatorToGl(t->m_Origo, 5.0f)); // Must set position here, after children are added. Because children need their transform dirtied
+	gScene.AddEntity(t);
+	t->SetStatus(TileData::eLoaded);
+
+	// Release geom memory
+	for (int i = 0; i < t->geoms.Num(); i++)
+		delete t->geoms[i];
+	t->geoms.Clear();
+
+	LOG("%.1fms. Received <%d, %d, %d> in frame %d. Created %d meshes in %.1fms\n", sw.GetMs(), t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber(), n, t_createMeshes);
+
+	return true;
+}
 //-----------------------------------------------------------------------------
 void TileManager::RenderDebug2d(CCamera* cam)
 {
@@ -592,12 +597,12 @@ void TileManager::RenderDebug2d(CCamera* cam)
 	int n = 0;
 	for (int i = 0; i < neededTiles.Num(); i++)
 	{
-		const Vec3i& t = neededTiles[i];
-		minz = Min(minz, t.z);
-		maxz = Max(maxz, t.z);
+		const TileNode* t = neededTiles[i];
+		minz = Min(minz, t->m_Tms.z);
+		maxz = Max(maxz, t->m_Tms.z);
 
-		Vec2d pmind = (TileMin(t) - camMercator2d) / 35.0;
-		Vec2d pmaxd = (TileMax(t) - camMercator2d) / 35.0;
+		Vec2d pmind = (TileMin(t->m_Tms) - camMercator2d) / 35.0;
+		Vec2d pmaxd = (TileMax(t->m_Tms) - camMercator2d) / 35.0;
 		Vec2 pmin = Vec2(pmind.x, pmind.y);
 		Vec2 pmax = Vec2(pmaxd.x, pmaxd.y);
 		pmin += screenpos;

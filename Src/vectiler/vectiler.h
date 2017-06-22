@@ -40,4 +40,31 @@ struct Params2
 	bool		vectorData;
 };
 
-bool vectiler(const Params2& params);
+//bool vectiler(const Params2& params);
+#if JJ_WORLDMAP == 1
+//-----------------------------------------------------------------------------
+struct StreamResult : ListNode<StreamResult>
+{
+	class MyTile* tile;
+	TArray<struct StreamGeom*> geoms;
+};
+//-----------------------------------------------------------------------------
+class MyTile : public Entity
+{
+public:
+	enum EStatus { eNotLoaded, eLoaded, eError } m_Status;
+public:
+	Vec3i	m_Tms;		// Tms grid coord xyz (z=zoom)
+	Vec2d	m_Origo;	// Tile origo (lower left corner) in mercator coordinates
+	uint32	m_Frame;	// Last frame we needed this tile
+
+	MyTile(const Vec3i& tms);
+	EStatus Status() const { return m_Status; }
+};
+//-----------------------------------------------------------------------------
+	bool GetTile(StreamResult* result);
+#endif
+
+#if JJ_WORLDMAP == 2
+	bool GetTile(class TileData* t);
+#endif

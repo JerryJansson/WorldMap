@@ -1,19 +1,6 @@
 #pragma once
 #include "../../../../Source/Modules/GameObject/Entity.h"
 //-----------------------------------------------------------------------------
-class MyTile : public Entity
-{
-public:
-	enum EStatus { eNotLoaded, eLoaded, eError } m_Status;
-public:
-	Vec3i	m_Tms;		// Tms grid coord xyz (z=zoom)
-	Vec2d	m_Origo;	// Tile origo (lower left corner) in mercator coordinates
-	uint32	m_Frame;	// Last frame we needed this tile
-
-	MyTile(const Vec3i& tms);
-	EStatus Status() const { return m_Status; }
-};
-//-----------------------------------------------------------------------------
 class TileManager
 {
 public:

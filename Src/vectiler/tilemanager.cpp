@@ -11,6 +11,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "disc.h"
+#include "vectiler.h"
 //-----------------------------------------------------------------------------
 const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);

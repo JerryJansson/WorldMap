@@ -333,6 +333,9 @@
     <ClCompile Include="..\..\..\..\Source\Engine\Common\Json.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Src\vectiler\tilemanager2.cpp">
+      <Filter>Main\Vectiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Src\State_Game.h">
@@ -658,6 +661,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\Source\Engine\Common\Json.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Src\vectiler\tilemanager2.h">
+      <Filter>Main\Vectiler</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
