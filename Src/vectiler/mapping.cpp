@@ -55,7 +55,8 @@ void CreateKindHash()
 	ADDHASH(fort);				ADDHASH(fuel);				ADDHASH(garden);
 	ADDHASH(gate);				ADDHASH(generator);			ADDHASH(glacier);
 	ADDHASH(golf_course);		ADDHASH(grass);				ADDHASH(grave_yard);
-	ADDHASH(groyne);			ADDHASH(hanami);			ADDHASH(hospital);
+	ADDHASH(groyne);			ADDHASH(hanami);			ADDHASH(hedge); 
+	ADDHASH(hospital);
 	ADDHASH(industrial);		ADDHASH(land);				ADDHASH(library);
 	ADDHASH(maze);				ADDHASH(meadow);			ADDHASH(military);
 	ADDHASH(national_park);		ADDHASH(nature_reserve);	ADDHASH(natural_forest);
@@ -174,9 +175,11 @@ void CreateKindHash()
 	ADDHASH(attraction,		Crgba(210, 210, 64));
 	ADDHASH(bridge,			Crgba(180, 190, 200));
 	ADDHASH(cemetery,		Crgba(128, 128, 128));
+	ADDHASH2(dam,			Crgba(255, 0, 0), 10.15f);
 	ADDHASH2(gate,			Crgba(255, 0, 0), 10.15f);
 	ADDHASH(grass,			Crgba(200, 235, 176));
 	ADDHASH(garden,			Crgba(215, 235, 176));
+	ADDHASH2(hedge,			Crgba(180, 200, 100),	0.3f);
 	ADDHASH(hospital,		Crgba(220, 128, 128));
 	ADDHASH(natural_wood,	Crgba(180, 220, 32));
 	ADDHASH(park,			Crgba(200, 250, 204));

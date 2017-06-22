@@ -50,6 +50,7 @@ enum EFeatureKind
 	eKind_forest,			eKind_fort,				eKind_fuel,					eKind_garden,
 	eKind_gate,				eKind_generator,		eKind_glacier,				eKind_golf_course,
 	eKind_grass,			eKind_grave_yard,		eKind_groyne,				eKind_hanami,
+	eKind_hedge,
 	eKind_hospital,			eKind_industrial,		eKind_land,					eKind_library,
 	eKind_maze,				eKind_meadow,			eKind_military,				eKind_national_park,
 	eKind_nature_reserve,	eKind_natural_forest,	eKind_natural_park,			eKind_natural_wood,

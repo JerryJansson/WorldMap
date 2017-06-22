@@ -113,7 +113,8 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 			f.kind = gKindHash.Get(tmpstr);
 			if (f.kind == eKind_unknown)
 			{
-				LOG("Ukn: %s - %s\n", layerNames[layerType], tmpstr.Str());
+				if(layerType != eLayerPois)
+					LOG("Ukn: %s - %s\n", layerNames[layerType], tmpstr.Str());
 			}
 		}
 		else if (strcmp(member, "boundary") == 0)	f.boundary		= prop.GetBool();
