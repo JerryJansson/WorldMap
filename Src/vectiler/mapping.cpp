@@ -31,6 +31,10 @@ void CreateKindHash()
 
 	// Buildings
 	ADDHASH(building);			ADDHASH(building_part);		ADDHASH(address);
+	// Places
+	ADDHASH(borough);			/*ADDHASH(country);*/			/*ADDHASH(locality);*/
+	ADDHASH(macrohood);			ADDHASH(microhood);			ADDHASH(neighbourhood);
+	/*ADDHASH(region);*/
 	// Earth
 	ADDHASH(archipelago);		ADDHASH(arete);				ADDHASH(cliff);
 	ADDHASH(continent);			ADDHASH(earth);				ADDHASH(island);

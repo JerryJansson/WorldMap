@@ -30,6 +30,9 @@ enum EFeatureKind
 
 	// Buildings
 	eKind_building,			eKind_building_part,		eKind_address,
+	// Places
+	eKind_borough,			/*eKind_country,*/			/*eKind_locality,*/		eKind_macrohood,
+	eKind_microhood,		eKind_neighbourhood,		/*eKind_region,*/
 	//Earth
 	eKind_archipelago,		eKind_arete,				eKind_cliff,
 	eKind_continent,		eKind_earth,				eKind_island,

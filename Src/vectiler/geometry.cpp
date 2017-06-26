@@ -267,15 +267,11 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 {
 	CStopWatch sw;
 
-	/*if (strstr(f->name.Str(), "Deutsches Patent") != 0)
+	//if (strstr(f->name.Str(), "Deutsches Patent") != 0)
+	if (f->lineStrings.size() > 1000)//3000)
 	{
 		int abba = 10;
 	}
-
-	if (f->lineStrings.size() > 3000)
-	{
-		int abba = 10;
-	}*/
 
 	PolygonMesh* mesh = new PolygonMesh(layerType, f);
 	const float sortHeight = 0;// f->sort_rank / MAX_SORT_RANK;
@@ -301,17 +297,16 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 	}
 	else if (f->geometryType == GeometryType::lines)
 	{
-		float w = GetWidth(layerType, f->kind);
-		if (w == 0.1f)
-		{
-			int abba = 10;
-		}
-
 		float t1 = 0;
 		float t2 = 0;
 		CStopWatch sw1;
-		const float extrudeW = w;
+		const float extrudeW = GetWidth(layerType, f->kind);;
 		const float extrudeH = sortHeight;
+
+		if (extrudeW == 0.1f)
+		{
+			int abba = 10;
+		}
 
 		Polygon2 polygon;
 		polygon.emplace_back();
