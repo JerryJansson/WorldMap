@@ -1,5 +1,6 @@
 #include "Precompiled.h"
 #include "geojson.h"
+int discarded = 0;
 #ifdef KEEP_2D
 //-----------------------------------------------------------------------------
 static inline void extractP(const rapidjson::Value& _in, Point& p, const Tile& _tile)
@@ -13,7 +14,6 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
 	const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
 	p.x = (pos.x - _tile.tileOrigin.x);
 	p.y = (pos.y - _tile.tileOrigin.y);
-	//return myLength(p - *last) >= 1e-5f ? true : false;
 	return sqLength(p - *last) >= 1e-10f ? true : false;
 }
 #else
@@ -32,7 +32,17 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
 	p.y = (pos.y - _tile.tileOrigin.y);
 	p.z = 0;
 	//return myLength(p - *last) >= 1e-5f ? true : false;
-	return sqLength(p - *last) >= 1e-10f ? true : false;
+	//return sqLength(p - *last) >= 1e-10f ? true : false;
+	// 1mm threshold
+	// sqrt(0.001) ~ 0,316
+	//return sqLength(p - *last) >= 0.316 ? true : false;
+	
+	if (sqLength(p - *last) >= 0.0316f)
+	{
+		return true;
+	}
+	discarded++;
+	return false;
 }
 #endif
 //-----------------------------------------------------------------------------
@@ -67,7 +77,7 @@ bool extractPoly(const rapidjson::Value& arr, Polygon2& poly, const Tile& _tile)
 		if (extractLineString(arr[i], poly.back(), _tile) < 3)	// Need at least 3 points in linestring to form a polygon
 		{
 			poly.pop_back();
-			gLogger.Warning("GeoJson invalid polygon");
+			gLogger.Warning("GeoJson: invalid LineString in polygon");
 		}
 	}
 
@@ -138,10 +148,10 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		else if (strcmp(member, "boundary") == 0)	f.boundary		= prop.GetBool();
     }
 
-	if (f.min_height > f.height)
+	/*if (f.min_height > f.height)
 	{
 		int abba = 10;
-	}
+	}*/
 
 	// Get feature's geometry type
 	const rapidjson::Value& geometry = _in["geometry"];
@@ -179,7 +189,7 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
         f.lineStrings.emplace_back();
 		if (extractLineString(coords, f.lineStrings.back(), _tile) < 2)
 		{
-			gLogger.Warning("GeoJson invalid geometry");
+			gLogger.Warning("GeoJson: invalid LineString");
 			return false;
 		}
     } 
@@ -191,13 +201,13 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 			if (extractLineString(*lineCoords, f.lineStrings.back(), _tile) < 2)
 			{
 				f.lineStrings.pop_back();
-				gLogger.Warning("GeoJson invalid geometry");
+				gLogger.Warning("GeoJson: one invalid LineString in MultiLineString");
 			}
         }
 
 		if (f.lineStrings.size() == 0)
 		{
-			gLogger.Warning("GeoJson invalid geometry");
+			gLogger.Warning("GeoJson: invalid MultiLineString");
 			return false;
 		}
 
@@ -205,14 +215,20 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 	else if (geomType == "Polygon")
 	{
         f.polygons.emplace_back();
-        extractPoly(coords, f.polygons.back(), _tile);
+		if (!extractPoly(coords, f.polygons.back(), _tile))
+		{
+			f.polygons.pop_back();
+			gLogger.Warning("GeoJson: invalid Polygon");
+			return false;
+		}
     }
 	else if (geomType == "MultiPolygon")
 	{
         for (auto polyCoords = coords.Begin(); polyCoords != coords.End(); ++polyCoords)
 		{
             f.polygons.emplace_back();
-            extractPoly(*polyCoords, f.polygons.back(), _tile);
+			if (!extractPoly(*polyCoords, f.polygons.back(), _tile))
+				f.polygons.pop_back();
         }
     }
 
@@ -270,14 +286,15 @@ void GeoJson::extractLayer(const rapidjson::Value& _in, Layer& layer, const Tile
 	// Default values
 	float defaultHeight = layer.layerType == eLayerBuildings ? 8.0f : 0.0f;
 	
-    const auto& features = featureIter->value;
-
-	const int featureCount = features.Size();
-	layer.features.EnsureCapacity(features.Size());
-	for (auto featureJson = features.Begin(); featureJson != features.End(); ++featureJson) 
+	// Json array of features
+    const auto& jsonFeatureArr = featureIter->value;
+	const int featureCount = jsonFeatureArr.Size();
+	layer.features.EnsureCapacity(featureCount);
+	//auto featureJson = features.Begin(); featureJson != features.End(); ++featureJson)
+	for (int i=0; i<featureCount; i++)
 	{
 		Feature& f = layer.features.AddEmpty();
-		if (!extractFeature(layer.layerType, *featureJson, f, _tile, defaultHeight))
+		if (!extractFeature(layer.layerType, jsonFeatureArr[i], f, _tile, defaultHeight))
 			layer.features.RemoveLast();
     }
 }
