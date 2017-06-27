@@ -2,18 +2,23 @@
 #include "jerry.h"
 #include <vector>
 #include "mapping.h"
+//#define KEEP_2D 1
+//-----------------------------------------------------------------------------
+#ifdef KEEP_2D
+	typedef v2 Point;
+#else
+	typedef v3 Point;
+#endif
+typedef std::vector<Point> LineString;
+typedef std::vector<LineString> Polygon2;
 //-----------------------------------------------------------------------------
 enum GeometryType
 {
 	unknown,
-    points,
-    lines,
-    polygons
+	points,
+	lines,
+	polygons
 };
-//-----------------------------------------------------------------------------
-typedef v3 Point;
-typedef std::vector<Point> LineString;
-typedef std::vector<LineString> Polygon2;
 //-----------------------------------------------------------------------------
 struct Feature 
 {

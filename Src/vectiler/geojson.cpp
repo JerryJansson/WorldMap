@@ -1,5 +1,22 @@
 #include "Precompiled.h"
 #include "geojson.h"
+#ifdef KEEP_2D
+//-----------------------------------------------------------------------------
+static inline void extractP(const rapidjson::Value& _in, Point& p, const Tile& _tile)
+{
+	const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
+	p.x = (pos.x - _tile.tileOrigin.x);
+	p.y = (pos.y - _tile.tileOrigin.y);
+}//-----------------------------------------------------------------------------
+static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Tile& _tile, Point* last)
+{
+	const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
+	p.x = (pos.x - _tile.tileOrigin.x);
+	p.y = (pos.y - _tile.tileOrigin.y);
+	//return myLength(p - *last) >= 1e-5f ? true : false;
+	return sqLength(p - *last) >= 1e-10f ? true : false;
+}
+#else
 //-----------------------------------------------------------------------------
 static inline void extractP(const rapidjson::Value& _in, Point& p, const Tile& _tile)
 {
@@ -17,6 +34,7 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
 	//return myLength(p - *last) >= 1e-5f ? true : false;
 	return sqLength(p - *last) >= 1e-10f ? true : false;
 }
+#endif
 //-----------------------------------------------------------------------------
 static inline int extractLineString(const rapidjson::Value& arr, LineString& l, const Tile& _tile)
 {

@@ -12,7 +12,47 @@ static inline float GetWidth(const ELayerType l, const EFeatureKind k)
 	return g ? g->width : default.width;
 }
 //-----------------------------------------------------------------------------
-static inline v3 perp(const v3& v) { return Normalize(v3(-v.y, v.x, 0.0)); }
+#ifdef KEEP_2D
+	static inline v2 perp(const v2& v) { return Normalize(v2(-v.y, v.x)); }
+	//-----------------------------------------------------------------------------
+	v2 computeMiterVector(const v2& d0, const v2& d1, const v2& n0, const v2& n1)
+	{
+		v2 miter = Normalize(n0 + n1);
+		float miterl2 = dot(miter, miter);
+
+		if (miterl2 < std::numeric_limits<float>::epsilon()) {
+			miter = v2(n1.y - n0.y, n0.x - n1.x);
+		}
+		else {
+			float theta = atan2f(d1.y, d1.x) - atan2f(d0.y, d0.x);
+			if (theta < 0.f)
+				theta += 2.0f * FLOAT_PI;
+			miter *= 1.f / std::max<float>(sin(theta * 0.5f), EPSILON);
+		}
+
+		return miter;
+	}
+#else
+	static inline v3 perp(const v3& v) { return Normalize(v3(-v.y, v.x, 0.0)); }
+	//-----------------------------------------------------------------------------
+	v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
+	{
+		v3 miter = Normalize(n0 + n1);
+		float miterl2 = dot(miter, miter);
+
+		if (miterl2 < std::numeric_limits<float>::epsilon()) {
+			miter = v3(n1.y - n0.y, n0.x - n1.x, 0.0);
+		}
+		else {
+			float theta = atan2f(d1.y, d1.x) - atan2f(d0.y, d0.x);
+			if (theta < 0.f)
+				theta += 2.0f * FLOAT_PI;
+			miter *= 1.f / std::max<float>(sin(theta * 0.5f), EPSILON);
+		}
+
+		return miter;
+	}
+#endif
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh)
 {
@@ -86,7 +126,8 @@ float sampleElevation(v2 position, const HeightData* heightMap)
 	return bilinearHeight;
 }
 //-----------------------------------------------------------------------------
-v2 centroid(const std::vector<std::vector<v3>>& polygon)
+//v2 centroid(const std::vector<std::vector<v3>>& polygon)
+v2 centroid(const Polygon2& polygon)
 {
 	v2 centroid(0, 0);
 	int n = 0;
@@ -112,7 +153,7 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 	std::vector<unsigned int>& outIndices,
 	const HeightData* elevation)
 {
-	int vertexDataOffset = outVertices.size();
+	int voffs = outVertices.size();
 	float minz = 0.f;
 	float cz = 0.f;
 
@@ -127,7 +168,7 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 		{
 			for (size_t i = 0; i < linestring.size(); i++)
 			{
-				v3 p(linestring[i]);
+				Point p(linestring[i]);
 				float pz = sampleElevation(v2(p.x, p.y), elevation);
 				minz = Min(minz, pz);
 			}
@@ -161,14 +202,14 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 			b.z = minHeight + minz;
 			outVertices.push_back({ b, normalVector });
 
-			outIndices.push_back(vertexDataOffset + 0);
-			outIndices.push_back(vertexDataOffset + 1);
-			outIndices.push_back(vertexDataOffset + 2);
-			outIndices.push_back(vertexDataOffset + 1);
-			outIndices.push_back(vertexDataOffset + 3);
-			outIndices.push_back(vertexDataOffset + 2);
+			outIndices.push_back(voffs + 0);
+			outIndices.push_back(voffs + 1);
+			outIndices.push_back(voffs + 2);
+			outIndices.push_back(voffs + 1);
+			outIndices.push_back(voffs + 3);
+			outIndices.push_back(voffs + 2);
 
-			vertexDataOffset += 4;
+			voffs += 4;
 		}
 	}
 
@@ -212,35 +253,17 @@ void buildPolygon(const Polygon2& polygon, const float height,
 	}
 }
 //-----------------------------------------------------------------------------
-v3 computeMiterVector(const v3& d0, const v3& d1, const v3& n0, const v3& n1)
-{
-	v3 miter = Normalize(n0 + n1);
-	float miterl2 = dot(miter, miter);
-
-	if (miterl2 < std::numeric_limits<float>::epsilon()) {
-		miter = v3(n1.y - n0.y, n0.x - n1.x, 0.0);
-	}
-	else {
-		float theta = atan2f(d1.y, d1.x) - atan2f(d0.y, d0.x);
-		if (theta < 0.f) 
-			theta += 2.0f * FLOAT_PI;
-		miter *= 1.f / std::max<float>(sin(theta * 0.5f), EPSILON);
-	}
-
-	return miter;
-}
-//-----------------------------------------------------------------------------
 void addPolygonPolylinePoint(LineString& linestring,
-	const v3& curr,
-	const v3& next,
-	const v3& last,
+	const Point& curr,
+	const Point& next,
+	const Point& last,
 	const float extrude,
 	const size_t lineDataSize,
 	const size_t i,
 	const bool forward)
 {
-	const v3 n0 = perp(curr - last);
-	const v3 n1 = perp(next - curr);
+	const Point n0 = perp(curr - last);
+	const Point n1 = perp(next - curr);
 	bool right = cross(n1, n0).z > 0.0;
 
 	if ((i == 1 && forward) || (i == lineDataSize - 2 && !forward))
@@ -251,9 +274,9 @@ void addPolygonPolylinePoint(LineString& linestring,
 
 	if (right)
 	{
-		v3 d0 = Normalize(last - curr);
-		v3 d1 = Normalize(next - curr);
-		v3 miter = computeMiterVector(d0, d1, n0, n1);
+		Point d0 = Normalize(last - curr);
+		Point d1 = Normalize(next - curr);
+		Point miter = computeMiterVector(d0, d1, n0, n1);
 		linestring.push_back(curr - miter * extrude);
 	}
 	else
@@ -261,75 +284,6 @@ void addPolygonPolylinePoint(LineString& linestring,
 		linestring.push_back(curr - n0 * extrude);
 		linestring.push_back(curr - n1 * extrude);
 	}
-}
-//-----------------------------------------------------------------------------
-void Jerry_BuildPolyLine(const LineString& linestring, const float extrudeW, std::vector<v3>& verts, std::vector<uint16> idxs)
-{
-	const size_t n = linestring.size();
-	assert(n >= 2);
-
-	// First vertex
-	const v3& curr = linestring[0];
-	const v3& next = linestring[1];
-	v3 nPrev, nNext = perp(next - curr) *= extrudeW;
-
-	verts.push_back(curr - nNext);
-	verts.push_back(curr + nNext);
-	
-	for (int i = 1; i < n - 1; i++)
-	{
-		const v3& p1 = linestring[i];
-		const v3& p2 = linestring[i + 1];
-		nPrev = nNext;
-		nNext = perp(p2-p1);
-	
-
-		// Compute "normal" for miter joint
-		v3 miterVec = nPrev + nNext;
-
-		// nPrev and nNext are in the opposite direction. In order to prevent NaN values, we use the perp
-		// vector of those two vectors
-		if (miterVec == Vec3::Zero()) 
-		{
-			int abba = 10;
-			assert(0);
-			// miterVec = perp2d(glm::vec3(normNext, 0.f), glm::vec3(normPrev, 0.f));
-		}
-		else 
-		{
-			const float scale = 2.f / dot(miterVec, miterVec);
-			miterVec *= scale;
-		}
-
-		/*float miterlimit = 5.0f;
-		if (glm::length2(miterVec) > glm::length2(_ctx.miterLimit))
-		{
-			trianglesOnJoin = 1;
-			miterVec *= _ctx.miterLimit / glm::length(miterVec);
-		}*/
-
-		int trianglesOnJoin = 0;
-		//float v = distance;
-		// Join type is a simple miter
-		if (trianglesOnJoin == 0) 
-		{
-			//addPolyLineVertex(coordCurr, miterVec, { 1.0, v }, _ctx); // right corner
-			//addPolyLineVertex(coordCurr, -miterVec, { 0.0, v }, _ctx); // left corner
-			//indexPairs(1, _ctx.numVertices, _ctx.indices);
-			v3 v0 = p1 + miterVec;
-			v3 v1 = p1 - miterVec;
-			verts.push_back(v0);
-			verts.push_back(v1);
-			idxs.push_back(i*2 - 2);	// 1*2 - 2 = 0
-			idxs.push_back(i*2 - 0);	// 1*2 - 0 = 2
-			idxs.push_back(i*2 + 1);	// 1*2 + 1 = 3
-			idxs.push_back(i*2 - 1);	// 1*2 - 1 = 1
-			idxs.push_back(i*2 - 2);	// 1*2 - 2 = 0
-			idxs.push_back(i*2 + 1);	// 1*2 + 1 = 3
-		}
-		else
-		{
-		}
 }
 //-----------------------------------------------------------------------------
 PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
@@ -389,9 +343,9 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 			sw1.Start();
 			if (n == 2)
 			{
-				const v3& curr = linestring[0];
-				const v3& next = linestring[1];
-				v3 n0 = perp(next - curr);
+				const Point& curr = linestring[0];
+				const Point& next = linestring[1];
+				Point n0 = perp(next - curr);
 				n0 *= extrudeW;
 
 				polygonLine.push_back(curr - n0);
@@ -401,11 +355,11 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 			}
 			else
 			{
-				v3 last = linestring[0];
+				Point last = linestring[0];
 				for (size_t i = 1; i < n - 1; ++i)
 				{
-					const v3& curr = linestring[i];
-					const v3& next = linestring[i + 1];
+					const Point& curr = linestring[i];
+					const Point& next = linestring[i + 1];
 					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, true);
 					last = curr;
 				}
@@ -413,8 +367,8 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 				last = linestring[n - 1];
 				for (int i = n - 2; i > 0; --i)
 				{
-					const v3& curr = linestring[i];
-					const v3& next = linestring[i - 1];
+					const Point& curr = linestring[i];
+					const Point& next = linestring[i - 1];
 					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, false);
 					last = curr;
 				}
