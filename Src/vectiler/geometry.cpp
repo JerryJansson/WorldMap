@@ -5,7 +5,14 @@
 //-----------------------------------------------------------------------------
 #define EPSILON 1e-5f
 //-----------------------------------------------------------------------------
-v3 perp(const v3& v) { return Normalize(v3(-v.y, v.x, 0.0)); }
+static inline float GetWidth(const ELayerType l, const EFeatureKind k)
+{
+	static MapGeom default(Crgba(255, 0, 0), 0.1f, false);
+	MapGeom* g = gGeomHash.GetValuePtr((l << 16 | k));
+	return g ? g->width : default.width;
+}
+//-----------------------------------------------------------------------------
+static inline v3 perp(const v3& v) { return Normalize(v3(-v.y, v.x, 0.0)); }
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh)
 {
@@ -256,11 +263,73 @@ void addPolygonPolylinePoint(LineString& linestring,
 	}
 }
 //-----------------------------------------------------------------------------
-float GetWidth(const ELayerType l, const EFeatureKind k)
+void Jerry_BuildPolyLine(const LineString& linestring, const float extrudeW, std::vector<v3>& verts, std::vector<uint16> idxs)
 {
-	static MapGeom default(Crgba(255, 0, 0), 0.1f, false);
-	MapGeom* g = gGeomHash.GetValuePtr((l << 16 | k));
-	return g ? g->width : default.width;
+	const size_t n = linestring.size();
+	assert(n >= 2);
+
+	// First vertex
+	const v3& curr = linestring[0];
+	const v3& next = linestring[1];
+	v3 nPrev, nNext = perp(next - curr) *= extrudeW;
+
+	verts.push_back(curr - nNext);
+	verts.push_back(curr + nNext);
+	
+	for (int i = 1; i < n - 1; i++)
+	{
+		const v3& p1 = linestring[i];
+		const v3& p2 = linestring[i + 1];
+		nPrev = nNext;
+		nNext = perp(p2-p1);
+	
+
+		// Compute "normal" for miter joint
+		v3 miterVec = nPrev + nNext;
+
+		// nPrev and nNext are in the opposite direction. In order to prevent NaN values, we use the perp
+		// vector of those two vectors
+		if (miterVec == Vec3::Zero()) 
+		{
+			int abba = 10;
+			assert(0);
+			// miterVec = perp2d(glm::vec3(normNext, 0.f), glm::vec3(normPrev, 0.f));
+		}
+		else 
+		{
+			const float scale = 2.f / dot(miterVec, miterVec);
+			miterVec *= scale;
+		}
+
+		/*float miterlimit = 5.0f;
+		if (glm::length2(miterVec) > glm::length2(_ctx.miterLimit))
+		{
+			trianglesOnJoin = 1;
+			miterVec *= _ctx.miterLimit / glm::length(miterVec);
+		}*/
+
+		int trianglesOnJoin = 0;
+		//float v = distance;
+		// Join type is a simple miter
+		if (trianglesOnJoin == 0) 
+		{
+			//addPolyLineVertex(coordCurr, miterVec, { 1.0, v }, _ctx); // right corner
+			//addPolyLineVertex(coordCurr, -miterVec, { 0.0, v }, _ctx); // left corner
+			//indexPairs(1, _ctx.numVertices, _ctx.indices);
+			v3 v0 = p1 + miterVec;
+			v3 v1 = p1 - miterVec;
+			verts.push_back(v0);
+			verts.push_back(v1);
+			idxs.push_back(i*2 - 2);	// 1*2 - 2 = 0
+			idxs.push_back(i*2 - 0);	// 1*2 - 0 = 2
+			idxs.push_back(i*2 + 1);	// 1*2 + 1 = 3
+			idxs.push_back(i*2 - 1);	// 1*2 - 1 = 1
+			idxs.push_back(i*2 - 2);	// 1*2 - 2 = 0
+			idxs.push_back(i*2 + 1);	// 1*2 + 1 = 3
+		}
+		else
+		{
+		}
 }
 //-----------------------------------------------------------------------------
 PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
