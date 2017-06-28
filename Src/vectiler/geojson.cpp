@@ -1,5 +1,6 @@
 #include "Precompiled.h"
 #include "geojson.h"
+#include "projection.h"
 int discarded = 0;
 #ifdef KEEP_2D
 //-----------------------------------------------------------------------------

@@ -5,7 +5,6 @@
 #include "../../../Source/Modules/Shared/State.h"
 #include "../../../Source/Modules/Landscape/LandscapeSettings.h"
 #include "State_Game.h"
-#include "vectiler/jerry.h"
 #include "tinyobjloader/tiny_obj_loader.h"
 #include "vectiler/projection.h"
 #include "vectiler/geometry.h"

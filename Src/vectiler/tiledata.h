@@ -1,7 +1,7 @@
 #pragma once
-#include "jerry.h"
 #include <vector>
 #include "mapping.h"
+
 //#define KEEP_2D 1
 //-----------------------------------------------------------------------------
 #ifdef KEEP_2D

@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include "jerry.h"
 #include "mapping.h"
 //-----------------------------------------------------------------------------
 struct PolygonVertex {

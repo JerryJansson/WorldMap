@@ -1,5 +1,5 @@
 #pragma once
-
+#include "../../../../Source/Modules/GameObject/Entity.h"
 // http://www.codepool.biz/build-use-libcurl-vs2015-windows.html
 // https://mapzen.com/documentation/vector-tiles/layers/
 

@@ -2,13 +2,16 @@
 #include <vector>
 #include "mapping.h"
 //-----------------------------------------------------------------------------
+typedef vtxP4NC vtxMap;
+//-----------------------------------------------------------------------------
 struct StreamGeom
 {
-	Caabb aabb;
-	ELayerType layerType;
-	int layerSubIdx;
-	TArray<vtxMap> vertices;
-	TArray<uint16> indices;
+	Caabb			aabb;
+	ELayerType		layerType;
+	int				layerSubIdx;
+	TArray<vtxMap>	vertices;
+	TArray<uint16>	indices;
+	
 	StreamGeom() { aabb.Invalidate(); }
 };
 //-----------------------------------------------------------------------------

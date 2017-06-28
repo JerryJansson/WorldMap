@@ -4,7 +4,6 @@
 
 #include "tilemanager.h"
 #include "projection.h"
-#include "jerry.h"
 #include "../../../../Source/Modules/GameObject/Camera.h"
 #include "../../../../Source/Modules/Shared/SceneNew.h"
 #include <thread>
@@ -13,10 +12,10 @@
 #include "disc.h"
 #include "vectiler.h"
 //-----------------------------------------------------------------------------
-const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
+const bool useSingleTile = true;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
 CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
-CVar tile_DiscCache("tile_DiscCache", true);
+CVar tile_DiscCache("tile_DiscCache", false);
 //-----------------------------------------------------------------------------
 #define ZZZOOM 16								// Regular grid uses a fixed zoom
 //const Vec2d longLatStart(18.080, 59.346);		// 36059, 19267 - Stockholm Stadion
