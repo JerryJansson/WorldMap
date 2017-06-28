@@ -25,7 +25,8 @@ const Vec2d longLatStart(-74.0130, 40.703);	// 19294, 24642 - Manhattan
 //const Vec3i singleTile(35207, 44036, 16);	// Berlin. Building with holes
 //const Vec3i singleTile(1204, 2554, 12);	// Contains a mesh > 65536 vertices
 //const Vec3i singleTile(4820, 10224, 14);	// Contains a mesh == 65536 vertices
-const Vec3i singleTile(19294, 40893, 16);
+//const Vec3i singleTile(19294, 40893, 16);	// Standard Manhattan
+const Vec3i singleTile(1207, 2555, 12);		// Heavy to Triangulate
 //const Vec3i singleTile(0,0,0);
 //const Vec3i singleTile(9647, 20446, 15);
 //const Vec3i singleTile(19288, 40894, 16);
@@ -323,6 +324,8 @@ bool TileManager::ReceiveLoadedTile()
 }
 #if 1
 //-----------------------------------------------------------------------------
+extern int discarded;
+extern Vec3i maxTile;
 static TArray<Vec3i> neededTiles(256);
 //-----------------------------------------------------------------------------
 void TileManager::Update(CCamera* cam)
@@ -336,6 +339,7 @@ void TileManager::Update(CCamera* cam)
 	const Vec2d meters = GlToMercator2d(cpos);
 	const Vec2d ll = MetersToLongLat(meters);
 	DbgMsg("cam: gl-<%.1f, %.1f, %.1f>, long/lat <%.5f, %.5f>", cpos.x, cpos.y, cpos.z, ll.x, ll.y);
+	DbgMsg("maxtile = <%d, %d, %d>\n", maxTile.x, maxTile.y, maxTile.z);
 
 	// Determine needed tiles
 	neededTiles.Clear();
@@ -362,6 +366,7 @@ void TileManager::Update(CCamera* cam)
 	}
 
 	DbgMsg("Tiles <Needed: %d, Missing: %d, Cached: %d>", neededTiles.Num(), missingTiles.Num(), m_Tiles.Num());
+	DbgMsg("Discarded points: %d>", discarded);
 
 	// Add tile to queue to stream
 	if (missingTiles.Num()>0 && !tileToStream)

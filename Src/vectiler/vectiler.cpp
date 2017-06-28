@@ -328,6 +328,8 @@ static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpS
 		}
 	}
 }*/
+
+Vec3i maxTile;
 //-----------------------------------------------------------------------------
 bool vectiler(const Params2& params)
 {
@@ -394,13 +396,27 @@ bool vectiler(const Params2& params)
 			const Feature* feature = &layer.features[i];
 			if (heightMap && (type != eLayerRoads) && (feature->height == 0.0f))	continue;
 
+			//CStopWatch sw;
 			PolygonMesh* mesh = CreatePolygonMeshFromFeature(type, feature, heightMap);
+			/*if (sw.GetMs() > 1000.0f)
+			{
+				LOG("Tile <%d, %d, %d> CreatePolyMesh: %.0fms\n", tile.x, tile.y, tile.z, sw.GetMs());
+			}*/
 			if (mesh)
 				AddNewMesh(mesh, tmpSplitArr, meshes);
 		}
 	}
 
 	float t_BuildMeshes = sw.GetMs(true);
+
+	static float maxt = 0;
+	if (t_BuildMeshes > maxt)
+	{
+		maxt = t_BuildMeshes;
+		maxTile.x = tile.x;
+		maxTile.y = tile.y;
+		maxTile.z = tile.z;
+	}
 
 	// Separate all meshes in it's respective layer
 	// Merge all meshes from same layer into a few big meshes (<=65536 vertices)
