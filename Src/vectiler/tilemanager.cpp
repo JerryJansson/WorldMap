@@ -15,7 +15,7 @@
 const bool useSingleTile = true;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
 CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
-CVar tile_DiscCache("tile_DiscCache", false);
+CVar tile_DiscCache("tile_DiscCache", eDiscJsonCache);
 //-----------------------------------------------------------------------------
 #define ZZZOOM 16								// Regular grid uses a fixed zoom
 //const Vec2d longLatStart(18.080, 59.346);		// 36059, 19267 - Stockholm Stadion
@@ -25,7 +25,10 @@ const Vec2d longLatStart(-74.0130, 40.703);		// 19294, 24642 - Manhattan
 //const Vec3i singleTile(1204, 2554, 12);		// Contains a mesh > 65536 vertices
 //const Vec3i singleTile(4820, 10224, 14);		// Contains a mesh == 65536 vertices
 //const Vec3i singleTile(19294, 40893, 16);		// Standard Manhattan
-const Vec3i singleTile(1207, 2555, 12);			// Heavy to Triangulate
+
+//const Vec3i singleTile(1207, 2555, 12);			// Heavy to Triangulate
+const Vec3i singleTile(4824, 10224, 14);		// Heavy to Triangulate
+
 // http://tangrams.github.io/tangram/#52.49877546805043,13.397676944732667,17 // (complex building with holes)
 //-----------------------------------------------------------------------------
 // Threads & synchronization

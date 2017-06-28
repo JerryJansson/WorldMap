@@ -15,7 +15,13 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
 	const Vec2d pos = LonLatToMeters(Vec2d(_in[0].GetDouble(), _in[1].GetDouble()));
 	p.x = (pos.x - _tile.tileOrigin.x);
 	p.y = (pos.y - _tile.tileOrigin.y);
-	return sqLength(p - *last) >= 1e-10f ? true : false;
+	//return sqLength(p - *last) >= 1e-10f ? true : false;
+	if (sqLength(p - *last) >= 0.0316f)
+	{
+		return true;
+	}
+	discarded++;
+	return false;
 }
 #else
 //-----------------------------------------------------------------------------
@@ -50,7 +56,6 @@ static inline bool extractPoint(const rapidjson::Value& _in, Point& p, const Til
 static inline int extractLineString(const rapidjson::Value& arr, LineString& l, const Tile& _tile)
 {
 	const int count = arr.Size();
-	assert(count >= 2);
 	l.reserve(count);
 	l.emplace_back();
 	extractP(arr[0], l.back(), _tile);
@@ -273,6 +278,11 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 // Parsed json in 88.6ms. Built GeoJson structures in 64.1ms
 // Parsed json in 104.3ms.Built GeoJson structures in 56.5ms
 // Parsed json in 81.8ms.Built GeoJson structures in 55.6ms
+
+// Earcut
+// Triangulated 690 PolygonMeshes in 3480.0ms
+// Triangulated 690 PolygonMeshes in 3485.3ms
+
 //-----------------------------------------------------------------------------
 void GeoJson::extractLayer(const rapidjson::Value& _in, Layer& layer, const Tile& _tile)
 {

@@ -39,8 +39,13 @@ struct Params2
 	float		terrainExtrusionScale;
 	bool		vectorData;
 };
-
-//bool vectiler(const Params2& params);
+//-----------------------------------------------------------------------------
+enum DiscCache
+{
+	eDiscNoCache,		// No allowed to use any cached tiles at all
+	eDiscJsonCache,		// Allowed to use cached json network tiles
+	eDiscBinaryCache	// Allowed to use binary cached geometry
+};
 #if JJ_WORLDMAP == 1
 //-----------------------------------------------------------------------------
 struct StreamResult : ListNode<StreamResult>

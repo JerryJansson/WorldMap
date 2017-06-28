@@ -465,7 +465,8 @@ bool GetTile(StreamResult* result)
 	//Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
 	//LOG("GetTile tms: <%d,%d,%d>, google: <%d, %d>\n", tms.x, tms.y, tms.z, google.x, google.y);
 
-	if (tile_DiscCache)
+	// See if tile is binary cached
+	if (tile_DiscCache == eDiscBinaryCache)
 	{
 		if (LoadBin(fname, result->geoms))
 			return true;

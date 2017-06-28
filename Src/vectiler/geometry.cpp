@@ -1,7 +1,9 @@
 #include "Precompiled.h"
 #include "geometry.h"
 #include "tiledata.h"
+//#include "earcut.hpp"
 #include "earcut.h"
+//#include "../../../../Source/Engine/Framework/Geomgen.h"
 //-----------------------------------------------------------------------------
 #define EPSILON 1e-5f
 //-----------------------------------------------------------------------------
@@ -216,14 +218,11 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 	return cz;
 }
 //-----------------------------------------------------------------------------
-void buildPolygon(const Polygon2& polygon, const float height,
-	std::vector<PolygonVertex>& outVertices,
-	std::vector<unsigned int>& outIndices,
-	const HeightData* elevation,
-	float centroidHeight)
+/*void buildPolygon(const Polygon2& polygon, const float height, std::vector<PolygonVertex>& outVertices, std::vector<unsigned int>& outIndices, const HeightData* elevation, float centroidHeight)
 {
 	mapbox::Earcut<float, unsigned int> earcut;
 	earcut(polygon);
+	
 	if (earcut.indices.size() == 0)
 		return;
 
@@ -251,6 +250,91 @@ void buildPolygon(const Polygon2& polygon, const float height,
 		v3 coord(position.x, position.y, height + centroidHeight);
 		outVertices.push_back({ coord, normal });
 	}
+}*/
+//-----------------------------------------------------------------------------
+void buildPolygon(const Polygon2& polygon, const float height, std::vector<PolygonVertex>& outVertices, std::vector<unsigned int>& outIndices, const HeightData* elevation,	float centroidHeight)
+{
+	// Run earcut
+	mapbox::detail::Earcut<uint32_t> earcut;
+	earcut(polygon);
+	if (earcut.indices.size() == 0)
+		return;
+	
+	// Count number of input vertices (not all may be used by earcut)
+	int inVtxCount = 0;
+	for (auto& line : polygon) {
+		inVtxCount += line.size();
+	}
+
+	if (polygon.size() > 1)
+	{
+		int abba = 10;
+	}
+
+	// Flatten. An array wich maps from a linear idx to specific ring/point
+	TArray<Vec2i> flatten;
+	flatten.SetNum(inVtxCount);
+	int n = 0;
+	for (size_t r=0; r<polygon.size(); r++)
+	{
+		const auto& ring = polygon[r];
+		for (size_t p = 0; p < ring.size(); p++)
+			flatten[n++] = Vec2i(r, p);
+	}
+
+	unsigned int vtxOffset = outVertices.size();
+
+	// Assume all vertices are used
+	outVertices.reserve(outVertices.size() + inVtxCount);
+
+	// Remap
+	int* remap = new int[inVtxCount];
+	for (int i = 0; i < inVtxCount; i++)
+		remap[i] = -1;
+	
+	int outVtxCount = 0;
+	int new_idx = 0;
+	for (size_t i = 0; i < earcut.indices.size(); i++)
+	{
+		const uint32_t old_idx = earcut.indices[i];
+		if (remap[old_idx] == -1)
+		{
+			remap[old_idx] = new_idx++;
+			outVtxCount++;
+			Vec2i ii = flatten[old_idx];
+			const Point& p = polygon[ii.x][ii.y];
+			PolygonVertex v;
+			v.position = Vec3(p.x, p.y, height + centroidHeight);
+			v.normal = Vec3(0, 0, 1);
+			outVertices.push_back(v);
+		}
+	}
+
+	// Move used vertices
+#if 0
+	outVertices.reserve(outVertices.size() + outVtxCount);
+	for (int oldidx = 0; oldidx < inVtxCount; oldidx++)
+	{
+		if (remap[oldidx] >= 0)
+		{
+			const Vec2i& ii = flatten[oldidx];
+			const Point& p = polygon[ii.x][ii.y];
+			PolygonVertex v;
+			v.position = Vec3(p.x, p.y, height + centroidHeight);
+			v.normal = Vec3(0, 0, 1);
+			outVertices.push_back(v);
+		}
+	}
+#endif
+
+
+	outIndices.reserve(outIndices.size() + earcut.indices.size());
+	for (auto i : earcut.indices)
+	{
+		outIndices.push_back(vtxOffset + remap[i]);
+	}
+
+	delete[] remap;
 }
 //-----------------------------------------------------------------------------
 void addPolygonPolylinePoint(LineString& linestring,
@@ -286,6 +370,134 @@ void addPolygonPolylinePoint(LineString& linestring,
 	}
 }
 //-----------------------------------------------------------------------------
+#if 0
+void Old_BuildPolyLine(const ELayerType layerType, const Feature* f, const float sortHeight, PolygonMesh* mesh, const HeightData* heightMap)
+{
+	CStopWatch sw, sw1;
+	float t1 = 0;
+	float t2 = 0;
+	const float extrudeW = GetWidth(layerType, f->kind);
+	const float extrudeH = sortHeight;
+	//if (extrudeW == 0.1f)
+	//{
+	//	int abba = 10;
+	//}
+
+	Polygon2 polygon;
+	polygon.emplace_back();
+	LineString& polygonLine = polygon.back();
+
+	for (const LineString& linestring : f->lineStrings)
+	{
+		polygonLine.clear();
+		const size_t n = linestring.size();
+
+		sw1.Start();
+		if (n == 2)
+		{
+			const Point& curr = linestring[0];
+			const Point& next = linestring[1];
+			Point n0 = perp(next - curr);
+			n0 *= extrudeW;
+
+			polygonLine.push_back(curr - n0);
+			polygonLine.push_back(curr + n0);
+			polygonLine.push_back(next + n0);
+			polygonLine.push_back(next - n0);
+		}
+		else
+		{
+			Point last = linestring[0];
+			for (size_t i = 1; i < n - 1; ++i)
+			{
+				const Point& curr = linestring[i];
+				const Point& next = linestring[i + 1];
+				addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, true);
+				last = curr;
+			}
+
+			last = linestring[n - 1];
+			for (int i = n - 2; i > 0; --i)
+			{
+				const Point& curr = linestring[i];
+				const Point& next = linestring[i - 1];
+				addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, false);
+				last = curr;
+			}
+
+			std::reverse(polygonLine.begin(), polygonLine.end());
+		}
+
+		if (polygonLine.size() < 4) { continue; }
+
+		/*int count = 0;
+		for (size_t i = 0; i < polygonLine.size(); i++)
+		{
+		int j = (i + 1) % polygonLine.size();
+		int k = (i + 2) % polygonLine.size();
+		double z = (polygonLine[j].x - polygonLine[i].x)
+		* (polygonLine[k].y - polygonLine[j].y)
+		- (polygonLine[j].y - polygonLine[i].y)
+		* (polygonLine[k].x - polygonLine[j].x);
+		if (z < 0) { count--; }
+		else if (z > 0) { count++; }
+		}
+
+		if (line.size() == 2 && count > 0)
+		{
+		int abba = 10;
+		}
+		if (line.size() > 2 && count <= 0)
+		{
+		int abba = 10;
+		}
+
+		if (count > 0) { // CCW
+
+		if (line.size() == 2)
+		{
+		int abba = 10;
+		}
+
+		std::reverse(polygonLine.begin(), polygonLine.end());
+		}*/
+
+		// Close the polygon
+		polygonLine.push_back(polygonLine[0]);
+
+		const size_t offset = mesh->vertices.size();
+		t1 += sw1.GetMs(true);
+
+		if (extrudeH > 0)
+			buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr);
+
+		buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f);
+
+		t2 += sw1.GetMs();
+
+		if (heightMap)
+		{
+			for (auto it = mesh->vertices.begin() + offset; it != mesh->vertices.end(); ++it)
+			{
+				it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap);
+			}
+		}
+	}
+
+	//if (params.terrain)
+	if (heightMap)
+		computeNormals(mesh);
+
+	float time = sw.GetMs();
+	if (time > 50)
+	{
+		LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", f->id, time, mesh->vertices.size(), mesh->indices.size() / 3);
+		LOG("LineBuilder: %.1f. PolyBuilder: %.1f\n", t1, t2);
+		//LOG("FeatureType: %d\n", feature.geometryType);
+	}
+}
+#endif
+//-----------------------------------------------------------------------------
 PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap)
 {
 	CStopWatch sw;
@@ -320,129 +532,43 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 	}
 	else if (f->geometryType == GeometryType::lines)
 	{
-		float t1 = 0;
-		float t2 = 0;
-		CStopWatch sw1;
-		const float extrudeW = GetWidth(layerType, f->kind);;
-		const float extrudeH = sortHeight;
+		//Old_BuildPolyLine(layerType, f, sortHeight, mesh, heightMap);
 
-		if (extrudeW == 0.1f)
-		{
-			int abba = 10;
-		}
 
-		Polygon2 polygon;
-		polygon.emplace_back();
-		LineString& polygonLine = polygon.back();
-
+		// First pass to estimate lower bounds for verts & idxs
+		int vc = 0;
+		int ic = 0;
 		for (const LineString& linestring : f->lineStrings)
 		{
-			polygonLine.clear();
-			const size_t n = linestring.size();
-
-			sw1.Start();
-			if (n == 2)
-			{
-				const Point& curr = linestring[0];
-				const Point& next = linestring[1];
-				Point n0 = perp(next - curr);
-				n0 *= extrudeW;
-
-				polygonLine.push_back(curr - n0);
-				polygonLine.push_back(curr + n0);
-				polygonLine.push_back(next + n0);
-				polygonLine.push_back(next - n0);
-			}
-			else
-			{
-				Point last = linestring[0];
-				for (size_t i = 1; i < n - 1; ++i)
-				{
-					const Point& curr = linestring[i];
-					const Point& next = linestring[i + 1];
-					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, true);
-					last = curr;
-				}
-
-				last = linestring[n - 1];
-				for (int i = n - 2; i > 0; --i)
-				{
-					const Point& curr = linestring[i];
-					const Point& next = linestring[i - 1];
-					addPolygonPolylinePoint(polygonLine, curr, next, last, extrudeW, n, i, false);
-					last = curr;
-				}
-
-				std::reverse(polygonLine.begin(), polygonLine.end());
-			}
-
-			if (polygonLine.size() < 4) { continue; }
-
-			/*int count = 0;
-			for (size_t i = 0; i < polygonLine.size(); i++)
-			{
-				int j = (i + 1) % polygonLine.size();
-				int k = (i + 2) % polygonLine.size();
-				double z = (polygonLine[j].x - polygonLine[i].x)
-					* (polygonLine[k].y - polygonLine[j].y)
-					- (polygonLine[j].y - polygonLine[i].y)
-					* (polygonLine[k].x - polygonLine[j].x);
-				if (z < 0) { count--; }
-				else if (z > 0) { count++; }
-			}
-
-			if (line.size() == 2 && count > 0)
-			{
-				int abba = 10;
-			}
-			if (line.size() > 2 && count <= 0)
-			{
-				int abba = 10;
-			}
-
-			if (count > 0) { // CCW
-
-				if (line.size() == 2)
-				{
-					int abba = 10;
-				}
-				
-				std::reverse(polygonLine.begin(), polygonLine.end());
-			}*/
-
-			// Close the polygon
-			polygonLine.push_back(polygonLine[0]);
-
-			const size_t offset = mesh->vertices.size();
-			t1 += sw1.GetMs(true);
-
-			if (extrudeH > 0)
-				buildPolygonExtrusion(polygon, 0.0f, extrudeH, mesh->vertices, mesh->indices, nullptr);
-
-			buildPolygon(polygon, extrudeH, mesh->vertices, mesh->indices, nullptr, 0.f);
-
-			t2 += sw1.GetMs();
-
-			if (heightMap)
-			{
-				for (auto it = mesh->vertices.begin() + offset; it != mesh->vertices.end(); ++it)
-				{
-					it->position.z += sampleElevation(v2(it->position.x, it->position.y), heightMap);
-				}
-			}
+			int _vc, _ic;
+			CGeomGen::PolyLine_MinimumStats(linestring.size(), _vc, _ic);
+			vc += _vc;
+			ic += _ic;
 		}
 
-		//if (params.terrain)
-		if (heightMap)
-			computeNormals(mesh);
-
-		float time = sw.GetMs();
-		if (time > 50)
+		const float extrudeW = GetWidth(layerType, f->kind);
+		TArray<Vec2> verts(vc);
+		TArray<uint16> idxs(ic);
+		for (const LineString& linestring : f->lineStrings)
 		{
-			LOG("Built mesh from featId(%I64d). Time %.1fms. V: %d, T: %d\n", f->id, time, mesh->vertices.size(), mesh->indices.size() / 3);
-			LOG("LineBuilder: %.1f. PolyBuilder: %.1f\n", t1, t2);
-			//LOG("FeatureType: %d\n", feature.geometryType);
+			CGeomGen::PolyLine(&linestring.front(), linestring.size(), extrudeW, verts, idxs);
 		}
+
+		assert(verts.Num() < 65536);
+
+		vc = verts.Num();
+		mesh->vertices.reserve(vc);
+		for (int i = 0; i < vc; i++)
+		{
+			mesh->vertices.emplace_back();
+			mesh->vertices[i].position = Vec3(verts[i].x, verts[i].y, 0.0f);
+			mesh->vertices[i].normal = Vec3(0, 0, 1);
+		}
+
+		ic = idxs.Num();
+		mesh->indices.reserve(ic);
+		for (int i = 0; i < ic; i++)
+			mesh->indices.push_back(idxs[i]);
 	}
 	else
 	{
