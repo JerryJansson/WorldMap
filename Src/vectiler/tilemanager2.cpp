@@ -4,7 +4,6 @@
 
 #include "tilemanager2.h"
 #include "projection.h"
-#include "jerry.h"
 #include "../../../../Source/Modules/GameObject/Camera.h"
 #include "../../../../Source/Modules/Shared/SceneNew.h"
 #include <thread>
@@ -17,7 +16,7 @@
 const bool useSingleTile = false;		// Only load 1 tile. Good for debugging
 CVar tile_QuadTree("tile_QuadTree", true);
 CVar tile_ShowQuadTree("tile_ShowQuadTree", 0);
-CVar tile_DiscCache("tile_DiscCache", true);
+CVar tile_DiscCache("tile_DiscCache", eDiscBinaryCache);
 //-----------------------------------------------------------------------------
 #define ZZZOOM 16							// Regular grid uses a fixed zoom
 //const Vec2d longLatStart(18.080, 59.346);	// 36059, 19267 - Stockholm Stadion
@@ -80,7 +79,7 @@ void StreamTile(int threadIdx)
 		tileLock.unlock();
 
 		//StreamResult* result = AllocResult(t);
-		GetTile(t);
+		GetTile(t->m_Tms, t->m_Geoms);
 
 		doneLock.lock();
 		doneList.Add(t);
@@ -551,11 +550,10 @@ bool TileManager::ReceiveLoadedTile()
 
 	float t_1 = sw.GetMs();
 
-	const int n = t->geoms.Num();
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < t->m_Geoms.Num(); i++)
 	{
-		CStrL name = Str_Printf("%s_%d", layerNames[t->geoms[i]->layerType], t->geoms[i]->layerSubIdx);
-		CMesh* mesh = CreateMeshFromStreamedGeom(name, t->geoms[i]);
+		CStrL name = Str_Printf("%s_%d", layerNames[t->m_Geoms[i]->layerType], t->m_Geoms[i]->layerSubIdx);
+		CMesh* mesh = CreateMeshFromStreamedGeom(name, t->m_Geoms[i]);
 		Entity* e = new Entity(name);
 		MeshComponent* meshcomp = e->CreateComponent<MeshComponent>();
 		meshcomp->m_DrawableFlags.Set(Drawable::eLightMap);
@@ -569,12 +567,12 @@ bool TileManager::ReceiveLoadedTile()
 	gScene.AddEntity(t);
 	t->SetStatus(TileData::eLoaded);
 
-	// Release geom memory
-	for (int i = 0; i < t->geoms.Num(); i++)
-		delete t->geoms[i];
-	t->geoms.Clear();
+	LOG("%.1fms. Received <%d, %d, %d> in frame %d. Created %d meshes in %.1fms\n", sw.GetMs(), t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber(), t->m_Geoms.Num(), t_createMeshes);
 
-	LOG("%.1fms. Received <%d, %d, %d> in frame %d. Created %d meshes in %.1fms\n", sw.GetMs(), t->m_Tms.x, t->m_Tms.y, t->m_Tms.z, Engine_GetFrameNumber(), n, t_createMeshes);
+	// Release geom memory
+	for (int i = 0; i < t->m_Geoms.Num(); i++)
+		delete t->m_Geoms[i];
+	t->m_Geoms.Clear();
 
 	return true;
 }
@@ -593,7 +591,6 @@ void TileManager::RenderDebug2d(CCamera* cam)
 	int minz = 200;
 	int maxz = 0;
 
-	
 	int n = 0;
 	for (int i = 0; i < neededTiles.Num(); i++)
 	{

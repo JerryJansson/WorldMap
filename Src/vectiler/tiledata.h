@@ -1,7 +1,8 @@
 #pragma once
 #include <vector>
 #include "mapping.h"
-
+#include "../../../../Source/Modules/GameObject/Entity.h"
+#include "projection.h"
 #define KEEP_2D 1
 //-----------------------------------------------------------------------------
 #ifdef KEEP_2D
@@ -62,11 +63,6 @@ struct HeightData
 	int width;
 	int height;
 };
-#if JJ_WORLDMAP == 1
-
-
-#endif
-
 #if JJ_WORLDMAP == 2
 //-----------------------------------------------------------------------------
 class TileData : public Entity
@@ -85,7 +81,7 @@ public:
 	uint32						m_FrameBump;	// Last frame we used this data
 	Vec2d						m_Origo;		// Tile origo (lower left corner) in mercator coordinates
 	struct TileNode*			m_Node;
-	TArray<struct StreamGeom*>	geoms;
+	TArray<struct StreamGeom*>	m_Geoms;
 
 	void Init(const Vec3i& tms)
 	{
