@@ -283,6 +283,18 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 // Triangulated 690 PolygonMeshes in 3480.0ms
 // Triangulated 690 PolygonMeshes in 3485.3ms
 
+// NUC ( Removed reserve() calls)
+// Triangulated 690 PolygonMeshes in 394.2ms
+// Triangulated 690 PolygonMeshes in 395.5ms
+// Replaced std::vector with TArray
+// Triangulated 690 PolygonMeshes in 199.9ms
+// Triangulated 690 PolygonMeshes in 198.6ms
+// More
+// Triangulated 690 PolygonMeshes in 190.0ms
+// Triangulated 690 PolygonMeshes in 193.6ms
+// Extrude
+// Triangulated 690 PolygonMeshes in 188.4ms
+
 //-----------------------------------------------------------------------------
 void GeoJson::extractLayer(const rapidjson::Value& _in, Layer& layer, const Tile& _tile)
 {

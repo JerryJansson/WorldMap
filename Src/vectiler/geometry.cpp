@@ -148,7 +148,11 @@ v2 centroid(const Polygon2& polygon)
 
 	return centroid;
 }
-float t_extrusion = 0;
+float t_extrusion = 0; 
+// 64.2, 69.8
+// 60.0, 62.0, 62.63
+// 56.75, 57.23
+// 58.42
 //-----------------------------------------------------------------------------
 float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	const float height,	VtxArr& outVertices, IdxArr& outIndices, const HeightData* elevation)
 {
@@ -171,7 +175,7 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 				Point p(linestring[i]);
 				float pz = sampleElevation(v2(p.x, p.y), elevation);
 				minz = Min(minz, pz);
-			}
+			} 
 		}
 	}
 
@@ -179,10 +183,6 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 	for (auto& linestring : polygon)
 	{
 		const size_t lineSize = linestring.size();
-
-		// BOGS PERFORMANCE !
-		//outVertices.reserve(outVertices.size() + lineSize * 4);
-		//outIndices.reserve(outIndices.size() + lineSize * 6);
 
 		for (size_t i = 0; i < lineSize - 1; i++)
 		{
@@ -193,17 +193,19 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 
 			const v3 normalVector = Normalize(cross(upVector, b - a));
 
-			a.z = height + cz;		outVertices.push_back({ a, normalVector });
-			b.z = height + cz;		outVertices.push_back({ b, normalVector });
-			a.z = minHeight + minz;	outVertices.push_back({ a, normalVector });
-			b.z = minHeight + minz;	outVertices.push_back({ b, normalVector });
-
-			outIndices.push_back(voffs + 0);
-			outIndices.push_back(voffs + 1);
-			outIndices.push_back(voffs + 2);
-			outIndices.push_back(voffs + 1);
-			outIndices.push_back(voffs + 3);
-			outIndices.push_back(voffs + 2);
+			PolyVert* _v = outVertices.AddEmpty(4);
+			a.z = height + cz;		_v[0] = { a, normalVector };
+			b.z = height + cz;		_v[1] = { b, normalVector };
+			a.z = minHeight + minz;	_v[2] = { a, normalVector };
+			b.z = minHeight + minz;	_v[3] = { b, normalVector };
+	
+			uint32* _i = outIndices.AddEmpty(6);
+			_i[0] = voffs + 0;
+			_i[1] = voffs + 1;
+			_i[2] = voffs + 2;
+			_i[3] = voffs + 1;
+			_i[4] = voffs + 3;
+			_i[5] = voffs + 2;
 
 			voffs += 4;
 		}
@@ -293,14 +295,9 @@ void buildPolygon(const Polygon2& polygon, const float height, VtxArr& outVertic
 	const int inVtxCount = ctx.flatten.Num();
 	const int vtxOffset = outVertices.size();
 
-	// Assume all vertices are used
-	// DO NOT RESERVE HERE. COUNTER PRODUCTIVE!
-	//outVertices.reserve(outVertices.size() + inVtxCount);
-
 	timetmp[2] += sw.GetMs(true);
 
 	// Remap
-	//int* remap = new int[inVtxCount];
 	ctx.remap.SetNum(inVtxCount);
 	for (int i = 0; i < inVtxCount; i++)
 		ctx.remap[i] = -1;
@@ -348,9 +345,7 @@ void buildPolygon(const Polygon2& polygon, const float height, VtxArr& outVertic
 	//}
 	uint32* _idx = outIndices.AddEmpty(ni);
 	for (int i = 0; i < ni; i++)
-	{
 		_idx[i] = vtxOffset + ctx.remap[ctx.earcut.indices[i]];
-	}
 	
 
 	timetmp[6] += sw.GetMs(true);
@@ -517,6 +512,9 @@ void Old_BuildPolyLine(const ELayerType layerType, const Feature* f, const float
 	}
 }
 #endif
+
+float t_poly = 0;
+float t_line = 0;
 //-----------------------------------------------------------------------------
 PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feature* f, const HeightData* heightMap, PolyMeshBuilder& ctx)
 {
@@ -534,6 +532,7 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 
 	if (f->geometryType == GeometryType::polygons)
 	{
+		CStopWatch sw;
 		for (const Polygon2& polygon : f->polygons)
 		{
 			float centroidHeight = 0.f;
@@ -545,9 +544,12 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 			else
 				buildPolygon(polygon, f->height + sortHeight, mesh->vertices, mesh->indices, heightMap, centroidHeight, ctx);
 		}
+
+		t_poly += sw.GetMs();
 	}
 	else if (f->geometryType == GeometryType::lines)
 	{
+		CStopWatch sw;
 		//Old_BuildPolyLine(layerType, f, sortHeight, mesh, heightMap);
 
 
@@ -573,7 +575,6 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 		assert(verts.Num() < 65536);
 
 		vc = verts.Num();
-		//mesh->vertices.reserve(vc);
 		mesh->vertices.SetNum(vc);
 		for (int i = 0; i < vc; i++)
 		{
@@ -583,11 +584,11 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 		}
 
 		ic = idxs.Num();
-		//mesh->indices.reserve(ic);
 		mesh->indices.SetNum(ic);
 		for (int i = 0; i < ic; i++)
 			mesh->indices[i] = idxs[i];
-			//mesh->indices.push_back(idxs[i]);
+
+		t_line += sw.GetMs();
 	}
 
 	if (mesh->vertices.size() == 0)

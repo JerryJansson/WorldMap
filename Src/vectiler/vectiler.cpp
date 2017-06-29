@@ -247,6 +247,7 @@ static inline int SplitMesh(const PolygonMesh* src, std::vector<PolygonMesh*>& d
 		LOG("%d: v: %d, t: %d\n", i, dstArr[i]->vertices.size(), dstArr[i]->indices.size()/3);
 	}
 	
+	delete[] remap;
 
 	return dstArr.size();
 }
