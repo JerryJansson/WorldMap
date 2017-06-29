@@ -9,7 +9,7 @@ extern CVar tile_DiscCache;
 //-----------------------------------------------------------------------------
 enum Border { right, left, bottom, top, };
 //-----------------------------------------------------------------------------
-void buildPlane(std::vector<PolygonVertex>& outVertices, std::vector<unsigned int>& outIndices,
+void buildPlane(VtxArr& outVertices, IdxArr& outIndices,
 	float width,       // Total plane width (x-axis)
 	float height,      // Total plane height (y-axis)
 	unsigned int nw,   // Split on width
@@ -17,8 +17,8 @@ void buildPlane(std::vector<PolygonVertex>& outVertices, std::vector<unsigned in
 	bool flip = false)
 {
 	// TODO: add offsets
-	std::vector<v4> vertices;
-	std::vector<int> indices;
+	//std::vector<v4> vertices;
+	//std::vector<int> indices;
 
 	int indexOffset = 0;
 
@@ -39,26 +39,26 @@ void buildPlane(std::vector<PolygonVertex>& outVertices, std::vector<unsigned in
 			v3 v2(w + ow, h, 0.0);
 			v3 v3(w + ow, h + oh, 0.0);
 
-			outVertices.push_back({ v0, normal });
-			outVertices.push_back({ v1, normal });
-			outVertices.push_back({ v2, normal });
-			outVertices.push_back({ v3, normal });
+			outVertices.Add({ v0, normal });
+			outVertices.Add({ v1, normal });
+			outVertices.Add({ v2, normal });
+			outVertices.Add({ v3, normal });
 
 			if (!flip) {
-				outIndices.push_back(indexOffset + 0);
-				outIndices.push_back(indexOffset + 1);
-				outIndices.push_back(indexOffset + 2);
-				outIndices.push_back(indexOffset + 0);
-				outIndices.push_back(indexOffset + 2);
-				outIndices.push_back(indexOffset + 3);
+				outIndices.Add(indexOffset + 0);
+				outIndices.Add(indexOffset + 1);
+				outIndices.Add(indexOffset + 2);
+				outIndices.Add(indexOffset + 0);
+				outIndices.Add(indexOffset + 2);
+				outIndices.Add(indexOffset + 3);
 			}
 			else {
-				outIndices.push_back(indexOffset + 0);
-				outIndices.push_back(indexOffset + 2);
-				outIndices.push_back(indexOffset + 1);
-				outIndices.push_back(indexOffset + 0);
-				outIndices.push_back(indexOffset + 3);
-				outIndices.push_back(indexOffset + 2);
+				outIndices.Add(indexOffset + 0);
+				outIndices.Add(indexOffset + 2);
+				outIndices.Add(indexOffset + 1);
+				outIndices.Add(indexOffset + 0);
+				outIndices.Add(indexOffset + 3);
+				outIndices.Add(indexOffset + 2);
 			}
 
 			indexOffset += 4;
@@ -67,7 +67,7 @@ void buildPlane(std::vector<PolygonVertex>& outVertices, std::vector<unsigned in
 }
 
 //-----------------------------------------------------------------------------
-void buildPedestalPlanes(const Tile& tile, std::vector<PolygonVertex>& outVertices,	std::vector<unsigned int>& outIndices, const HeightData* elevation,	unsigned int subdiv, float pedestalHeight)
+void buildPedestalPlanes(const Tile& tile, VtxArr& outVertices,	IdxArr& outIndices, const HeightData* elevation, unsigned int subdiv, float pedestalHeight)
 {
 	const float offset = 1.0 / subdiv;
 	const v3 upVector(0.0, 0.0, 1.0);
@@ -211,7 +211,7 @@ static inline int SplitMesh(const PolygonMesh* src, std::vector<PolygonMesh*>& d
 
 	int* remap = new int[src_nv];
 
-	uint32 i = 0;
+	int i = 0;
 	while (i < src->indices.size())
 	{
 		PolygonMesh* dst = new PolygonMesh(src->layerType, src->feature);

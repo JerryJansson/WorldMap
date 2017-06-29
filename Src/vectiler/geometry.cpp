@@ -58,7 +58,7 @@ static inline float GetWidth(const ELayerType l, const EFeatureKind k)
 //-----------------------------------------------------------------------------
 void computeNormals(PolygonMesh* mesh)
 {
-	for (size_t i = 0; i < mesh->indices.size(); i += 3)
+	for (int i = 0; i < mesh->indices.size(); i += 3)
 	{
 		int i1 = mesh->indices[i + 0];
 		int i2 = mesh->indices[i + 1];
@@ -148,12 +148,11 @@ v2 centroid(const Polygon2& polygon)
 
 	return centroid;
 }
+float t_extrusion = 0;
 //-----------------------------------------------------------------------------
-float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	const float height,
-	std::vector<PolygonVertex>& outVertices,
-	std::vector<unsigned int>& outIndices,
-	const HeightData* elevation)
+float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	const float height,	VtxArr& outVertices, IdxArr& outIndices, const HeightData* elevation)
 {
+	CStopWatch sw;
 	int voffs = outVertices.size();
 	float minz = 0.f;
 	float cz = 0.f;
@@ -181,8 +180,9 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 	{
 		const size_t lineSize = linestring.size();
 
-		outVertices.reserve(outVertices.size() + lineSize * 4);
-		outIndices.reserve(outIndices.size() + lineSize * 6);
+		// BOGS PERFORMANCE !
+		//outVertices.reserve(outVertices.size() + lineSize * 4);
+		//outIndices.reserve(outIndices.size() + lineSize * 6);
 
 		for (size_t i = 0; i < lineSize - 1; i++)
 		{
@@ -209,12 +209,13 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 		}
 	}
 
+	t_extrusion += sw.GetMs();
 	return cz;
 }
 //-----------------------------------------------------------------------------
 // OLD EARCUT
 #if 0
-void buildPolygon(const Polygon2& polygon, const float height, std::vector<PolygonVertex>& outVertices, std::vector<unsigned int>& outIndices, const HeightData* elevation, float centroidHeight)
+void buildPolygon(const Polygon2& polygon, const float height, std::vector<PolyVert>& outVertices, std::vector<unsigned int>& outIndices, const HeightData* elevation, float centroidHeight)
 {
 	mapbox::Earcut<float, unsigned int> earcut;
 	earcut(polygon);
@@ -248,97 +249,27 @@ void buildPolygon(const Polygon2& polygon, const float height, std::vector<Polyg
 	}
 }
 #endif
-//-----------------------------------------------------------------------------
-// TANGRAM-ES
-#if 0
-void buildPolygon(const Polygon2& polygon, const float height, std::vector<PolygonVertex>& outVertices, std::vector<unsigned int>& outIndices, const HeightData* elevation, float centroidHeight)
-{
-	// Run earcut
-	mapbox::detail::Earcut<uint32_t> earcut;
-	earcut(polygon);
-	if (earcut.indices.size() == 0)
-		return;
 
-	// Count number of input vertices (not all may be used by earcut)
-	int inVtxCount = 0;
-	for (auto& line : polygon) {
-		inVtxCount += line.size();
-	}
-
-	// Mark the points that are referenced by indices as used.
-	size_t sumVertices = 0;
-	std::vector<int> used;
-	used.assign(inVtxCount, 0);
-	for (auto i : earcut.indices) {
-		if (used[i] == 0) {
-			used[i] = 1;
-			sumVertices++;
-		}
-	}
-
-	unsigned int vtxOffset = outVertices.size();
-
-	// Assume all vertices are used
-	outVertices.reserve(outVertices.size() + inVtxCount);
-
-	size_t ring = 0;
-	size_t offset = 0;
-
-	// Go through all points of the polyon.
-	for (int src = 0, dst = 0; src < inVtxCount; src++) 
-	{
-		// The points of the polygon rings are indexed linearly.
-		// This maps the indices back to the original ring and point.
-		if (src - offset >= polygon[ring].size()) {
-			offset += polygon[ring].size();
-			ring += 1;
-		}
-
-		// Add vertex only when the point is used.
-		if (used[src] == 0) { continue; }
-
-		// Keep track of skipped points to update indices
-		used[src] = dst++;
-
-		auto& p = polygon[ring][src - offset];
-		PolygonVertex v;
-		v.position = Vec3(p.x, p.y, height + centroidHeight);
-		v.normal = Vec3(0, 0, 1);
-		outVertices.push_back(v);
-		/*glm::vec3 coord(p.x, p.y, _height);
-
-		if (_ctx.useTexCoords) {
-			glm::vec2 uv(mapValue(coord.x, min.x, max.x, 0., 1.),
-				mapValue(coord.y, min.y, max.y, 1., 0.));
-
-			_ctx.addVertex(coord, glm::vec3(0.0, 0.0, 1.0), uv);
-		}
-		else {
-			_ctx.addVertex(coord, glm::vec3(0.0, 0.0, 1.0), glm::vec2(0));
-		}*/
-	}
-
-
-		outIndices.reserve(outIndices.size() + earcut.indices.size());
-		for (auto i : earcut.indices)
-		{
-			outIndices.push_back(vtxOffset + used[i]);
-		}
-	}
-#endif
+float timetmp[7] = { 0,0,0,0,0,0,0 };
 //-----------------------------------------------------------------------------
 // JJ NEW EARCUT
 #if 1
-void buildPolygon(const Polygon2& polygon, const float height, std::vector<PolygonVertex>& outVertices, std::vector<unsigned int>& outIndices, const HeightData* elevation,	const float centroidHeight, PolyMeshBuilder& ctx)
+void buildPolygon(const Polygon2& polygon, const float height, VtxArr& outVertices, IdxArr& outIndices, const HeightData* elevation, const float centroidHeight, PolyMeshBuilder& ctx)
 {
 	ctx.Clear();
 
+	CStopWatch sw;
 	// Run earcut
-	//mapbox::detail::Earcut<uint32_t> earcut;
 	ctx.earcut(polygon);
 	const int ni = ctx.earcut.indices.size();
+	
+	timetmp[0] += sw.GetMs(true);
+	
 	if (ni == 0)
 		return;
+
+	// 6.43
+	// 6.62
 	
 	// Count number of input vertices (not all may be used by earcut)
 	/*int inVtxCount = 0;
@@ -347,9 +278,8 @@ void buildPolygon(const Polygon2& polygon, const float height, std::vector<Polyg
 	}*/
 
 	// Flatten. An array wich maps from a linear idx to specific ring/point
-	//TArray<Vec2i> flatten;
 	//ctx.flatten.SetNum(inVtxCount);
-	//int n = 0;
+	int n = 0;
 	for (size_t r=0; r<polygon.size(); r++)
 	{
 		const auto& ring = polygon[r];
@@ -358,64 +288,76 @@ void buildPolygon(const Polygon2& polygon, const float height, std::vector<Polyg
 			//ctx.flatten[n++] = Vec2i(r, p);
 	}
 
+	timetmp[1] += sw.GetMs(true);
+
 	const int inVtxCount = ctx.flatten.Num();
 	const int vtxOffset = outVertices.size();
 
 	// Assume all vertices are used
-	outVertices.reserve(outVertices.size() + inVtxCount);
+	// DO NOT RESERVE HERE. COUNTER PRODUCTIVE!
+	//outVertices.reserve(outVertices.size() + inVtxCount);
+
+	timetmp[2] += sw.GetMs(true);
 
 	// Remap
 	//int* remap = new int[inVtxCount];
 	ctx.remap.SetNum(inVtxCount);
 	for (int i = 0; i < inVtxCount; i++)
 		ctx.remap[i] = -1;
+
+	timetmp[3] += sw.GetMs(true);
 	
-	int outVtxCount = 0;
-	int new_idx = 0;
+	int newVerts = 0;
 	for (int i = 0; i < ni; i++)
 	{
 		const uint32_t old_idx = ctx.earcut.indices[i];
 		if (ctx.remap[old_idx] == -1)
-		{
-			ctx.remap[old_idx] = new_idx++;
-			outVtxCount++;
-			Vec2i ii = ctx.flatten[old_idx];
-			const Point& p = polygon[ii.x][ii.y];
-			PolygonVertex v;
-			v.position = Vec3(p.x, p.y, height + centroidHeight);
-			v.normal = Vec3(0, 0, 1);
-			outVertices.push_back(v);
-		}
+			ctx.remap[old_idx] = newVerts++;
 	}
 
+	timetmp[4] += sw.GetMs(true);
+
 	// Move used vertices
-#if 0
-	outVertices.reserve(outVertices.size() + outVtxCount);
+#if 1
+	PolyVert* _v = outVertices.AddEmpty(newVerts);
 	for (int oldidx = 0; oldidx < inVtxCount; oldidx++)
 	{
-		if (remap[oldidx] >= 0)
+		const int newIdx = ctx.remap[oldidx];
+		if (newIdx >= 0)
 		{
-			const Vec2i& ii = flatten[oldidx];
+			const Vec2i& ii = ctx.flatten[oldidx];
 			const Point& p = polygon[ii.x][ii.y];
-			PolygonVertex v;
+			PolyVert& v = _v[newIdx];
 			v.position = Vec3(p.x, p.y, height + centroidHeight);
 			v.normal = Vec3(0, 0, 1);
-			outVertices.push_back(v);
 		}
 	}
 #endif
 
+	timetmp[5] += sw.GetMs(true);
 
-	outIndices.reserve(outIndices.size() + ni);
-	for (auto i : ctx.earcut.indices)
+	// 13.34
+	// 12.76
+	// 12.45
+	//7.63
+	//8.39
+	//outIndices.reserve(outIndices.size() + ni);
+	//for (auto i : ctx.earcut.indices)
+	//{
+	//	outIndices.push_back(vtxOffset + ctx.remap[i]);
+	//}
+	uint32* _idx = outIndices.AddEmpty(ni);
+	for (int i = 0; i < ni; i++)
 	{
-		outIndices.push_back(vtxOffset + ctx.remap[i]);
+		_idx[i] = vtxOffset + ctx.remap[ctx.earcut.indices[i]];
 	}
+	
 
-	//delete[] remap;
+	timetmp[6] += sw.GetMs(true);
 }
 #endif
 //-----------------------------------------------------------------------------
+#if 0
 void addPolygonPolylinePoint(LineString& linestring,
 	const Point& curr,
 	const Point& next,
@@ -449,7 +391,6 @@ void addPolygonPolylinePoint(LineString& linestring,
 	}
 }
 //-----------------------------------------------------------------------------
-#if 0
 void Old_BuildPolyLine(const ELayerType layerType, const Feature* f, const float sortHeight, PolygonMesh* mesh, const HeightData* heightMap)
 {
 	CStopWatch sw, sw1;
@@ -584,9 +525,9 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 	//if (strstr(f->name.Str(), "Deutsches Patent") != 0)
 	//if (f->min_height > f->height)
 	//if (f->lineStrings.size() > 1000)//3000)
-	{
-		int abba = 10;
-	}
+	//{
+	//	int abba = 10;
+	//}
 
 	PolygonMesh* mesh = new PolygonMesh(layerType, f);
 	const float sortHeight = 0;// f->sort_rank / MAX_SORT_RANK;
@@ -632,18 +573,21 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 		assert(verts.Num() < 65536);
 
 		vc = verts.Num();
-		mesh->vertices.reserve(vc);
+		//mesh->vertices.reserve(vc);
+		mesh->vertices.SetNum(vc);
 		for (int i = 0; i < vc; i++)
 		{
-			mesh->vertices.emplace_back();
+			//mesh->vertices.emplace_back();
 			mesh->vertices[i].position = Vec3(verts[i].x, verts[i].y, 0.0f);
 			mesh->vertices[i].normal = Vec3(0, 0, 1);
 		}
 
 		ic = idxs.Num();
-		mesh->indices.reserve(ic);
+		//mesh->indices.reserve(ic);
+		mesh->indices.SetNum(ic);
 		for (int i = 0; i < ic; i++)
-			mesh->indices.push_back(idxs[i]);
+			mesh->indices[i] = idxs[i];
+			//mesh->indices.push_back(idxs[i]);
 	}
 
 	if (mesh->vertices.size() == 0)

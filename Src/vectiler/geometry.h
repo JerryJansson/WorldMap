@@ -1,18 +1,20 @@
 #pragma once
-//#include <vector>
-//#include "mapping.h"
 #include "tiledata.h"
 #include "earcut.h"
 //-----------------------------------------------------------------------------
-struct PolygonVertex {
+struct PolyVert {
 	v3 position;
 	v3 normal;
 };
+//typedef std::vector<unsigned int>	IdxArr;
+//typedef std::vector<PolyVert>		VtxArr;
+typedef TArray<uint32> IdxArr;
+typedef TArray<PolyVert> VtxArr;
 //-----------------------------------------------------------------------------
 struct PolygonMesh
 {
-	std::vector<unsigned int> indices;
-	std::vector<PolygonVertex> vertices;
+	IdxArr indices;
+	VtxArr vertices;
 	ELayerType layerType;
 	const struct Feature* feature;
 

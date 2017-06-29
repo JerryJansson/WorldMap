@@ -809,3 +809,82 @@ AddMeshToMesh(mesh, bigMesh);
 //float t_MergeMeshes = sw.GetMs(true);
 
 //LOG("Triangulated %d PolygonMeshes in %.1fms. Merged these meshes to %d meshes in %.1fms\n", meshes.size(), t_BuildMeshes, merged.size(), t_MergeMeshes);
+
+//-----------------------------------------------------------------------------
+// TANGRAM-ES
+#if 0
+void buildPolygon(const Polygon2& polygon, const float height, std::vector<PolyVert>& outVertices, std::vector<unsigned int>& outIndices, const HeightData* elevation, float centroidHeight)
+{
+	// Run earcut
+	mapbox::detail::Earcut<uint32_t> earcut;
+	earcut(polygon);
+	if (earcut.indices.size() == 0)
+		return;
+
+	// Count number of input vertices (not all may be used by earcut)
+	int inVtxCount = 0;
+	for (auto& line : polygon) {
+		inVtxCount += line.size();
+	}
+
+	// Mark the points that are referenced by indices as used.
+	size_t sumVertices = 0;
+	std::vector<int> used;
+	used.assign(inVtxCount, 0);
+	for (auto i : earcut.indices) {
+		if (used[i] == 0) {
+			used[i] = 1;
+			sumVertices++;
+		}
+	}
+
+	unsigned int vtxOffset = outVertices.size();
+
+	// Assume all vertices are used
+	outVertices.reserve(outVertices.size() + inVtxCount);
+
+	size_t ring = 0;
+	size_t offset = 0;
+
+	// Go through all points of the polyon.
+	for (int src = 0, dst = 0; src < inVtxCount; src++)
+	{
+		// The points of the polygon rings are indexed linearly.
+		// This maps the indices back to the original ring and point.
+		if (src - offset >= polygon[ring].size()) {
+			offset += polygon[ring].size();
+			ring += 1;
+		}
+
+		// Add vertex only when the point is used.
+		if (used[src] == 0) { continue; }
+
+		// Keep track of skipped points to update indices
+		used[src] = dst++;
+
+		auto& p = polygon[ring][src - offset];
+		PolyVert v;
+		v.position = Vec3(p.x, p.y, height + centroidHeight);
+		v.normal = Vec3(0, 0, 1);
+		outVertices.push_back(v);
+		/*glm::vec3 coord(p.x, p.y, _height);
+
+		if (_ctx.useTexCoords) {
+		glm::vec2 uv(mapValue(coord.x, min.x, max.x, 0., 1.),
+		mapValue(coord.y, min.y, max.y, 1., 0.));
+
+		_ctx.addVertex(coord, glm::vec3(0.0, 0.0, 1.0), uv);
+		}
+		else {
+		_ctx.addVertex(coord, glm::vec3(0.0, 0.0, 1.0), glm::vec2(0));
+		}*/
+	}
+
+
+	outIndices.reserve(outIndices.size() + earcut.indices.size());
+	for (auto i : earcut.indices)
+	{
+		outIndices.push_back(vtxOffset + used[i]);
+	}
+}
+#endif
