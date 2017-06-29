@@ -66,10 +66,6 @@ public:
 	MyTile(const Vec3i& tms);
 	EStatus Status() const { return m_Status; }
 };
+#endif
 //-----------------------------------------------------------------------------
-	bool GetTile(StreamResult* result);
-#endif
-
-#if JJ_WORLDMAP == 2
-	bool GetTile(class TileData* t);
-#endif
+bool GetTile(const Vec3i& tms, TArray<StreamGeom*>& geoms);

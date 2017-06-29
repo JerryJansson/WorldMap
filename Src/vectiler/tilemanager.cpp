@@ -104,7 +104,7 @@ void StreamTile(int threadIdx)
 		tileLock.unlock();
 
 		StreamResult* result = AllocResult(t);
-		GetTile(result);
+		GetTile(result->tile->m_Tms, result->geoms);
 
 		doneLock.lock();
 		doneList.PushBack(result);

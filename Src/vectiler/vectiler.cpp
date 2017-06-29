@@ -67,12 +67,7 @@ void buildPlane(std::vector<PolygonVertex>& outVertices, std::vector<unsigned in
 }
 
 //-----------------------------------------------------------------------------
-void buildPedestalPlanes(const Tile& tile,
-	std::vector<PolygonVertex>& outVertices,
-	std::vector<unsigned int>& outIndices,
-	const HeightData* elevation,
-	unsigned int subdiv,
-	float pedestalHeight)
+void buildPedestalPlanes(const Tile& tile, std::vector<PolygonVertex>& outVertices,	std::vector<unsigned int>& outIndices, const HeightData* elevation,	unsigned int subdiv, float pedestalHeight)
 {
 	const float offset = 1.0 / subdiv;
 	const v3 upVector(0.0, 0.0, 1.0);
@@ -270,65 +265,6 @@ static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpS
 		tmpSplitArr.clear();
 	}
 }
-//-----------------------------------------------------------------------------
-// Separate all meshes in it's respective layer
-// Merge as many small meshes together as possible (<65536 vertices)
-//-----------------------------------------------------------------------------
-/*int MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
-{
-	int total = 0;
-	for (PolygonMesh* mesh : meshes)
-	{
-		std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
-		PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
-		if (!bigMesh || !AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
-		{
-			bigMesh = new PolygonMesh(mesh->layerType);
-			bigMesh->bigMeshIdx = arr.size();
-			arr.push_back(bigMesh);
-			AddMeshToMesh(mesh, bigMesh);
-
-			total++;
-		}
-	}
-
-	//for (int i = 0; i < eNumLayerTypes; i++)
-	//{
-	//	if(meshArr[i].size())
-	//		LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
-	//}
-
-	return total;
-}*/
-// Merge as many small meshes together as possible (<65536 vertices)
-//-----------------------------------------------------------------------------
-/*void MergeMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*>& merged)
-{
-	ELayerType layer = (ELayerType)-1;
-	PolygonMesh* bigMesh = NULL;
-	for (PolygonMesh* mesh : meshes)
-	{
-		bool allocNew = false;
-		if (mesh->layerType != layer)
-		{
-			layer = mesh->layerType;
-			allocNew = true;
-		}
-		else if (!AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
-		{
-			allocNew = true;
-		}
-
-		if (allocNew)
-		{
-			bigMesh = new PolygonMesh(layer);
-			bigMesh->bigMeshIdx = arr.size();
-			arr.push_back(bigMesh);
-			AddMeshToMesh(mesh, bigMesh);
-		}
-	}
-}*/
-
 Vec3i maxTile;
 //-----------------------------------------------------------------------------
 bool vectiler(const Params2& params)
@@ -381,9 +317,8 @@ bool vectiler(const Params2& params)
 		}*/
 	}
 
-	//std::vector<EFeatureKind> kinds;
-
-	/// Build vector tile meshes
+	// Build vector tile meshes
+	PolyMeshBuilder ctx;
 	for (int l = 0; l < vectorLayers.Num(); l++)
 	{
 		const Layer& layer = vectorLayers[l];
@@ -395,13 +330,8 @@ bool vectiler(const Params2& params)
 		{
 			const Feature* feature = &layer.features[i];
 			if (heightMap && (type != eLayerRoads) && (feature->height == 0.0f))	continue;
-
-			//CStopWatch sw;
-			PolygonMesh* mesh = CreatePolygonMeshFromFeature(type, feature, heightMap);
-			/*if (sw.GetMs() > 1000.0f)
-			{
-				LOG("Tile <%d, %d, %d> CreatePolyMesh: %.0fms\n", tile.x, tile.y, tile.z, sw.GetMs());
-			}*/
+			
+			PolygonMesh* mesh = CreatePolygonMeshFromFeature(type, feature, heightMap, ctx);
 			if (mesh)
 				AddNewMesh(mesh, tmpSplitArr, meshes);
 		}
@@ -418,57 +348,33 @@ bool vectiler(const Params2& params)
 		maxTile.z = tile.z;
 	}
 
-	// Separate all meshes in it's respective layer
-	// Merge all meshes from same layer into a few big meshes (<=65536 vertices)
-	//std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
-	//int nMerged = MergeLayerMeshes(meshes, meshArr);
-	//float t_MergeMeshes = sw.GetMs(true);
-	//LOG("Triangulated %d PolygonMeshes in %.1fms. Merged these meshes to %d meshes in %.1fms\n", meshes.size(), t_BuildMeshes, nMerged, t_MergeMeshes);
-
-	//std::vector<PolygonMesh*> merged;
-	//MergeMeshes(meshes, merged);
-	//float t_MergeMeshes = sw.GetMs(true);
-	
-	//LOG("Triangulated %d PolygonMeshes in %.1fms. Merged these meshes to %d meshes in %.1fms\n", meshes.size(), t_BuildMeshes, merged.size(), t_MergeMeshes);
 	LOG("Triangulated %d PolygonMeshes in %.1fms\n", meshes.size(), t_BuildMeshes);
 	
 	// Save output BIN file
 	CStrL fname = Str_Printf("%d_%d_%d.bin", tile.x, tile.y, tile.z);
-	//SaveBin(fname, meshArr);
 	SaveBin(fname, meshes);
 
 	// Delete all meshes
 	for (size_t i = 0; i < meshes.size(); i++)
 		delete meshes[i];
 
-	/*for (size_t i = 0; i < eNumLayerTypes; i++)
-	{
-		for (size_t k = 0; k < meshArr[i].size(); k++)
-			delete meshArr[i][k];
-	}*/
-	
 	return true;
 }
-
-#if JJ_WORLDMAP == 1
 //-----------------------------------------------------------------------------
-bool GetTile(StreamResult* result)
+bool GetTile(const Vec3i& tms, TArray<StreamGeom*>& geoms)
 {
-	const MyTile* t = result->tile;
-
-	assert(t->Status() == MyTile::eNotLoaded);
-
-	const Vec3i& tms = t->m_Tms;
+	//const MyTile* t = result->tile;
+	//assert(t->Status() == MyTile::eNotLoaded);
+	//const Vec3i& tms = t->m_Tms;
 	const CStrL tileName = Str_Printf("%d_%d_%d", tms.x, tms.y, tms.z);
 	const CStrL fname = tileName + ".bin";
-
 	//Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
 	//LOG("GetTile tms: <%d,%d,%d>, google: <%d, %d>\n", tms.x, tms.y, tms.z, google.x, google.y);
 
 	// See if tile is binary cached
 	if (tile_DiscCache == eDiscBinaryCache)
 	{
-		if (LoadBin(fname, result->geoms))
+		if (LoadBin(fname, geoms))
 			return true;
 	}
 
@@ -488,49 +394,8 @@ bool GetTile(StreamResult* result)
 	if (!vectiler(params))
 		return false;
 
-	if (!LoadBin(fname, result->geoms))
+	if (!LoadBin(fname, geoms))
 		return false;
 
 	return true;
 }
-#endif
-
-#if JJ_WORLDMAP == 2
-//-----------------------------------------------------------------------------
-bool GetTile(TileData* t)
-{
-	const Vec3i& tms = t->m_Tms;
-	const CStrL tileName = Str_Printf("%d_%d_%d", tms.x, tms.y, tms.z);
-	const CStrL fname = tileName + ".bin";
-
-	//Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
-	//LOG("GetTile tms: <%d,%d,%d>, google: <%d, %d>\n", tms.x, tms.y, tms.z, google.x, google.y);
-
-	if (tile_DiscCache)
-	{
-		if (LoadBin(fname, t->geoms))
-			return true;
-	}
-
-	// Mapzen uses google xyz indexing
-	struct Params2 params =
-	{
-		"vector-tiles-qVaBcRA",	// apiKey
-		tms.x,					// Tile X
-		tms.y,					// Tile Y
-		tms.z,					// Tile Z (zoom)
-		false,					// terrain. Generate terrain elevation topography
-		64,						// terrainSubdivision
-		1.0f,					// terrainExtrusionScale
-		true					// vectorData. Buildings, roads, landuse, pois, etc...
-	};
-
-	if (!vectiler(params))
-		return false;
-
-	if (!LoadBin(fname, t->geoms))
-		return false;
-
-	return true;
-}
-#endif

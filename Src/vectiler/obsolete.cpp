@@ -735,3 +735,77 @@ bool saveOBJ(const char* outputOBJ,
 //bool LoadBin(const char* fname, TArray<GGeom>& geomArr);
 //bool SaveBin(const char* fname, std::vector<PolygonMesh*> meshes);
 //bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms);// TArray<GGeom*>& geomArr);
+
+//-----------------------------------------------------------------------------
+// Separate all meshes in it's respective layer
+// Merge as many small meshes together as possible (<65536 vertices)
+//-----------------------------------------------------------------------------
+/*int MergeLayerMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*> meshArr[eNumLayerTypes])
+{
+int total = 0;
+for (PolygonMesh* mesh : meshes)
+{
+std::vector<PolygonMesh*>& arr = meshArr[mesh->layerType];	// Choose correct layer
+PolygonMesh* bigMesh = arr.empty() ? NULL : arr.back();
+if (!bigMesh || !AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
+{
+bigMesh = new PolygonMesh(mesh->layerType);
+bigMesh->bigMeshIdx = arr.size();
+arr.push_back(bigMesh);
+AddMeshToMesh(mesh, bigMesh);
+
+total++;
+}
+}
+
+//for (int i = 0; i < eNumLayerTypes; i++)
+//{
+//	if(meshArr[i].size())
+//		LOG("%s: %d meshes\n", layerNames[i], meshArr[i].size());
+//}
+
+return total;
+}*/
+// Merge as many small meshes together as possible (<65536 vertices)
+//-----------------------------------------------------------------------------
+/*void MergeMeshes(const std::vector<PolygonMesh*>& meshes, std::vector<PolygonMesh*>& merged)
+{
+ELayerType layer = (ELayerType)-1;
+PolygonMesh* bigMesh = NULL;
+for (PolygonMesh* mesh : meshes)
+{
+bool allocNew = false;
+if (mesh->layerType != layer)
+{
+layer = mesh->layerType;
+allocNew = true;
+}
+else if (!AddMeshToMesh(mesh, bigMesh))				// Try to add current mesh to our bigMesh
+{
+allocNew = true;
+}
+
+if (allocNew)
+{
+bigMesh = new PolygonMesh(layer);
+bigMesh->bigMeshIdx = arr.size();
+arr.push_back(bigMesh);
+AddMeshToMesh(mesh, bigMesh);
+}
+}
+}*/
+
+//std::vector<EFeatureKind> kinds;
+
+// Separate all meshes in it's respective layer
+// Merge all meshes from same layer into a few big meshes (<=65536 vertices)
+//std::vector<PolygonMesh*> meshArr[eNumLayerTypes];
+//int nMerged = MergeLayerMeshes(meshes, meshArr);
+//float t_MergeMeshes = sw.GetMs(true);
+//LOG("Triangulated %d PolygonMeshes in %.1fms. Merged these meshes to %d meshes in %.1fms\n", meshes.size(), t_BuildMeshes, nMerged, t_MergeMeshes);
+
+//std::vector<PolygonMesh*> merged;
+//MergeMeshes(meshes, merged);
+//float t_MergeMeshes = sw.GetMs(true);
+
+//LOG("Triangulated %d PolygonMeshes in %.1fms. Merged these meshes to %d meshes in %.1fms\n", meshes.size(), t_BuildMeshes, merged.size(), t_MergeMeshes);
