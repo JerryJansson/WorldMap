@@ -88,13 +88,22 @@ Crgba GetColor(const ELayerType l, const EFeatureKind k)
 	return g ? g->color : default.color;
 }
 //-----------------------------------------------------------------------------
+/*struct myV
+{
+	float d[6];
+};
+TArray<myV> vtmp(65536);
+TArray <uint16>	itmp(40000);*/
+//-----------------------------------------------------------------------------
 bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 {
-	CStopWatch sw;
+	CStopWatch sw,sw1;
 
 	CFile f;
 	if (!f.Open(fname, FILE_READ))
 		return false;
+
+	float t1 = sw1.GetMs(true);
 
 	int ver = f.ReadInt();
 
@@ -107,8 +116,16 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 	StreamGeom* bigGeom = NULL;
 	int subLayer;
 
+	float t2 = sw1.GetMs(true);
+
+	float t3 = 0;
+	float t4 = 0;
+	float t5 = 0;
+	float t6 = 0;
+	float t7 = 0;
 	for (int m = 0; m < nMeshes; m++)
 	{
+		CStopWatch sw2;
 		ELayerType layerType = (ELayerType)f.ReadInt();
 		EFeatureKind kind = (EFeatureKind)f.ReadInt();
 		const int sort = f.ReadInt();
@@ -140,28 +157,44 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 			subLayer++;
 		}
 
+		t3 += sw2.GetMs(true);
+
 		if (allocGeom)
 		{
 			bigGeom = new StreamGeom;
-			bigGeom->vertices.EnsureCapacity(65536);
-			bigGeom->indices.EnsureCapacity(65536);
+			//bigGeom->vertices.EnsureCapacity(65536);
+			//bigGeom->indices.EnsureCapacity(65536);
+			//vtmp.Clear();
+			//itmp.Clear();
 			bigGeom->layerType = layerType;
 			bigGeom->layerSubIdx = subLayer;
 			geoms.Add(bigGeom);
 		}
 
+		t4 += sw2.GetMs(true);
+
 		const int voffset = bigGeom->vertices.Num();
 		const int ioffset = bigGeom->indices.Num();
-		bigGeom->vertices.SetNum(voffset + nv);
-		bigGeom->indices.SetNum(ioffset + ni);
+		bigGeom->vertices.AddEmpty(nv);
+		bigGeom->indices.AddEmpty(ni);
+		//bigGeom->vertices.SetNum(voffset + nv);
+		//bigGeom->indices.SetNum(ioffset + ni);
 		vtxMap* vtx = &bigGeom->vertices[voffset];
 		uint16* idxs = &bigGeom->indices[ioffset];
+		/*const int voffset = vtmp.Num();
+		const int ioffset = itmp.Num();
+		vtmp.SetNum(voffset + nv);
+		itmp.SetNum(ioffset + ni);
+		myV* vtx = &vtmp[voffset];
+		uint16* idxs = &bigGeom->indices[ioffset];*/
 
 		const Crgba col = GetColor(layerType, kind);
 		if (col == gRGBA_Red)
 		{
 			int abba = 10;
 		}
+
+		t5 += sw2.GetMs(true);
 
 		for (int i = 0; i < nv; i++)
 		{
@@ -174,14 +207,19 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 			bigGeom->aabb.AddPoint(v);
 		}
 
+		t6 += sw2.GetMs(true);
+
 		f.Read(idxs, ni * sizeof(uint16));
 		for (int i = 0; i < ni; i++)
 			idxs[i] += voffset;
 
+		t7 += sw2.GetMs(true);
+
 		//LOG("Read: %s, type: %d, nv: %d, ni: %d\n", name, type, nv, ni);
 	}
 
-	LOG("%.0fms. Loaded %s. Merged %d -> %d\n", sw.GetMs(), fname, nMeshes, geoms.Num());
+	LOG("Loaded %s in %.0fms. Merged %d -> %d\n", fname, sw.GetMs(), nMeshes, geoms.Num());
+	LOG("%.1fms, %.1fms, %.1fms, %.1fms, %.1fms, %.1fms, %.1fms <%d, %d>\n", t1, t2, t3, t4, t5, t6, t7, geoms[0]->vertices.Num(), geoms[0]->indices.Num());
 
 	return true;
 }
