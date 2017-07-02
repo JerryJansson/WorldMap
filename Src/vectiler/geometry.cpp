@@ -578,7 +578,6 @@ PolygonMesh* CreatePolygonMeshFromFeature(const ELayerType layerType, const Feat
 		mesh->vertices.SetNum(vc);
 		for (int i = 0; i < vc; i++)
 		{
-			//mesh->vertices.emplace_back();
 			mesh->vertices[i].position = Vec3(verts[i].x, verts[i].y, 0.0f);
 			mesh->vertices[i].normal = Vec3(0, 0, 1);
 		}
