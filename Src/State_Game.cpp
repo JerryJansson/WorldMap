@@ -5,7 +5,13 @@
 #include "../../../Source/Modules/Landscape/LandscapeEnvironment.h"
 #include "State_Game.h"
 #include "Worldmap.h"
-#include "vectiler\tilemanager.h"
+#if JJ_WORLDMAP == 1
+	#include "vectiler\tilemanager.h"
+#endif
+
+#if JJ_WORLDMAP == 2
+#include "vectiler\tilemanager2.h"
+#endif
 
 bool allowGuiInput = true;
 //-----------------------------------------------------------------------------
@@ -150,16 +156,20 @@ void CState_Game::Update(const float dt)
 //-----------------------------------------------------------------------------
 void CState_Game::Render()
 {
+	CCamera* gameCam = gViewer.GetGameCamera();
+	CCamera* viewCam = gViewer.GetDrawCamera();
+
+	gameCam->m_ClearColor = Vec4(0.6f, 0.8f, 0.9f, 1.0f);
+	gScene.Render(gameCam, viewCam, NULL);
+
 	for (int i = 0; i < tracep.Num(); i++)
 	{
 		DrawWireCube(tracep[i].pos, 0.02f, gRGBA_Red);
 		DrawLine3d(tracep[i].pos, tracep[i].pos + tracep[i].nrm, gRGBA_Red);
 	}
 
-	CCamera* gameCam = gViewer.GetGameCamera();
-	CCamera* viewCam = gViewer.GetDrawCamera();
+	gTileManager.RenderDebug3d(viewCam);
 
-	gScene.Render(gameCam, viewCam, NULL);
 
 	//if (gEditorEnabled)
 	//	Editor_Render3d(viewCam);

@@ -330,6 +330,7 @@ extern float timetmp[7];
 extern float t_extrusion;
 extern float t_poly;
 extern float t_line;
+extern float t_disc;
 //-----------------------------------------------------------------------------
 void TileManager::Update(CCamera* cam)
 {
@@ -351,6 +352,7 @@ void TileManager::Update(CCamera* cam)
 	DbgMsg("extrusion: %.2f", t_extrusion);
 	DbgMsg("Poly: %.2f", t_poly);
 	DbgMsg("Line: %.2f", t_line);
+	DbgMsg("Disc: %.1f", t_disc);
 
 	// Determine needed tiles
 	neededTiles.Clear();

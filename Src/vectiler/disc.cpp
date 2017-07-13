@@ -219,7 +219,7 @@ bool LoadBin(const char* fname, TArray<StreamGeom*>& geoms)
 	}
 
 	LOG("Loaded %s in %.0fms. Merged %d -> %d\n", fname, sw.GetMs(), nMeshes, geoms.Num());
-	LOG("%.1fms, %.1fms, %.1fms, %.1fms, %.1fms, %.1fms, %.1fms <%d, %d>\n", t1, t2, t3, t4, t5, t6, t7, geoms[0]->vertices.Num(), geoms[0]->indices.Num());
+	//LOG("%.1fms, %.1fms, %.1fms, %.1fms, %.1fms, %.1fms, %.1fms <%d, %d>\n", t1, t2, t3, t4, t5, t6, t7, geoms[0]->vertices.Num(), geoms[0]->indices.Num());
 
 	return true;
 }

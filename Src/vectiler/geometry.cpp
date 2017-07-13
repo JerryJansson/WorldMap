@@ -186,8 +186,10 @@ float buildPolygonExtrusion(const Polygon2& polygon, const float minHeight,	cons
 
 		for (size_t i = 0; i < lineSize - 1; i++)
 		{
-			v3 a(linestring[i]);
-			v3 b(linestring[i + 1]);
+			//v3 a(linestring[i]);
+			//v3 b(linestring[i + 1]);
+			v3 a = Vec3(linestring[i].x, linestring[i].y, 0.0f);		// No automatic Vec3(Vec2) constructor
+			v3 b = Vec3(linestring[i+1].x, linestring[i+1].y, 0.0f);
 
 			//if (a == b) { continue; } // Should never happen since we deal with this when creating GeoJson structures
 

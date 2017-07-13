@@ -361,6 +361,7 @@ bool vectiler(const Params2& params)
 
 	return true;
 }
+float t_disc = 0;
 //-----------------------------------------------------------------------------
 bool GetTile(const Vec3i& tms, TArray<StreamGeom*>& geoms)
 {
@@ -371,13 +372,19 @@ bool GetTile(const Vec3i& tms, TArray<StreamGeom*>& geoms)
 	const CStrL fname = tileName + ".bin";
 	//Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
 	//LOG("GetTile tms: <%d,%d,%d>, google: <%d, %d>\n", tms.x, tms.y, tms.z, google.x, google.y);
-
+	// 4111, 4236
+	// 4800, 4208
+	CStopWatch sw;
 	// See if tile is binary cached
 	if (tile_DiscCache == eDiscBinaryCache)
 	{
 		if (LoadBin(fname, geoms))
+		{
+			t_disc += sw.GetMs();
 			return true;
+		}
 	}
+	
 
 	// Mapzen uses google xyz indexing
 	struct Params2 params =
