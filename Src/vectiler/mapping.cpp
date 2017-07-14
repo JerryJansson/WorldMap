@@ -30,77 +30,64 @@ void CreateKindHash()
 	ADDHASH(unknown);
 
 	// Buildings
-	ADDHASH(building);			ADDHASH(building_part);		ADDHASH(address);
+	ADDHASH(building);				ADDHASH(building_part);		ADDHASH(address);
 	// Places
-	ADDHASH(borough);			/*ADDHASH(country);*/			/*ADDHASH(locality);*/
-	ADDHASH(macrohood);			ADDHASH(microhood);			ADDHASH(neighbourhood);
+	ADDHASH(borough);				/*ADDHASH(country);*/			/*ADDHASH(locality);*/
+	ADDHASH(macrohood);				ADDHASH(microhood);			ADDHASH(neighbourhood);
 	/*ADDHASH(region);*/
 	// Earth
-	ADDHASH(archipelago);		ADDHASH(arete);				ADDHASH(cliff);
-	ADDHASH(continent);			ADDHASH(earth);				ADDHASH(island);
-	ADDHASH(islet);				ADDHASH(ridge);				ADDHASH(valley);
+	ADDHASH(archipelago);			ADDHASH(arete);				ADDHASH(cliff);				ADDHASH(continent);
+	ADDHASH(earth);					ADDHASH(island);			ADDHASH(islet);				ADDHASH(ridge);	
+	ADDHASH(valley);
 	// Roads
-	ADDHASH(aerialway);			ADDHASH(aeroway);			ADDHASH(ferry);
-	ADDHASH(highway);			ADDHASH(major_road);		ADDHASH(minor_road);
-	ADDHASH(path);				ADDHASH(piste);				ADDHASH(racetrack);
-	ADDHASH(rail);				//ADDHASH(portage_way);
+	ADDHASH(aerialway);				ADDHASH(aeroway);			ADDHASH(ferry);				ADDHASH(highway);
+	ADDHASH(major_road);			ADDHASH(minor_road);		ADDHASH(path);				ADDHASH(piste);
+	ADDHASH(racetrack);				ADDHASH(rail);				//ADDHASH(portage_way);
 	// Landuse
-	ADDHASH(aerodrome);			ADDHASH(allotments);		ADDHASH(amusement_ride);
-	ADDHASH(animal);			ADDHASH(apron);				ADDHASH(aquarium);
-	ADDHASH(artwork);			ADDHASH(attraction);		ADDHASH(aviary);
-	ADDHASH(battlefield);		ADDHASH(beach);				ADDHASH(breakwater);
-	ADDHASH(bridge);			ADDHASH(camp_site);			ADDHASH(caravan_site);
-	ADDHASH(carousel);			ADDHASH(cemetery);			ADDHASH(cinema);
-	ADDHASH(city_wall);			ADDHASH(college);			ADDHASH(commercial);
-	ADDHASH(common);			ADDHASH(cutline);			ADDHASH(dam);
-	ADDHASH(dike);				ADDHASH(dog_park);			ADDHASH(enclosure);
-	ADDHASH(farm);				ADDHASH(farmland);			ADDHASH(farmyard);
-	ADDHASH(fence);				ADDHASH(footway);			ADDHASH(forest);
-	ADDHASH(fort);				ADDHASH(fuel);				ADDHASH(garden);
-	ADDHASH(gate);				ADDHASH(generator);			ADDHASH(glacier);
-	ADDHASH(golf_course);		ADDHASH(grass);				ADDHASH(grave_yard);
-	ADDHASH(groyne);			ADDHASH(hanami);			ADDHASH(hedge); 
-	ADDHASH(hospital);
-	ADDHASH(industrial);		ADDHASH(land);				ADDHASH(library);
-	ADDHASH(maze);				ADDHASH(meadow);			ADDHASH(military);
-	ADDHASH(national_park);		ADDHASH(nature_reserve);	ADDHASH(natural_forest);
-	ADDHASH(natural_park);		ADDHASH(natural_wood);		ADDHASH(park);
-	ADDHASH(parking);			ADDHASH(pedestrian);		ADDHASH(petting_zoo);
-	ADDHASH(picnic_site);		ADDHASH(pier);				ADDHASH(pitch);
-	ADDHASH(place_of_worship);	ADDHASH(plant);				ADDHASH(playground);
-	ADDHASH(prison);			ADDHASH(protected_area);	ADDHASH(quarry);
-	ADDHASH(railway);			ADDHASH(recreation_ground);	ADDHASH(recreation_track);
-	ADDHASH(residential);		ADDHASH(resort);			ADDHASH(rest_area);
-	ADDHASH(retail);			ADDHASH(retaining_wall);	ADDHASH(rock);
-	ADDHASH(roller_coaster);	ADDHASH(runway);			ADDHASH(rural);
-	ADDHASH(school);			ADDHASH(scree);				ADDHASH(scrub);
-	ADDHASH(service_area);		ADDHASH(snow_fence);		ADDHASH(sports_centre);
-	ADDHASH(stadium);			ADDHASH(stone);				ADDHASH(substation);
-	ADDHASH(summer_toboggan);	ADDHASH(taxiway);			ADDHASH(theatre);
-	ADDHASH(theme_park);		ADDHASH(tower);				ADDHASH(trail_riding_station);
-	ADDHASH(university);		ADDHASH(urban_area);		ADDHASH(urban);
-	ADDHASH(village_green);		ADDHASH(wastewater_plant);	ADDHASH(water_park);
-	ADDHASH(water_slide);		ADDHASH(water_works);		ADDHASH(wetland);
-	ADDHASH(wilderness_hut);	ADDHASH(wildlife_park);		ADDHASH(winery);
-	ADDHASH(winter_sports);		ADDHASH(wood);				ADDHASH(works);
+	ADDHASH(aerodrome);				ADDHASH(allotments);		ADDHASH(amusement_ride);	ADDHASH(animal);
+	ADDHASH(apron);					ADDHASH(aquarium);			ADDHASH(artwork);			ADDHASH(attraction);
+	ADDHASH(aviary);				ADDHASH(battlefield);		ADDHASH(beach);				ADDHASH(breakwater);
+	ADDHASH(bridge);				ADDHASH(camp_site);			ADDHASH(caravan_site);		ADDHASH(carousel);
+	ADDHASH(cemetery);				ADDHASH(cinema);			ADDHASH(city_wall);			ADDHASH(college);
+	ADDHASH(commercial);			ADDHASH(common);			ADDHASH(cutline);			ADDHASH(dam);
+	ADDHASH(dike);					ADDHASH(dog_park);			ADDHASH(enclosure);			ADDHASH(farm);
+	ADDHASH(farmland);				ADDHASH(farmyard);			ADDHASH(fence);				ADDHASH(footway);
+	ADDHASH(forest);				ADDHASH(fort);				ADDHASH(fuel);				ADDHASH(garden);
+	ADDHASH(gate);					ADDHASH(generator);			ADDHASH(glacier);			ADDHASH(golf_course);
+	ADDHASH(grass);					ADDHASH(grave_yard);		ADDHASH(groyne);			ADDHASH(hanami);
+	ADDHASH(hedge); 				ADDHASH(hospital);			ADDHASH(industrial);		ADDHASH(land);
+	ADDHASH(library);				ADDHASH(maze);				ADDHASH(meadow);			ADDHASH(military);
+	ADDHASH(national_park);			ADDHASH(nature_reserve);	ADDHASH(natural_forest);	ADDHASH(natural_park);
+	ADDHASH(natural_wood);			ADDHASH(park);				ADDHASH(parking);			ADDHASH(pedestrian);
+	ADDHASH(petting_zoo);			ADDHASH(picnic_site);		ADDHASH(pier);				ADDHASH(pitch);
+	ADDHASH(place_of_worship);		ADDHASH(plant);				ADDHASH(playground);		ADDHASH(prison);
+	ADDHASH(protected_area);		ADDHASH(quarry);			ADDHASH(railway);			ADDHASH(recreation_ground);
+	ADDHASH(recreation_track);		ADDHASH(residential);		ADDHASH(resort);			ADDHASH(rest_area);
+	ADDHASH(retail);				ADDHASH(retaining_wall);	ADDHASH(rock);				ADDHASH(roller_coaster);
+	ADDHASH(runway);				ADDHASH(rural);				ADDHASH(school);			ADDHASH(scree);
+	ADDHASH(scrub);					ADDHASH(service_area);		ADDHASH(snow_fence);		ADDHASH(sports_centre);
+	ADDHASH(stadium);				ADDHASH(stone);				ADDHASH(substation);		ADDHASH(summer_toboggan);
+	ADDHASH(taxiway);				ADDHASH(theatre);			ADDHASH(theme_park);		ADDHASH(tower);
+	ADDHASH(trail_riding_station);	ADDHASH(university);		ADDHASH(urban_area);		ADDHASH(urban);
+	ADDHASH(village_green);			ADDHASH(wastewater_plant);	ADDHASH(water_park);		ADDHASH(water_slide);
+	ADDHASH(water_works);			ADDHASH(wetland);			ADDHASH(wilderness_hut);	ADDHASH(wildlife_park);
+	ADDHASH(winery);				ADDHASH(winter_sports);		ADDHASH(wood);				ADDHASH(works);
 	ADDHASH(zoo);
 	// Transit
-	ADDHASH(light_rail);		ADDHASH(monorail);			ADDHASH(platform);			//ADDHASH(railway);
-	ADDHASH(subway);			ADDHASH(train);				ADDHASH(tram);
+	ADDHASH(light_rail);			ADDHASH(monorail);			ADDHASH(platform);			//ADDHASH(railway);
+	ADDHASH(subway);				ADDHASH(train);				ADDHASH(tram);
 	// Water
-	ADDHASH(basin);				ADDHASH(bay);				ADDHASH(canal);
-	ADDHASH(ditch);				ADDHASH(dock);				ADDHASH(drain);
-	ADDHASH(fjord);				ADDHASH(lake);				ADDHASH(ocean);
-	ADDHASH(playa);				ADDHASH(river);				ADDHASH(riverbank);
-	ADDHASH(sea);				ADDHASH(stream);			ADDHASH(strait);
-	ADDHASH(swimming_pool);		ADDHASH(water);
+	ADDHASH(basin);					ADDHASH(bay);				ADDHASH(canal);				ADDHASH(ditch);
+	ADDHASH(dock);					ADDHASH(drain);				ADDHASH(fjord);				ADDHASH(lake);
+	ADDHASH(ocean);					ADDHASH(playa);				ADDHASH(river);				ADDHASH(riverbank);
+	ADDHASH(sea);					ADDHASH(stream);			ADDHASH(strait);			ADDHASH(swimming_pool);
+	ADDHASH(water);
 	// Pois
 	ADDHASH(station);
 	//Boundaries
-	ADDHASH(aboriginal_lands);	ADDHASH(country);			ADDHASH(county);
-	ADDHASH(disputed);			ADDHASH(indefinite);		ADDHASH(indeterminate);
-	ADDHASH(lease_limit);		ADDHASH(line_of_control);	ADDHASH(locality);
-	ADDHASH(macroregion);		ADDHASH(map_unit);			ADDHASH(overlay_limit);
+	ADDHASH(aboriginal_lands);		ADDHASH(country);			ADDHASH(county);			ADDHASH(disputed);
+	ADDHASH(indefinite);			ADDHASH(indeterminate);		ADDHASH(lease_limit);		ADDHASH(line_of_control);
+	ADDHASH(locality);				ADDHASH(macroregion);		ADDHASH(map_unit);			ADDHASH(overlay_limit);
 	ADDHASH(region);
 
 #undef ADDHASH
@@ -119,18 +106,18 @@ void CreateKindHash()
 #define ADDHASH3(KIND, C, W, S) gGeomHash.Add((l<<16)|eKind_##KIND, MapGeom(C, W, S))
 	
 	l = eLayerWater;
-	ADDHASH(basin,			Crgba(181, 208, 208));
-	ADDHASH2(canal,			Crgba(181, 208, 208),	1.5f);
+	Crgba defColWater = Crgba(81, 148, 190);
+	ADDHASH(basin,			defColWater);
+	ADDHASH2(canal,			defColWater,	1.5f);
 	ADDHASH(lake,			Crgba(191, 198, 208));
-	ADDHASH(ocean,			Crgba(181, 208, 208));
-	ADDHASH2(river,			Crgba(181, 208, 208),	2.0f);
-	ADDHASH(riverbank,		Crgba(181, 208, 208));
-	ADDHASH3(strait,		Crgba(181, 208, 208),	1.0f,	true);	// Intended for label placement only
-	ADDHASH2(stream,		Crgba(181, 208, 208),	1.0f);
+	ADDHASH(ocean,			defColWater);
+	ADDHASH2(river,			defColWater,	2.0f);
+	ADDHASH(riverbank,		defColWater);
+	ADDHASH3(strait,		defColWater,	1.0f,	true);	// Intended for label placement only
+	ADDHASH2(stream,		defColWater,	1.0f);
 	ADDHASH(swimming_pool,	Crgba(171, 228, 198));
-	ADDHASH(water,			Crgba(181, 208, 208));
+	ADDHASH(water,			defColWater);
 	
-
 	l = eLayerBuildings;
 	ADDHASH(building,		Crgba(217, 208, 201));
 	ADDHASH(building_part,	Crgba(0, 208, 201));
@@ -141,8 +128,6 @@ void CreateKindHash()
 	ADDHASH(station,		Crgba(160, 130, 100));
 	ADDHASH3(subway,		Crgba(255, 0, 0),		2.0f,	true);
 	ADDHASH3(train,			Crgba(255, 0, 0),		2.5f,	true);
-	
-	
 	
 	l = eLayerBoundaries;
 	ADDHASH3(aboriginal_lands,	Crgba(255, 0, 0),		0.5f,	true);

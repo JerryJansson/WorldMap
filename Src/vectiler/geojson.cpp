@@ -75,9 +75,9 @@ static inline int extractLineString(const rapidjson::Value& arr, LineString& l, 
 //-----------------------------------------------------------------------------
 bool extractPoly(const rapidjson::Value& arr, Polygon2& poly, const Tile& _tile)
 {
-	const int count = arr.Size();
-	poly.reserve(count);
-	for(int i=0; i<count; i++)
+	const int rings = arr.Size();
+	poly.reserve(rings);
+	for(int i=0; i<rings; i++)
 	{
 		poly.emplace_back();
 		if (extractLineString(arr[i], poly.back(), _tile) < 3)	// Need at least 3 points in linestring to form a polygon
@@ -87,7 +87,7 @@ bool extractPoly(const rapidjson::Value& arr, Polygon2& poly, const Tile& _tile)
 		}
 	}
 
-	return poly.size() == count;
+	return poly.size() == rings;
 }
 //-----------------------------------------------------------------------------
 bool SkipFeature(const ELayerType layerType, const Feature& f)
@@ -234,7 +234,11 @@ bool GeoJson::extractFeature(const ELayerType layerType, const rapidjson::Value&
 		{
             f.polygons.emplace_back();
 			if (!extractPoly(*polyCoords, f.polygons.back(), _tile))
+			{
 				f.polygons.pop_back();
+				gLogger.Warning("GeoJson: invalid MultiPolygon");
+				return false;
+			}
         }
     }
 

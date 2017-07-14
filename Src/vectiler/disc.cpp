@@ -26,11 +26,11 @@ bool SaveBin(const char* fname, const std::vector<PolygonMesh*>& meshes)
 	for (int i = 0; i < nMeshes; i++)
 	{
 		const PolygonMesh* mesh = meshes[i];
-		const Feature* feature = mesh->feature;
+		//const Feature* feature = mesh->feature;
 
 		f.WriteInt(mesh->layerType);
 
-		int sort;
+		/*int sort;
 		int kind;
 		if (feature)
 		{
@@ -43,7 +43,11 @@ bool SaveBin(const char* fname, const std::vector<PolygonMesh*>& meshes)
 			meshname = "";
 			sort = 0;
 			kind = eKind_unknown;
-		}
+		}*/
+
+		meshname = mesh->feature_name;
+		int sort = mesh->feature_sortrank;
+		EFeatureKind kind = mesh->feature_kind;
 
 		f.WriteInt(kind);
 		f.WriteInt(sort);

@@ -30,15 +30,6 @@ vectiler()
 
 */
 
-struct Params2
-{
-	const char* apiKey;
-	int			tilex, tiley, tilez;
-	bool		terrain;
-	int			terrainSubdivision;
-	float		terrainExtrusionScale;
-	bool		vectorData;
-};
 //-----------------------------------------------------------------------------
 enum DiscCache
 {

@@ -170,7 +170,7 @@ PolygonMesh* CreateTerrainMesh(const Tile& tile, const HeightData* heightMap, co
 	if (!heightMap)
 		return NULL;
 
-	PolygonMesh* mesh = new PolygonMesh(eLayerTerrain);
+	PolygonMesh* mesh = new PolygonMesh(eLayerTerrain, NULL);
 	buildPlane(mesh->vertices, mesh->indices, 2.0, 2.0, terrainSubdivision, terrainSubdivision);
 
 	// Build terrain mesh extrusion, with bilinear height sampling
@@ -185,8 +185,8 @@ PolygonMesh* CreateTerrainMesh(const Tile& tile, const HeightData* heightMap, co
 //-----------------------------------------------------------------------------
 void CreatePedestalMeshes(const Tile& tile, const HeightData* heightMap, PolygonMesh* meshes[2], const int terrainSubdivision, float pedestalHeight)
 {
-	PolygonMesh* ground = new PolygonMesh(eLayerTerrain);
-	PolygonMesh* wall = new PolygonMesh(eLayerTerrain);
+	PolygonMesh* ground = new PolygonMesh(eLayerTerrain, NULL);
+	PolygonMesh* wall = new PolygonMesh(eLayerTerrain, NULL);
 
 	buildPlane(ground->vertices, ground->indices, 2.0, 2.0, terrainSubdivision, terrainSubdivision, true);
 
@@ -214,7 +214,12 @@ static inline int SplitMesh(const PolygonMesh* src, std::vector<PolygonMesh*>& d
 	int i = 0;
 	while (i < src->indices.size())
 	{
-		PolygonMesh* dst = new PolygonMesh(src->layerType, src->feature);
+		//PolygonMesh* dst = new PolygonMesh(src->layerType, src->feature);
+		PolygonMesh* dst = new PolygonMesh(src->layerType, NULL);
+		dst->feature_kind = src->feature_kind;
+		dst->feature_name = src->feature_name;
+		dst->feature_sortrank = src->feature_sortrank;
+
 		dstArr.push_back(dst);
 
 		for (int k = 0; k < src_nv; k++)
@@ -266,12 +271,28 @@ static inline void AddNewMesh(PolygonMesh* mesh, std::vector<PolygonMesh*>& tmpS
 		tmpSplitArr.clear();
 	}
 }
+//-----------------------------------------------------------------------------
+CStrL TileFileName(const Vec3i& tms)
+{
+	return GetWriteFile(Str_Printf("cache/%d_%d_%d.bin", tms.x, tms.y, tms.z));
+}
+//-----------------------------------------------------------------------------
 Vec3i maxTile;
 //-----------------------------------------------------------------------------
-bool vectiler(const Params2& params)
+struct Params2
+{
+	const char* apiKey;
+	Vec3i		tms;
+	bool		terrain;
+	int			terrainSubdivision;
+	float		terrainExtrusionScale;
+	bool		vectorData;
+};
+//-----------------------------------------------------------------------------
+static bool vectiler(const Params2& params, std::vector<PolygonMesh*>& meshes)
 {
 	HeightData* heightMap = NULL;
-	Tile tile(params.tilex, params.tiley, params.tilez);
+	Tile tile(params.tms.x, params.tms.y, params.tms.z);
 
 	if (params.terrain)
 	{
@@ -296,7 +317,6 @@ bool vectiler(const Params2& params)
 	}
 
 	// Build meshes for the tile
-	std::vector<PolygonMesh*> meshes;
 	std::vector<PolygonMesh*> tmpSplitArr;
 	CStopWatch sw;
 	
@@ -350,14 +370,6 @@ bool vectiler(const Params2& params)
 	}
 
 	LOG("Triangulated %d PolygonMeshes in %.1fms\n", meshes.size(), t_BuildMeshes);
-	
-	// Save output BIN file
-	CStrL fname = Str_Printf("%d_%d_%d.bin", tile.x, tile.y, tile.z);
-	SaveBin(fname, meshes);
-
-	// Delete all meshes
-	for (size_t i = 0; i < meshes.size(); i++)
-		delete meshes[i];
 
 	return true;
 }
@@ -365,19 +377,13 @@ float t_disc = 0;
 //-----------------------------------------------------------------------------
 bool GetTile(const Vec3i& tms, TArray<StreamGeom*>& geoms)
 {
-	//const MyTile* t = result->tile;
-	//assert(t->Status() == MyTile::eNotLoaded);
-	//const Vec3i& tms = t->m_Tms;
-	const CStrL tileName = Str_Printf("%d_%d_%d", tms.x, tms.y, tms.z);
-	const CStrL fname = tileName + ".bin";
+	const CStrL fname = TileFileName(tms);
 	//Vec2i google = TmsToGoogleTile(Vec2i(tms.x, tms.y), tms.z);
-	//LOG("GetTile tms: <%d,%d,%d>, google: <%d, %d>\n", tms.x, tms.y, tms.z, google.x, google.y);
-	// 4111, 4236
-	// 4800, 4208
-	CStopWatch sw;
+
 	// See if tile is binary cached
 	if (tile_DiscCache == eDiscBinaryCache)
 	{
+		CStopWatch sw;
 		if (LoadBin(fname, geoms))
 		{
 			t_disc += sw.GetMs();
@@ -385,22 +391,28 @@ bool GetTile(const Vec3i& tms, TArray<StreamGeom*>& geoms)
 		}
 	}
 	
-
 	// Mapzen uses google xyz indexing
 	struct Params2 params =
 	{
 		"vector-tiles-qVaBcRA",	// apiKey
-		tms.x,					// Tile X
-		tms.y,					// Tile Y
-		tms.z,					// Tile Z (zoom)
+		tms,					// tile x,y,z
 		false,					// terrain. Generate terrain elevation topography
 		64,						// terrainSubdivision
 		1.0f,					// terrainExtrusionScale
 		true					// vectorData. Buildings, roads, landuse, pois, etc...
 	};
 
-	if (!vectiler(params))
+	// Download & triangulate tile
+	std::vector<PolygonMesh*> meshes;
+	if (!vectiler(params, meshes))
 		return false;
+
+	// Save tile
+	SaveBin(fname, meshes);
+
+	// Delete all meshes
+	for (size_t i = 0; i < meshes.size(); i++)
+		delete meshes[i];
 
 	if (!LoadBin(fname, geoms))
 		return false;

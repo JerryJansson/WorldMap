@@ -16,9 +16,27 @@ struct PolygonMesh
 	IdxArr indices;
 	VtxArr vertices;
 	ELayerType layerType;
-	const struct Feature* feature;
+	//const struct Feature* feature;
+	CStr			feature_name;
+	int				feature_sortrank;
+	EFeatureKind	feature_kind;
 
-	PolygonMesh(ELayerType type, const struct Feature* _feature=NULL) : layerType(type), feature(_feature) {}
+	PolygonMesh(ELayerType type, const struct Feature* _feature)// : layerType(type), feature(_feature) {}
+	{
+		layerType = type;
+		if (_feature)
+		{
+			feature_name = _feature->name;
+			feature_sortrank = _feature->sort_rank;
+			feature_kind = _feature->kind;
+		}
+		else
+		{
+			feature_name = "Unknown";
+			feature_sortrank = 0;
+			feature_kind = eKind_unknown;
+		}
+	}
 };
 //-----------------------------------------------------------------------------
 class PolyMeshBuilder
