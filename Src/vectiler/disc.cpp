@@ -2,6 +2,7 @@
 #include "geometry.h"
 #include "tiledata.h"
 #include "disc.h"
+#include "..\..\..\..\Source\Middleware\lz4\lz4.h"
 //-----------------------------------------------------------------------------
 #define VER 2
 #define MAX_SORT_RANK 500 // https://mapzen.com/documentation/vector-tiles/layers/
@@ -81,6 +82,25 @@ bool SaveBin(const char* fname, const std::vector<PolygonMesh*>& meshes)
 	}
 
 	LOG("%.1fms. Saved %s. Meshes: %d, Tris: %d, Vtx: %d\n", sw.GetMs(), fname, nMeshes, statNumTriangles, statNumVertices);
+
+
+	/*f.Close();
+	CStopWatch tt;
+	int loadsize = 0;
+	char* loaded = F_Load(fname, &loadsize);
+
+	int bounds = LZ4_compressBound(loadsize);
+
+	tt.Start();
+	char* lz4 = new char[bounds];
+	float t1 = tt.GetMs(true);
+	int compressed = LZ4_compress_default(loaded, lz4, loadsize, bounds);
+	float t2 = tt.GetMs();
+
+	delete[] lz4;
+	delete[] loaded;
+
+	LOG("LZ4: Compressed %.1fkb -> %.1fkb (%.1f%%) in %.1f, %.1fms\n", loadsize/1024.0f, compressed/1024.0f, (compressed*100.0f) / loadsize, t1, t2);*/
 
 	return true;
 }
